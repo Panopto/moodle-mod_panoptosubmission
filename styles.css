@@ -1,0 +1,81 @@
+.panopto-player-container {
+  transition: opacity .5s ease-in-out;
+  -moz-transition: opacity .5s ease-in-out;
+  -webkit-transition: opacity .5s ease-in-out;
+}
+
+.panopto-player-container.no-session {
+    display: none;
+    opacity: 0;
+}
+
+.panopto-session-container {
+    position: relative;
+    min-height: 150px;
+}
+
+.panopto-session-container .panopto-thumbnail-container {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    opacity: 0;
+    transition: opacity .5s ease-in-out;
+    -moz-transition: opacity .5s ease-in-out;
+    -webkit-transition: opacity .5s ease-in-out;
+}
+
+.panopto-session-container .panopto-player-iframe {
+    opacity: 1;
+    transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
+    -moz-transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
+    -webkit-transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
+} 
+
+.panopto-session-container.session-hidden .panopto-thumbnail-container {
+    opacity: 1;
+}
+
+.panopto-session-container.session-hidden .panopto-player-iframe {
+    opacity: 0;
+    height: 0px;
+} 
+
+.panopto-thumbnail {
+    display: block;
+}
+
+.panopto-session-title {
+    display: block;
+    font-size: 20px;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.panopto-show-session-toggle {
+    font-size: 16px;
+    text-decoration: underline;
+    margin-bottom: 5px;
+}
+
+.panopto-status-graded {
+    color: black;
+    background-color: #cfefcf;
+}
+
+.panopto-status-not-graded {
+    color: black;
+    background-color: #ffff7f;
+}
+
+.panopto-status-not-submitted {
+    color: black;
+    background-color: #efefef;
+}
+
+.panopto-overduesubmission {
+    color: red;
+}
+
+.panopto-grade-input-container {
+    white-space: nowrap;
+}

@@ -1,0 +1,11 @@
+{
+  "moodle-mod_panoptosubmission-submissionpanel": {
+    "requires": [
+        "base",
+        "node",
+        "panel",
+        "moodle-core-notification",
+        "node-event-simulate"
+    ]
+  }
+}

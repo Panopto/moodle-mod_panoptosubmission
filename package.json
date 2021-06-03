@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "grunt": "^1.3.0",
+    "shifter": "^1.2.0"
+  }
+}

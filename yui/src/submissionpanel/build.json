@@ -1,0 +1,10 @@
+{
+  "name": "moodle-mod_panoptosubmission-submissionpanel",
+  "builds": {
+    "moodle-mod_panoptosubmission-submissionpanel": {
+      "jsfiles": [
+        "submissionpanel.js"
+      ]
+    }
+  }
+}
