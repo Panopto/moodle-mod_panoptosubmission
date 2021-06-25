@@ -619,6 +619,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $html .= html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'width', 'name' => 'width', 'value' => 0));
         $html .= html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'height', 'name' => 'height', 'value' => 0));
         $html .= html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'source', 'name' => 'source', 'value' => 0));
+        $html .= html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'customdata', 'name' => 'customdata', 'value' => 0));
         $html .= html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'sessiontitle', 'name' => 'sessiontitle', 'value' => 0));
         $html .= html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'thumbnailwidth', 'name' => 'thumbnailwidth', 'value' => 0));
         $html .= html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'thumbnailheight', 'name' => 'thumbnailheight', 'value' => 0));
