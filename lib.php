@@ -294,6 +294,10 @@ function panoptosubmission_grade_item_update($targetinstance, $grades = null) {
         $params['grademax']  = $targetinstance->grade;
         $params['grademin']  = 0;
 
+        if (isset($grades) && isset($grades->rawgrade)) {
+            $grades->rawgrade = ($grades->rawgrade / $targetinstance->grade) * 100.0;
+        }
+
     } else if ($targetinstance->grade < 0) {
         $params['gradetype'] = GRADE_TYPE_SCALE;
         $params['scaleid']   = -$targetinstance->grade;
