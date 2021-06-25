@@ -192,8 +192,6 @@ if (!empty($gradedata->mode)) {
             // trigger grade event
             if ($DB->insert_record('panoptosubmission_submission', $usersubmissions)) {
 
-                $grade = new stdClass();
-                $grade->userid = $userid;
                 $grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
 
                 $pansubmissionactivity->cmidnumber = $cm->idnumber;
