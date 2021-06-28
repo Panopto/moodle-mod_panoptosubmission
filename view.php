@@ -69,7 +69,8 @@ echo format_module_intro('panoptosubmission', $panactivityinstance, $cm->id);
 echo $OUTPUT->box_end();
 
 $submitdisabled = false;
-if (panoptosubmission_submission_past_due($panactivityinstance)) {
+if (panoptosubmission_submission_past_due($panactivityinstance) ||
+    !panoptosubmission_submission_available_yet($panactivityinstance)) {
     $submitdisabled = true;
 }
 

@@ -34,7 +34,7 @@ require_once(dirname(dirname(dirname(__FILE__))).'/blocks/panopto/lib/panopto_da
  * are prohibited
  *
  * @param object targetactivity - Instance of a Panopto Student Submission activity
- * @return bool - true if past due, otherwise false
+ * @return bool - true if available, otherwise false
  */
 function panoptosubmission_submission_past_due($targetactivity) {
     $pastdue = false;
@@ -44,6 +44,22 @@ function panoptosubmission_submission_past_due($targetactivity) {
     }
 
     return $pastdue;
+}
+
+/**
+ * Check if the assignment submission start date is set and if it has arrived yet.
+ *
+ * @param object targetactivity - Instance of a Panopto Student Submission activity
+ * @return bool - true if past due, otherwise false
+ */
+function panoptosubmission_submission_available_yet($targetactivity) {
+    $availableyet = true;
+
+    if (isset($targetactivity->timeavailable)) {
+        $availableyet = time() >= $targetactivity->timeavailable;
+    }
+
+    return $availableyet;
 }
 
 /**
