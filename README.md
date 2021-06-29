@@ -13,10 +13,10 @@
 5. An LTI Tool for the Panopto server must be configured on the Moodle site. If one does not already exist for your Panopto site please navigate to Site administration -> Plugins -> Activity modules -> External tool -> Manage preconfigured tools
 6. Click Add Preconfigured tool. 
 7. Input the following information
-    - Tool Name: <panoptoServer> Student Submission Tool
-    - Tool Url: https://<panoptoServer>/Panopto/LTI/LTI.aspx
-    - Consumer Key: <Identity Provider instance name>
-    - Shared secret: <Identity Provided application key>
+    - Tool Name: [panoptoServer] Student Submission Tool
+    - Tool Url: https://[panoptoServer]/Panopto/LTI/LTI.aspx
+    - Consumer Key:[Identity Provider instance name]
+    - Shared secret: [Identity Provided application key]
     - Custom Parameters:
         ```
         panopto_student_submission_tool=true
@@ -40,7 +40,7 @@
 3. Select the Panopto Student Submission tool
 4. Give the assignment a name
 5. (Optional) Customize any of the other options to suit your needs (e.g. grade, due date, allow late submission, …, etc)
-6. Click either save and Display or Save and Return to course. 
+6. Click either Save and Display or Save and Return to course. 
 
 **Activity Grading**
 1. Navigate to the activity you want to grade
