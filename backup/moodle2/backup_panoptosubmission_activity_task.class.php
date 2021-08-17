@@ -26,6 +26,7 @@ class backup_panoptosubmission_activity_task extends backup_activity_task {
 
     protected function define_my_settings() {
     }
+    
     protected function define_my_steps() {
         $this->add_step(new backup_panoptosubmission_activity_structure_step('panoptosubmission_structure', 'panoptosubmission.xml'));
     }
