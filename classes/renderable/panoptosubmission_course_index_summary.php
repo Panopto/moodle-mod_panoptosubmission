@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die();
  * Renderable panopto submission index summary
  */
 class panoptosubmission_course_index_summary implements renderable {
-    /** @var array activities A list of course modules and their status or submission counts depending on the user capabilities
+    /** @var array activities A list of course modules and their status or submission counts depending on the user capabilities */
     public $activities = array();
     /** @var boolean usesections True if the parent course supports sections */
     public $usesections = false;
