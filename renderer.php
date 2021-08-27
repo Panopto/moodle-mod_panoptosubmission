@@ -26,6 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(dirname(dirname(__FILE__))).'/lib/tablelib.php');
 require_once(dirname(dirname(dirname(__FILE__))).'/lib/moodlelib.php');
+require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosubmission_course_index_summary.php');
 
 /**
  * Table class for displaying video submissions for grading
@@ -934,6 +935,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         }
 
         $usesections = course_format_uses_sections($course->format);
+        $modinfo = get_fast_modinfo($course);
         if ($usesections) {
             $sections = $modinfo->get_section_info_all();
         }
@@ -941,40 +943,41 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $courseformatname  = get_string('sectionname', 'format_' . $course->format);
         $courseindexsummary = new panoptosubmission_course_index_summary($usesections, $courseformatname);
         $activitycount = 0;
-        $modinfo = get_fast_modinfo($course);
-        foreach ($modinfo->instances['panoptosubmission'] as $cm) {
-            if (!$cm->uservisible) {
-                continue;
-            }
-
-            $activitycount++;
-
-            $sectionname = '';
-            if ($usesections && $cm->sectionnum) {
-                $sectionname = get_section_name($course, $sections[$cm->sectionnum]);
-            }
-
-            $submitted = '';
-
-            $context = context_module::instance($cm->id);
-            if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
-                $submitted = $DB->count_records('panoptosubmission_submission', array('panactivityid' => $cm->instance));
-            } else if (has_capability('mod/panoptosubmission:submit', $context)) {
-                if ($DB->count_records('panoptosubmission_submission', array('panactivityid' => $cm->instance, 'userid' => $USER->id)) > 0) {
-                    $submitted = get_string('submitted', 'mod_panoptosubmission');
-                } else {
-                    $submitted = get_string('nosubmission', 'mod_panoptosubmission');
+        if (array_key_exists('panoptosubmission', $modinfo->instances)) {
+            foreach ($modinfo->instances['panoptosubmission'] as $cm) {
+                if (!$cm->uservisible) {
+                    continue;
                 }
-            }
 
-            $currentgrades = grade_get_grades($course->id, 'mod', 'panoptosubmission', $cm->instance, $USER->id);
-            if (isset($currentgrades->items[0]->grades[$USER->id]) && !$currentgrades->items[0]->grades[$USER->id]->hidden ) {
-                $grade = $currentgrades->items[0]->grades[$USER->id]->str_grade;
-            } else {
-                $grade = '-';
-            }
+                $activitycount++;
 
-            $courseindexsummary->add_assign_info($cm->id, $cm->name, $sectionname, $cms[$cm->id]->timedue, $submitted, $grade);
+                $sectionname = '';
+                if ($usesections && $cm->sectionnum) {
+                    $sectionname = get_section_name($course, $sections[$cm->sectionnum]);
+                }
+
+                $submitted = '';
+
+                $context = context_module::instance($cm->id);
+                if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
+                    $submitted = $DB->count_records('panoptosubmission_submission', array('panactivityid' => $cm->instance));
+                } else if (has_capability('mod/panoptosubmission:submit', $context)) {
+                    if ($DB->count_records('panoptosubmission_submission', array('panactivityid' => $cm->instance, 'userid' => $USER->id)) > 0) {
+                        $submitted = get_string('submitted', 'mod_panoptosubmission');
+                    } else {
+                        $submitted = get_string('nosubmission', 'mod_panoptosubmission');
+                    }
+                }
+
+                $currentgrades = grade_get_grades($course->id, 'mod', 'panoptosubmission', $cm->instance, $USER->id);
+                if (isset($currentgrades->items[0]->grades[$USER->id]) && !$currentgrades->items[0]->grades[$USER->id]->hidden ) {
+                    $grade = $currentgrades->items[0]->grades[$USER->id]->str_grade;
+                } else {
+                    $grade = '-';
+                }
+
+                $courseindexsummary->add_assign_info($cm->id, $cm->name, $sectionname, $cms[$cm->id]->timedue, $submitted, $grade);
+            }
         }
 
         if ($activitycount > 0) {
@@ -1266,7 +1269,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $table->data = array();
 
         $currentsection = '';
-        foreach ($indexsummary->assignments as $info) {
+        foreach ($indexsummary->activities as $info) {
             $params = array('id' => $info['cmid']);
             $link = html_writer::link(new moodle_url('/mod/panoptosubmission/view.php', $params), $info['cmname']);
             $due = $info['timedue'] ? userdate($info['timedue']) : '-';
