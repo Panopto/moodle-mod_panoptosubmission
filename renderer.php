@@ -26,6 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(dirname(dirname(__FILE__))).'/lib/tablelib.php');
 require_once(dirname(dirname(dirname(__FILE__))).'/lib/moodlelib.php');
+require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosubmission_course_index_summary.php');
 
 /**
  * Table class for displaying video submissions for grading
@@ -934,6 +935,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         }
 
         $usesections = course_format_uses_sections($course->format);
+        $modinfo = get_fast_modinfo($course);
         if ($usesections) {
             $sections = $modinfo->get_section_info_all();
         }
@@ -941,7 +943,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $courseformatname  = get_string('sectionname', 'format_' . $course->format);
         $courseindexsummary = new panoptosubmission_course_index_summary($usesections, $courseformatname);
         $activitycount = 0;
-        $modinfo = get_fast_modinfo($course);
         foreach ($modinfo->instances['panoptosubmission'] as $cm) {
             if (!$cm->uservisible) {
                 continue;
@@ -1266,7 +1267,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $table->data = array();
 
         $currentsection = '';
-        foreach ($indexsummary->assignments as $info) {
+        foreach ($indexsummary->activities as $info) {
             $params = array('id' => $info['cmid']);
             $link = html_writer::link(new moodle_url('/mod/panoptosubmission/view.php', $params), $info['cmname']);
             $due = $info['timedue'] ? userdate($info['timedue']) : '-';
