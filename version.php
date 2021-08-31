@@ -30,7 +30,7 @@ $plugin->version = 2021083000;
 $plugin->requires  = 2014051200;
 $plugin->cron = 0;
 $plugin->component = 'mod_panoptosubmission';
-$plugin->maturity = MATURITY_BETA;
+$plugin->maturity = MATURITY_STABLE;
 $plugin->dependencies = array(
     'block_panopto' => ANY_VERSION
 );
