@@ -1097,7 +1097,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                             'showSessionPreviewToggle.textContent = "' . get_string('sessionpreview_hide', 'panoptosubmission') . '";' .
                         '} else {' .
                             'sessionContainerDiv.classList.add("session-hidden");' .
-                            'sessionIframe.setAttribute("src", "/");' .
+                            'sessionIframe.setAttribute("src", "about:blank");' .
                             'showSessionPreviewToggle.textContent = "' . get_string('sessionpreview_show', 'panoptosubmission') . '";' .
                         '}' .
                     '}' .
