@@ -106,7 +106,8 @@ if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
         'addvidbtnid' => 'id_add_video',
         'ltilaunchurl' => $url->out(false),
         'height' => PANOPTO_PANEL_HEIGHT,
-        'width' => PANOPTO_PANEL_WIDTH
+        'width' => PANOPTO_PANEL_WIDTH,
+        'courseid' => $course->id
     );
 
     $PAGE->requires->yui_module('moodle-mod_panoptosubmission-submissionpanel', 'M.mod_panoptosubmission.initsubmissionpanel', array($params), null, true);
