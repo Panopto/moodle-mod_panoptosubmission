@@ -30,6 +30,9 @@ var PANOPTOSUBMISSIONFRAME = function() {
 };
 
 Y.extend(PANOPTOSUBMISSIONFRAME, Y.Base, {
+
+    courseid: null,
+
     /**
      * Init function for the checkboxselection module
      * @property params
@@ -40,6 +43,8 @@ Y.extend(PANOPTOSUBMISSIONFRAME, Y.Base, {
         if ('0' === params.addvidbtnid || '0' === params.ltilaunchurl || 0 === params.courseid || 0 === params.height || 0 === params.width) {
             return;
         }
+
+        this.courseid = params.courseid
 
         var addvideobtn = Y.one('#' + params.addvidbtnid);
         addvideobtn.on('click', this.open_panopto_window_callback, this, params.ltilaunchurl, params.height, params.width);
@@ -76,10 +81,11 @@ Y.extend(PANOPTOSUBMISSIONFRAME, Y.Base, {
             thumbnailnode = Y.one('img[id=panoptothumbnail]'),
             thumbnaillinknode = Y.one('a[id=panoptothumbnaillink]'),
             titlenode = Y.one('a[id=panoptosessiontitle]'),
-            newSubmissionSource = new URL(iframenode.getAttribute('src')),
+            newSubmissionSource = new URL(closeEvent.detail.ltiViewerUrl),
             search_params = newSubmissionSource.searchParams;
 
         // This will encode the params so decode the json once to make sure it is not double encoded.
+        search_params.set('course', this.courseid);
         search_params.set('custom', decodeURI(closeEvent.detail.customData));
         search_params.set('contentUrl', closeEvent.detail.contentUrl);
 
@@ -106,6 +112,10 @@ Y.extend(PANOPTOSUBMISSIONFRAME, Y.Base, {
         // Do not set the iframe src yet, it will cause the video to play when the iframe is not visible.
         iframenode.setAttribute('width', closeEvent.detail.width);
         iframenode.setAttribute('height', closeEvent.detail.height);
+
+        if (!iframenode.hasClass('session-hidden')) {
+            iframenode.setAttribute('src', newSubmissionSource.toString());
+        }
         
         contentwrappernode.removeClass('no-session');
         
@@ -132,6 +142,9 @@ Y.extend(PANOPTOSUBMISSIONFRAME, Y.Base, {
             value: 0
         },
         width : {
+            value: 0
+        },
+        courseid : {
             value: 0
         }
     }

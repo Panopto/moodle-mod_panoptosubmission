@@ -21,18 +21,14 @@
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-require_once("../../config.php");
-
+require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
 $id = required_param('id', PARAM_INT); // Course ID.
+
+global $PAGE, $OUTPUT, $DB;
 
 $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
 
 require_login($course);
-
-global $SESSION, $CFG;
 
 $PAGE->set_url('/mod/panoptosubmission/index.php', array('id' => $id));
 $PAGE->set_pagelayout('incourse');

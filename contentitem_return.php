@@ -55,8 +55,9 @@ $customdata = $contentitems->{'@graph'}[0]->custom;
 
 // In this version of Moodle LTI contentitem request we do not want the interactive viewer. 
 unset($customdata->use_panopto_interactive_view);
-?>
 
+$ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
+?>
 
 <script type="text/javascript">
     <?php if (count($errors) > 0): ?>
@@ -66,8 +67,8 @@ unset($customdata->use_panopto_interactive_view);
         var sessionSelectedEvent;
         var detailObject = {
             'detail': {
-
                 'title': "<?php echo $contentitems->{'@graph'}[0]->title ?>",
+                'ltiViewerUrl': "<?php echo $ltiviewerurl->out(false) ?>",
                 'contentUrl': "<?php echo $contentitems->{'@graph'}[0]->url ?>",
                 'customData': "<?php echo urlencode(json_encode($customdata)) ?>",
                 'width': <?php echo $framewidth ?>,

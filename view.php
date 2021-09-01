@@ -37,7 +37,7 @@ if (!empty($id)) {
 
 require_course_login($course->id, true, $cm);
 
-global $SESSION, $CFG;
+global $PAGE, $OUTPUT, $DB;
 
 $PAGE->set_url('/mod/panoptosubmission/view.php', array('id' => $id));
 $PAGE->set_title(format_string($panactivityinstance->name));
@@ -100,14 +100,14 @@ if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
 
     echo $renderer->display_grade_feedback($panactivityinstance, $context);
 
-    // TODO: Setup Panopto LTI code here
     $url = new moodle_url('/mod/panoptosubmission/contentitem.php', $contentitemparams);
 
     $params = array(
         'addvidbtnid' => 'id_add_video',
         'ltilaunchurl' => $url->out(false),
         'height' => PANOPTO_PANEL_HEIGHT,
-        'width' => PANOPTO_PANEL_WIDTH
+        'width' => PANOPTO_PANEL_WIDTH,
+        'courseid' => $course->id
     );
 
     $PAGE->requires->yui_module('moodle-mod_panoptosubmission-submissionpanel', 'M.mod_panoptosubmission.initsubmissionpanel', array($params), null, true);
