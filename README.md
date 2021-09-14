@@ -28,4 +28,5 @@ For the most up to date documentation for the Panopto Student Submission plugin 
 8. Save the LTI Tool
 
 ## Pre-Requisites
-- The target course must be provisioned with Panopto
+- The [Panopto block for Moodle](https://github.com/Panopto/Moodle-2.0-plugin-for-Panopto) is installed on the Moodle site. 
+- The target course must be provisioned with Panopto.
