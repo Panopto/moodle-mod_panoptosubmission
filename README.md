@@ -1,8 +1,8 @@
 # Moodle Panopto Student Submission Activity
+This plugin adds a Panopto Student Submission activity to Moodle. This tool can be used to create activities that will allow students to submit Panopto Content to be graded by graders for the course. 
 
-## Pre-requisites 
-
-- The [Panopto Block for Moodle](https://github.com/Panopto/Moodle-2.0-plugin-for-Panopto) must be installed
+## Documentation
+For the most up to date documentation for the Panopto Student Submission plugin please see our [online documentation at Panopto](https://support.panopto.com/s/article/How-to-Enable-Student-Submission-for-Moodle).
 
 
 ## Installation
@@ -25,33 +25,8 @@
         use_panopto_sandbox=true
             - This custom parameter will give students personal folders regardless of IdP setting.
         ```
-8. Save the LTI Tool  
+8. Save the LTI Tool
 
-
-## Usage
-
-### Pre-Requisites
-- The target course must be provisioned with Panopto
-
-### Teacher Usage
-**Activity Creation**
-1. In the target course turn on editing.
-2. Click the Add and activity or resource link in the section of the course you wish to add an assignment to. 
-3. Select the Panopto Student Submission tool
-4. Give the assignment a name
-5. (Optional) Customize any of the other options to suit your needs (e.g. grade, due date, allow late submission, …, etc)
-6. Click either Save and Display or Save and Return to course. 
-
-**Activity Grading**
-1. Navigate to the activity you want to grade
-2. Click the grade button.
-3. Select the Grade or Update button for the student you wish to grade.
-4. Input the desired grade and comment if wanted. Click Save Changes to submit the grade to Moodle. 
-
-### Student Usage
-**Activity Submission**
-1. Navigate to the activity
-2. Click ‘Add Panopto Submission’
-3. If your submission is not yet ready you may upload or record it from this window in any folder you have creator access. If your submission is ready you may select it from your folder. Once you have selected, recorded, or uploaded your submission click Insert
-4. Note: Pressing Insert here is what triggers the Panopto side of the student submission behavior. Any submission that is inserted will get copied/moved to the student submissions folder
-5. The user may now view their submission in the Moodle page, if they are happy with their submission they can click Submit. If they do not like their submission they may click replace if re-submission is enabled.
+## Pre-Requisites
+- The [Panopto block for Moodle](https://github.com/Panopto/Moodle-2.0-plugin-for-Panopto) is installed on the Moodle site. 
+- The target course must be provisioned with Panopto.
