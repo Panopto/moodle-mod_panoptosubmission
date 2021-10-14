@@ -26,8 +26,9 @@ define('PANOPTOSUBMISSION_ALL', 0);
 define('PANOPTOSUBMISSION_REQ_GRADING', 1);
 define('PANOPTOSUBMISSION_SUBMITTED', 2);
 
-require_once(dirname(dirname(dirname(__FILE__))).'/lib/gradelib.php');
-require_once(dirname(dirname(dirname(__FILE__))).'/blocks/panopto/lib/panopto_data.php');
+require_once($CFG->libdir . '/gradelib.php');
+require_once($CFG->dirroot . '/grade/grading/lib.php');
+require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
 
 /**
  * Check if the assignment submission end date has passed or if late submissions
@@ -116,7 +117,7 @@ function panoptosubmission_get_submission($targetinstanceid, $userid) {
     $record = $DB->get_record_select('panoptosubmission_submission', $where, $param, '*');
 
     if (empty($record)) {
-        return false;
+        return null;
     }
 
     return $record;
@@ -361,4 +362,38 @@ function panoptosubmission_get_assignment_students($cm) {
     $users = get_enrolled_users($context, 'mod/panoptosubmission:submit', 0, 'u.id');
 
     return $users;
+}
+
+function panoptosubmission_get_grading_instance($cminstance, $context, $submission, $gradingdisabled) {
+    global $CFG, $USER;
+
+    $grademenu = make_grades_menu($cminstance->grade);
+    $allowgradedecimals = $cminstance->grade > 0;
+
+    $advancedgradingwarning = false;
+    $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
+    $gradinginstance = null;
+    if ($gradingmethod = $gradingmanager->get_active_method()) {
+        $controller = $gradingmanager->get_controller($gradingmethod);
+        if ($controller->is_form_available()) {
+            $itemid = null;
+            if ($submission) {
+                $itemid = $submission->id;
+            }
+            if ($gradingdisabled && $itemid) {
+                $gradinginstance = $controller->get_current_instance($USER->id, $itemid);
+            } else if (!$gradingdisabled) {
+                $instanceid = optional_param('advancedgradinginstanceid', 0, PARAM_INT);
+                $gradinginstance = $controller->get_or_create_instance($instanceid,
+                                                                       $USER->id,
+                                                                       $itemid);
+            }
+        } else {
+            $advancedgradingwarning = $controller->form_unavailable_notification();
+        }
+    }
+    if ($gradinginstance) {
+        $gradinginstance->get_controller()->set_grade_range($grademenu, $allowgradedecimals);
+    }
+    return $gradinginstance;
 }
