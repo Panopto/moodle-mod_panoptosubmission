@@ -135,20 +135,48 @@ if ($submissionform->is_cancelled()) {
     redirect($previousurl);
 } else if ($submitted_data = $submissionform->get_data()) {
 
-    if (!isset($submitted_data->cancel) && isset($submitted_data->xgrade) && isset($submitted_data->submissioncomment_editor)) {
+    if (!isset($submitted_data->cancel) && (isset($submitted_data->xgrade) || isset($submitted_data->advancedgrading)) && isset($submitted_data->submissioncomment_editor)) {
 
         // Flag used when an instructor is about to grade a user who does not have
-        // a submittion
+        // a submission
         $updategrade = true;
 
-        if ($submission) {
+        $blanksubmission = false;
+        if (!isset($submission)) {
+            $blanksubmission = true;
+            $submission = new stdClass();
+            $submission->panactivityid      = $cm->instance;
+            $submission->userid             = $userid;
+            $submission->grade              = -1;
+            $submission->submissioncomment  = $submitted_data->submissioncomment_editor['text'];
+            $submission->format             = $submitted_data->submissioncomment_editor['format'];
+            $submission->timemarked         = time();
+            $submission->teacher            = $USER->id;
+
+            $submission->id = $DB->insert_record('panoptosubmission_submission', $submission);
+        }
+
+        $cmgrade = $DB->get_record('panoptosubmission', array('id' => $cm->instance), 'grade');
+        
+        $gradinginstance = panoptosubmission_get_grading_instance($cmgrade, $context, $submission, $gradingdisabled);
+
+        if ($gradinginstance) {
+            $advancedgrade = $gradinginstance->submit_and_get_grade($submitted_data->advancedgrading,
+                                                                    $submission->id);
+
+            $currentgrade = $advancedgrade;
+        } else {
+            $currentgrade = $submitted_data->xgrade;
+        }
+
+        if(!$blanksubmission) {
 
             $submissionchanged = strcmp($submission->submissioncomment, $submitted_data->submissioncomment_editor['text']);
-            if ($submission->grade == $submitted_data->xgrade && !$submissionchanged) {
+            if ($submission->grade == $currentgrade && !$submissionchanged) {
                 $updategrade = false;
             }
             if ($submissionchanged || $updategrade) {
-                $submission->grade = $submitted_data->xgrade;
+                $submission->grade = $currentgrade;
                 $submission->submissioncomment = $submitted_data->submissioncomment_editor['text'];
                 $submission->format = $submitted_data->submissioncomment_editor['format'];
                 $submission->timemarked = time();
@@ -158,21 +186,12 @@ if ($submissionform->is_cancelled()) {
         } else {
 
             // Check for unchanged values
-            if ('-1' == $submitted_data->xgrade && empty($submitted_data->submissioncomment_editor['text'])) {
-
+            if ('-1' == $currentgrade && empty($submitted_data->submissioncomment_editor['text'])) {
                 $updategrade = false;
             } else {
 
-                $submission = new stdClass();
-                $submission->panactivityid        = $cm->instance;
-                $submission->userid             = $userid;
-                $submission->grade              = $submitted_data->xgrade;
-                $submission->submissioncomment  = $submitted_data->submissioncomment_editor['text'];
-                $submission->format             = $submitted_data->submissioncomment_editor['format'];
-                $submission->timemarked         = time();
-                $submission->teacher            = $USER->id;
-
-                $DB->insert_record('panoptosubmission_submission', $submission);
+                $submission->grade = $currentgrade;
+                $DB->update_record('panoptosubmission_submission', $submission);
             }
         }
 
@@ -185,7 +204,7 @@ if ($submissionform->is_cancelled()) {
 
             // Add to log.
             $event = \mod_panoptosubmission\event\grades_updated::create(array(
-                'context'   => context_module::instance($cm->id),
+                'context'   => $context,
             ));
             $event->trigger();
         }

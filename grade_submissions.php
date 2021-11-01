@@ -82,6 +82,14 @@ if ($data = $prefform->get_data()) {
 
     set_user_preference('panoptosubmission_filter', $data->filter);
 
+
+    // Make sure advanced grading is disabled before we enable quick grading
+    $gradingmanager = get_grading_manager($this->get_context(), 'mod_panoptosubmission', 'submissions');
+    $controller = $gradingmanager->get_active_controller();
+    if (!empty($controller)) {
+        unset($data->quickgrade);
+    }
+
     if (isset($data->quickgrade)) {
         set_user_preference('panoptosubmission_quickgrade', $data->quickgrade);
     } else {

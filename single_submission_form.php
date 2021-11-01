@@ -25,6 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/course/moodleform_mod.php');
+require_once(dirname(__FILE__).'/locallib.php');
 
 class panoptosubmission_singlesubmission_form extends moodleform {
 
@@ -64,34 +65,56 @@ class panoptosubmission_singlesubmission_form extends moodleform {
             $mform->addElement('html', $renderer->get_video_container($submission, $cm->course, $cm->id));
         }
 
-
-        if ($this->_customdata->gradingdisabled || $this->_customdata->gradingdisabled) {
+        $gradingdisabled = $this->_customdata->gradingdisabled;
+        if ($gradingdisabled) {
             $attributes['disabled'] = 'disabled';
         }
 
         $grademenu = make_grades_menu($this->_customdata->cminstance->grade);
         $grademenu['-1'] = get_string('nograde');
 
-        if ($this->_customdata->cminstance->grade > 0) {
-            $gradeinputattributes = array(
-                'id' => 'panoptogradeinputbox',
-                'class' => 'panopto-grade-input-box',
-                'type' => 'number',
-                'min' => 0,
-                'max' => $this->_customdata->cminstance->grade
-            );
+        $currentgrade = isset($this->_customdata->submission->grade) && $this->_customdata->submission->grade > 0 ? $this->_customdata->submission->grade : null;
 
-            $currentgrade = isset($this->_customdata->submission->grade) && $this->_customdata->submission->grade > 0 ? $this->_customdata->submission->grade : null;
-            $mform->addElement('text', 'xgrade', get_string('grade_out_of', 'panoptosubmission', $this->_customdata->cminstance->grade), $grademenu, $gradeinputattributes);
-            $mform->setDefault('xgrade', $currentgrade);
-        } else {
-            $attributes = array();
-            $mform->addElement('select', 'xgrade', get_string('grade') . ':', $grademenu, $attributes);
+        $gradinginstance = panoptosubmission_get_grading_instance(
+            $this->_customdata->cminstance, 
+            $this->_customdata->context,
+            $submission, 
+            $gradingdisabled
+        );
 
-            if (isset($submission->grade)) {
-                $mform->setDefault('xgrade', $this->_customdata->submission->grade);
+        $mform->addElement('header', 'gradeheader', get_string('grade'));
+        if ($gradinginstance) {
+            $gradingelement = $mform->addElement('grading',
+                                                 'advancedgrading',
+                                                 get_string('grade').':',
+                                                 array('gradinginstance' => $gradinginstance));
+            if ($gradingdisabled) {
+                $gradingelement->freeze();
             } else {
-                $mform->setDefault('xgrade', '-1' );
+                $mform->addElement('hidden', 'advancedgradinginstanceid', $gradinginstance->get_id());
+                $mform->setType('advancedgradinginstanceid', PARAM_INT);
+            }
+        } else {
+            if ($this->_customdata->cminstance->grade > 0) {
+                $gradeinputattributes = array(
+                    'id' => 'panoptogradeinputbox',
+                    'class' => 'panopto-grade-input-box',
+                    'type' => 'number',
+                    'min' => 0,
+                    'max' => $this->_customdata->cminstance->grade
+                );
+
+                $mform->addElement('text', 'xgrade', get_string('grade_out_of', 'panoptosubmission', $this->_customdata->cminstance->grade), $grademenu, $gradeinputattributes);
+                $mform->setDefault('xgrade', $currentgrade);
+            } else {
+                $attributes = array();
+                $mform->addElement('select', 'xgrade', get_string('grade') . ':', $grademenu, $attributes);
+
+                if (isset($submission->grade)) {
+                    $mform->setDefault('xgrade', $this->_customdata->submission->grade);
+                } else {
+                    $mform->setDefault('xgrade', '-1' );
+                }
             }
         }
 
