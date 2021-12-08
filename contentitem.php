@@ -26,7 +26,7 @@ require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
 require_once(dirname(__FILE__) . '/locallib.php');
-require_once(dirname(__FILE__) . '/lib/panopto_lti_utility.php');
+require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
 
 $courseid = required_param('courseid', PARAM_INT);
 
@@ -38,12 +38,12 @@ require_login($course);
 // TODO: Investigate best way to handle this for users viewing imported content. 
 /*$context = context_course::instance($courseid);
 
-if (!\panopto_lti_utility::panoptosubmission_is_active_user_enrolled($context)) {
+if (!\panoptosubmission_lti_utility::is_active_user_enrolled($context)) {
     require_capability('moodle/course:manageactivities', $context);
     require_capability('mod/lti:addcoursetool', $context);
 }*/ 
 
-$toolid = \panopto_lti_utility::panoptosubmission_get_course_tool_id($courseid);
+$toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
 
 // If no lti tool exists then we can not continue. 
 if (is_null($toolid)) {
