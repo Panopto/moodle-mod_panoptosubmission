@@ -48,8 +48,15 @@ $framewidth = !empty($contentitems->{'@graph'}[0]->placementAdvice->displayWidth
 $frameheight = !empty($contentitems->{'@graph'}[0]->placementAdvice->displayHeight) ? $contentitems->{'@graph'}[0]->placementAdvice->displayHeight : 
     !empty($contentitems->{'@graph'}[0]->displayHeight) ? $contentitems->{'@graph'}[0]->displayHeight : 480; 
 
-$thumbnailwidth = !empty($contentitems->{'@graph'}[0]->thumbnail->width) ? $contentitems->{'@graph'}[0]->thumbnail->width : 128; 
-$thumbnailheight = !empty($contentitems->{'@graph'}[0]->thumbnail->height) ? $contentitems->{'@graph'}[0]->thumbnail->height : 72; 
+$thumbnailwidth = 128;
+if (!empty($contentitems->{'@graph'}[0]->thumbnail->width)) {
+    $thumbnailwidth = $contentitems->{'@graph'}[0]->thumbnail->width;
+}
+
+$thumbnailheight = 72;
+if (!empty($contentitems->{'@graph'}[0]->thumbnail->height)) {
+    $thumbnailheight = $contentitems->{'@graph'}[0]->thumbnail->height;
+}
 
 $customdata = $contentitems->{'@graph'}[0]->custom;
 
