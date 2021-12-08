@@ -21,7 +21,7 @@
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class panopto_lti_utility {
+class panoptosubmission_lti_utility {
 
     /**
      * Get the id of the pre-configured LTI tool that matched the Panopto server a course is provisioned to.
@@ -30,7 +30,7 @@ class panopto_lti_utility {
      * @param int $courseid - the id of the course we are targetting in moodle.
      * @return int the id of the first matching tool 
      */ 
-    public static function panoptosubmission_get_course_tool_id($courseid) {
+    public static function get_course_tool_id($courseid) {
         global $DB;
         
         $ltitooltypes = $DB->get_records('lti_types', null, 'name');
@@ -63,8 +63,8 @@ class panopto_lti_utility {
      * @param  stdClass $instance the external tool activity settings
      * @return string The HTML code containing the javascript code for the launch
      */
-    public static function panoptosubmission_launch_tool($instance) {
-        list($endpoint, $params) = panopto_lti_utility::panoptosubmission_get_launch_data($instance);
+    public static function launch_tool($instance) {
+        list($endpoint, $params) = panoptosubmission_lti_utility::get_launch_data($instance);
 
         $debuglaunch = ( $instance->debuglaunch == 1 );
 
@@ -81,7 +81,7 @@ class panopto_lti_utility {
      * @return array the endpoint URL and parameters (including the signature)
      * @since  Moodle 3.0
      */
-    private static function panoptosubmission_get_launch_data($instance, $nonce = '') {
+    private static function get_launch_data($instance, $nonce = '') {
         global $PAGE, $CFG, $USER;
 
         if (empty($CFG)) {
@@ -306,7 +306,7 @@ class panopto_lti_utility {
         return array($endpoint, $params);
     }
 
-    public static function panoptosubmission_is_active_user_enrolled($targetcontext) {
+    public static function is_active_user_enrolled($targetcontext) {
         global $USER; 
 
         return is_enrolled($targetcontext, $USER, 'mod/assignment:submit');
