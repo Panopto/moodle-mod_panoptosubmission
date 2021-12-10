@@ -168,6 +168,8 @@ class provider implements \core_privacy\local\metadata\provider,
             // Get the panoptosubmission submissions submitted by & marked by the user for an panoptosubmission
             $submissionsdata = self::get_panoptosubmission_submissions_by_panoptosubmission($panoptosubmissiondata->id, $user->id, $teacher);
 
+            $gradingmanager = get_grading_manager($context, 'mod_assign', 'submissions');
+            $controller = $gradingmanager->get_active_controller();
             foreach ($submissionsdata as $submissiondata) {
                 // Default subcontext path to export assignment submissions submitted by the user.
                 $subcontexts = [
@@ -188,6 +190,11 @@ class provider implements \core_privacy\local\metadata\provider,
                 $submission = self::get_panoptosubmission_submission_output($submissiondata);
 
                 writer::with_context($context)->export_data($subcontexts, $submission);
+
+                // Check for advanced grading and retrieve that information.
+                if (isset($controller)) {
+                    \core_grading\privacy\provider::export_item_data($context, $submissiondata->id, get_string('privacy:submissionpath', 'mod_panoptosubmission'));
+                }
             }
         }
     }
@@ -210,6 +217,14 @@ class provider implements \core_privacy\local\metadata\provider,
         if ($panoptosubmission != null) {
             $DB->delete_records('panoptosubmission_submission', ['panactivityid' => $panoptosubmission->id]);
         }
+
+
+        // Delete advanced grading information.
+        $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
+        $controller = $gradingmanager->get_active_controller();
+        if (isset($controller)) {
+            \core_grading\privacy\provider::delete_instance_data($context);
+        }
     }
 
     /**
@@ -228,6 +243,16 @@ class provider implements \core_privacy\local\metadata\provider,
 
         // Only retrieve panoptosubmission submissions submitted by the user for deletion.
         $panoptosubmissionsubmissionids = array_keys(self::get_panoptosubmission_submissions_by_contextlist($contextlist, $userid));
+
+        $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
+        $controller = $gradingmanager->get_active_controller();
+        if (isset($controller)) {
+            // Careful here, if no submissionids are provided then all data is deleted for the context.
+            foreach ($panoptosubmissionsubmissionids as $submissionid) {
+                \core_grading\privacy\provider::delete_instance_data($context, $submissionid);
+            }
+        }
+
         $DB->delete_records_list('panoptosubmission_submission', 'id', $panoptosubmissionsubmissionids);
     }
 
@@ -262,6 +287,13 @@ class provider implements \core_privacy\local\metadata\provider,
             AND s.userid $inorequalsql";
 
         $submissionids = $DB->get_records_sql($sql, $params);
+
+        $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
+        $controller = $gradingmanager->get_active_controller();
+        // Careful here, if no submissionids are provided then all data is deleted for the context.
+        if (isset($controller) && !empty($submissionids)) {
+            \core_grading\privacy\provider::delete_instance_data($context, $submissionids);
+        }
 
         // Delete related tables.
         $DB->delete_records_list('assignment_submissions', 'id', array_keys($submissionids));

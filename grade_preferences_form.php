@@ -26,6 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(dirname(dirname(__FILE__))).'/course/moodleform_mod.php');
 require_once(dirname(__FILE__).'/locallib.php');
+require_once($CFG->dirroot . '/grade/grading/lib.php');
 require_once($CFG->libdir.'/formslib.php');
 
 class panoptosubmission_gradepreferences_form extends moodleform {
@@ -80,9 +81,15 @@ class panoptosubmission_gradepreferences_form extends moodleform {
 
         }
 
-        $mform->addElement('checkbox', 'quickgrade', get_string('quickgrade', 'panoptosubmission'));
-        $mform->setDefault('quickgrade', '');
-        $mform->addHelpButton('quickgrade', 'quickgrade', 'panoptosubmission');
+        $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
+        $controller = $gradingmanager->get_active_controller();
+        $showquickgrading = empty($controller);
+
+        if ($showquickgrading) {
+            $mform->addElement('checkbox', 'quickgrade', get_string('quickgrade', 'panoptosubmission'));
+            $mform->setDefault('quickgrade', '');
+            $mform->addHelpButton('quickgrade', 'quickgrade', 'panoptosubmission');
+        }
 
         $mform->addElement('select', 'group_filter', get_string('group_filter', 'mod_panoptosubmission'), $group_opt);
 

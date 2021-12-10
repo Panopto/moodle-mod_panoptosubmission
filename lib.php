@@ -248,32 +248,36 @@ function panoptosubmission_supports($feature) {
     switch($feature) {
         case FEATURE_GROUPS:
             return true;
-            break;
         case FEATURE_GROUPINGS:
             return true;
-            break;
         case FEATURE_GROUPMEMBERSONLY:
             return true;
-            break;
         case FEATURE_MOD_INTRO:
             return true;
-            break;
         case FEATURE_COMPLETION_TRACKS_VIEWS:
             return true;
-            break;
         case FEATURE_GRADE_HAS_GRADE:
             return true;
-            break;
         case FEATURE_GRADE_OUTCOMES:
             return true;
-            break;
+        case FEATURE_ADVANCED_GRADING:
+            return true;
         case FEATURE_BACKUP_MOODLE2:
             return true;
-            break;
         default:
             return null;
-            break;
     }
+}
+
+
+
+/**
+ * Lists all gradable areas for the advanced grading methods gramework
+ *
+ * @return array('string'=>'string') An array with area names as keys and descriptions as values
+ */
+function panoptosubmission_grading_areas_list() {
+    return array('submissions'=>get_string('submissions', 'panoptosubmission'));
 }
 
 /**

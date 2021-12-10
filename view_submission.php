@@ -27,7 +27,7 @@ function init_panoptosubmission_view() {
     if (empty($CFG)) {
         require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
     }
-    require_once(dirname(__FILE__) . '/lib/panopto_lti_utility.php');
+    require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
     require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
     require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
 
@@ -43,7 +43,7 @@ function init_panoptosubmission_view() {
     require_capability('mod/lti:view', $context);
 
     // Get a matching LTI tool for the course. 
-    $toolid = \panopto_lti_utility::panoptosubmission_get_course_tool_id($courseid);
+    $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
 
     // If no lti tool exists then we can not continue. 
     if (is_null($toolid)) {
@@ -69,7 +69,7 @@ function init_panoptosubmission_view() {
         }
     }
     
-    echo \panopto_lti_utility::panoptosubmission_launch_tool($lti);
+    echo \panoptosubmission_lti_utility::launch_tool($lti);
 }
 
 init_panoptosubmission_view();

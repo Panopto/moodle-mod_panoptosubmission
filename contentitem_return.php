@@ -24,7 +24,7 @@
  */
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-require_once(dirname(__FILE__) . '/lib/panopto_lti_utility.php');
+require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
 
 
 $courseid = required_param('course', PARAM_INT);
@@ -43,13 +43,25 @@ if (!is_object($contentitems) && !is_array($contentitems)) {
     $errors[] = 'invalidjson';
 }
 
-$framewidth = !empty($contentitems->{'@graph'}[0]->placementAdvice->displayWidth) ? $contentitems->{'@graph'}[0]->placementAdvice->displayWidth : 
-    !empty($contentitems->{'@graph'}[0]->displayWidth) ? $contentitems->{'@graph'}[0]->displayWidth : 720; 
-$frameheight = !empty($contentitems->{'@graph'}[0]->placementAdvice->displayHeight) ? $contentitems->{'@graph'}[0]->placementAdvice->displayHeight : 
-    !empty($contentitems->{'@graph'}[0]->displayHeight) ? $contentitems->{'@graph'}[0]->displayHeight : 480; 
+$framewidth = 720;
+if (!empty($contentitems->{'@graph'}[0]->placementAdvice->displayWidth)) {
+    $framewidth = $contentitems->{'@graph'}[0]->placementAdvice->displayWidth;
+}
 
-$thumbnailwidth = !empty($contentitems->{'@graph'}[0]->thumbnail->width) ? $contentitems->{'@graph'}[0]->thumbnail->width : 128; 
-$thumbnailheight = !empty($contentitems->{'@graph'}[0]->thumbnail->height) ? $contentitems->{'@graph'}[0]->thumbnail->height : 72; 
+$frameheight = 480;
+if (!empty($contentitems->{'@graph'}[0]->placementAdvice->displayHeight)) {
+    $frameheight = $contentitems->{'@graph'}[0]->placementAdvice->displayHeight;
+}
+
+$thumbnailwidth = 128;
+if (!empty($contentitems->{'@graph'}[0]->thumbnail->width)) {
+    $thumbnailwidth = $contentitems->{'@graph'}[0]->thumbnail->width;
+}
+
+$thumbnailheight = 72;
+if (!empty($contentitems->{'@graph'}[0]->thumbnail->height)) {
+    $thumbnailheight = $contentitems->{'@graph'}[0]->thumbnail->height;
+}
 
 $customdata = $contentitems->{'@graph'}[0]->custom;
 
