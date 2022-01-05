@@ -57,14 +57,15 @@ $PAGE->navbar->add($currentcrumb);
 
 $renderer = $PAGE->get_renderer('mod_panoptosubmission');
 $courseid = $PAGE->context->get_course_context(false);
+$context = context_module::instance($cm->id);
 
 echo $OUTPUT->header();
 
-require_capability('mod/panoptosubmission:gradesubmission', context_module::instance($cm->id));
+require_capability('mod/panoptosubmission:gradesubmission', $context);
 
 $event = \mod_panoptosubmission\event\grade_submissions_page_viewed::create(array(
     'objectid'  => $pansubmissionactivity->id,
-    'context'   => context_module::instance($cm->id)
+    'context'   => $context
 ));
 $event->trigger();
 
@@ -84,7 +85,7 @@ if ($data = $prefform->get_data()) {
 
 
     // Make sure advanced grading is disabled before we enable quick grading
-    $gradingmanager = get_grading_manager($this->get_context(), 'mod_panoptosubmission', 'submissions');
+    $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
     $controller = $gradingmanager->get_active_controller();
     if (!empty($controller)) {
         unset($data->quickgrade);
@@ -162,7 +163,7 @@ if (!empty($gradedata->mode)) {
 
                 // Add to log only if updating.
                 $event = \mod_panoptosubmission\event\grades_updated::create(array(
-                    'context'   => context_module::instance($cm->id),
+                    'context'   => $context,
                     'other'     => array(
                         'crud'    => 'u'
                     )
@@ -208,7 +209,7 @@ if (!empty($gradedata->mode)) {
 
                 // Add to log only if updating
                 $event = \mod_panoptosubmission\event\grades_updated::create(array(
-                    'context'   => context_module::instance($cm->id),
+                    'context'   => $context,
                     'other'     => array(
                         'crud'      => 'c'
                     )
