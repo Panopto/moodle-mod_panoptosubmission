@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -17,7 +18,7 @@
 /**
  * Panopto lti helper object. Contains info required for Panopto LTI tools to be used in text editors
  *
- * @package block_panopto
+ * @package mod_panoptosubmission
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -25,14 +26,14 @@ class panoptosubmission_lti_utility {
 
     /**
      * Get the id of the pre-configured LTI tool that matched the Panopto server a course is provisioned to.
-     *  If multiple LTI tools are configured to a single server this will get the first one. 
+     *  If multiple LTI tools are configured to a single server this will get the first one.
      *
      * @param int $courseid - the id of the course we are targetting in moodle.
-     * @return int the id of the first matching tool 
-     */ 
+     * @return int the id of the first matching tool
+     */
     public static function get_course_tool_id($courseid) {
         global $DB;
-        
+
         $ltitooltypes = $DB->get_records('lti_types', null, 'name');
         $targetservername = $DB->get_field('block_panopto_foldermap', 'panopto_server', array('moodleid' => $courseid));
 
@@ -44,11 +45,11 @@ class panoptosubmission_lti_utility {
                 ]
             );
 
-            if (!empty($targetservername) && strpos($type->config['toolurl'], $targetservername) !== false && 
+            if (!empty($targetservername) && strpos($type->config['toolurl'], $targetservername) !== false &&
                 $type->state == LTI_TOOL_STATE_CONFIGURED) {
                 $currentconfig = lti_get_type_config($type->id);
 
-                if(!empty($currentconfig['customparameters']) && 
+                if(!empty($currentconfig['customparameters']) &&
                     strpos($currentconfig['customparameters'], 'panopto_student_submission_tool') !== false) {
                     return $type->id;
                 }
@@ -64,7 +65,7 @@ class panoptosubmission_lti_utility {
      * @return string The HTML code containing the javascript code for the launch
      */
     public static function launch_tool($instance) {
-        list($endpoint, $params) = panoptosubmission_lti_utility::get_launch_data($instance);
+        list($endpoint, $params) = self::get_launch_data($instance);
 
         $debuglaunch = ( $instance->debuglaunch == 1 );
 
@@ -87,7 +88,7 @@ class panoptosubmission_lti_utility {
         if (empty($CFG)) {
             require_once(dirname(__FILE__) . '/../../../../../config.php');
         }
-        
+
         require_once($CFG->dirroot . '/mod/lti/lib.php');
         require_once($CFG->dirroot . '/mod/lti/locallib.php');
 
@@ -201,7 +202,7 @@ class panoptosubmission_lti_utility {
             $requestparams = $allparams;
         }
 
-        // This is needed to make the lti tool support moodle v3.5.0
+        // This is needed to make the lti tool support moodle v3.5.0.
         if (function_exists('lti_build_standard_message')) {
             $requestparams = array_merge($requestparams, lti_build_standard_message($instance, $orgid, $ltiversion));
         } else {
@@ -212,8 +213,15 @@ class panoptosubmission_lti_utility {
         if (isset($typeconfig['customparameters'])) {
             $customstr = $typeconfig['customparameters'];
         }
-        $requestparams = array_merge($requestparams, lti_build_custom_parameters($toolproxy, $tool, $instance, $allparams, $customstr,
-            $instance->instructorcustomparameters, $islti2));
+        $requestparams = array_merge($requestparams, lti_build_custom_parameters(
+            $toolproxy,
+            $tool,
+            $instance,
+            $allparams,
+            $customstr,
+            $instance->instructorcustomparameters,
+            $islti2
+        ));
 
         $launchcontainer = lti_get_launch_container($instance, $typeconfig);
         $returnurlparams = array('course' => $course->id,
@@ -274,7 +282,7 @@ class panoptosubmission_lti_utility {
 
         if ((!empty($key) && !empty($secret)) || (defined('LTI_VERSION_1P3') && $ltiversion === LTI_VERSION_1P3)) {
 
-            // lti_sign_jwt was not added until 3.7 so we need to support the original style of processing this. 
+            // Lti_sign_jwt was not added until 3.7 so we need to support the original style of processing this.
             if (defined('LTI_VERSION_1P3') && function_exists('lti_sign_jwt')) {
                 if ($ltiversion !== LTI_VERSION_1P3) {
                     $params = lti_sign_parameters($requestparams, $endpoint, 'POST', $key, $secret);
@@ -306,8 +314,14 @@ class panoptosubmission_lti_utility {
         return array($endpoint, $params);
     }
 
+    /**
+     * Returns true or false depending on if the active user is enrolled in a context
+     *
+     *  @param $targetcontext the context we are checking enrollment for
+     *  @return boolean true or false if the user is enrolled in the context
+     */
     public static function is_active_user_enrolled($targetcontext) {
-        global $USER; 
+        global $USER;
 
         return is_enrolled($targetcontext, $USER, 'mod/assignment:submit');
     }

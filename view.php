@@ -30,7 +30,6 @@ define('PANOPTO_PANEL_HEIGHT', 600);
 
 $id = required_param('id', PARAM_INT);
 
-
 if (!empty($id)) {
     list($cm, $course, $panactivityinstance) = panoptosubmission_validate_cmid($id);
 }
@@ -50,14 +49,14 @@ $context = context_module::instance($cm->id);
 $PAGE->requires->css('/mod/panoptosubmission/styles.css');
 $renderer = $PAGE->get_renderer('mod_panoptosubmission');
 
-// send the viewed activity event once this page is viewed. 
+// Send the viewed activity event once this page is viewed.
 $detailsviewedevent = \mod_panoptosubmission\event\assignment_details_viewed::create(array(
     'objectid' => $panactivityinstance->id,
     'context' => context_module::instance($cm->id)
 ));
 $detailsviewedevent->trigger();
 
-// Set the activity as viewed in Moodle
+// Set the activity as viewed in Moodle.
 $completioninfo = new completion_info($course);
 $completioninfo->set_module_viewed($cm);
 
@@ -74,7 +73,7 @@ if (panoptosubmission_submission_past_due($panactivityinstance) ||
     $submitdisabled = true;
 }
 
-$submission = $DB->get_record('panoptosubmission_submission', 
+$submission = $DB->get_record('panoptosubmission_submission',
     array('panactivityid' => $panactivityinstance->id, 'userid' => $USER->id)
 );
 
@@ -110,7 +109,8 @@ if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
         'courseid' => $course->id
     );
 
-    $PAGE->requires->yui_module('moodle-mod_panoptosubmission-submissionpanel', 'M.mod_panoptosubmission.initsubmissionpanel', array($params), null, true);
+    $PAGE->requires->yui_module('moodle-mod_panoptosubmission-submissionpanel',
+        'M.mod_panoptosubmission.initsubmissionpanel', array($params), null, true);
     $PAGE->requires->string_for_js('replacevideo', 'panoptosubmission');
     $PAGE->requires->string_for_js('select_submission', 'panoptosubmission');
 }

@@ -1,4 +1,7 @@
 <?php
+
+// This file is part of Moodle - http://moodle.org/
+//
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -14,7 +17,7 @@
 
 /**
  * Panopto Submission restore activity task.
- * 
+ *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -24,16 +27,34 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/mod/panoptosubmission/backup/moodle2/restore_panoptosubmission_stepslib.php');
 
+/**
+ * Panopto Submission restore activity task.
+ *
+ * @package mod_panoptosubmission
+ * @copyright  Panopto 2021
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class restore_panoptosubmission_activity_task extends restore_activity_task {
 
+    /**
+     * defines settings for restore
+     */
     protected function define_my_settings() {
     }
 
+    /**
+     * Defines steps for restore
+     */
     protected function define_my_steps() {
-        $this->add_step(new restore_panoptosubmission_activity_structure_step('panoptosubmission_structure', 'panoptosubmission.xml'));
+        $this->add_step(
+            new restore_panoptosubmission_activity_structure_step('panoptosubmission_structure', 'panoptosubmission.xml')
+        );
     }
 
-    static public function define_decode_contents() {
+    /**
+     * Decode contents for restore
+     */
+    public static function define_decode_contents() {
         $contents = array();
 
         $contents[] = new restore_decode_content('panoptosubmission', array('intro'), 'panoptosubmission');
@@ -41,7 +62,10 @@ class restore_panoptosubmission_activity_task extends restore_activity_task {
         return $contents;
     }
 
-    static public function define_decode_rules() {
+    /**
+     * Decode rules for restore
+     */
+    public static function define_decode_rules() {
         $rules = array();
 
         $rules[] = new restore_decode_rule('PANOPTOSUBMISSIONVIEWBYID', '/mod/panoptosubmission/view.php?id=$1', 'course_module');
@@ -51,7 +75,10 @@ class restore_panoptosubmission_activity_task extends restore_activity_task {
 
     }
 
-    static public function define_restore_log_rules() {
+    /**
+     * log rules for restore
+     */
+    public static function define_restore_log_rules() {
         $rules = array();
 
         $rules[] = new restore_log_rule('panoptosubmission', 'add', 'view.php?id={course_module}', '{panoptosubmission}');
@@ -61,7 +88,10 @@ class restore_panoptosubmission_activity_task extends restore_activity_task {
         return $rules;
     }
 
-    static public function define_restore_log_rules_for_course() {
+    /**
+     * Log rules for course during restore
+     */
+    public static function define_restore_log_rules_for_course() {
         $rules = array();
         $rules[] = new restore_log_rule('panoptosubmission', 'view all', 'index.php?id={course}', null);
 

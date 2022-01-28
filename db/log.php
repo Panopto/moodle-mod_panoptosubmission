@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -26,7 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $logs = array(
         array('module' => 'panoptosubmission', 'action' => 'add', 'mtable' => 'panoptosubmission', 'field' => 'name'),
-        array('module' => 'panoptosubmission', 'action' => 'update', 'mtable' => 'panoptosubmission', 'field' =>' name'),
+        array('module' => 'panoptosubmission', 'action' => 'update', 'mtable' => 'panoptosubmission', 'field' => ' name'),
         array('module' => 'panoptosubmission', 'action' => 'view', 'mtable' => 'panoptosubmission', 'field' => 'name'),
         array('module' => 'panoptosubmission', 'action' => 'delete', 'mtable' => 'panoptosubmission', 'field' => 'name')
 );

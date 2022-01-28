@@ -26,6 +26,13 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(dirname(dirname(__FILE__))).'/course/moodleform_mod.php');
 
+/**
+ * This class contains the forms to create and edit an instance of this module
+ *
+ * @package mod_panoptosubmission
+ * @copyright  Panopto 2021
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class mod_panoptosubmission_mod_form extends moodleform_mod {
     /**
      * Definition function for the form.
@@ -53,10 +60,10 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
         $mform->addElement('date_time_selector', 'timeavailable', get_string('availabledate', 'panoptosubmission'), array('optional' => true));
         $mform->addHelpButton('timeavailable', 'availabledate', 'panoptosubmission');
         $mform->setDefault('timeavailable', time());
-        
+
         $mform->addElement('date_time_selector', 'timedue', get_string('duedate', 'panoptosubmission'), array('optional' => true));
         $mform->addHelpButton('timedue', 'duedate', 'panoptosubmission');
-        $mform->setDefault('timedue', time()+7*24*3600);
+        $mform->setDefault('timedue', time() + 7 * 24 * 3600);
 
         $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
 

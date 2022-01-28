@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * single submission view page for the Panopto Student Submission module. 
+ * single submission view page for the Panopto Student Submission module.
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
@@ -55,7 +55,9 @@ $PAGE->set_title(format_string($pansubmissionactivity->name));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_context($context);
 
-$previousurl = new moodle_url('/mod/panoptosubmission/grade_submissions.php', array('cmid' => $cm->id, 'tifirst' => $tifirst, 'tilast' => $tilast, 'page' => $page));
+$previousurl = new moodle_url('/mod/panoptosubmission/grade_submissions.php', 
+    array('cmid' => $cm->id, 'tifirst' => $tifirst, 'tilast' => $tilast, 'page' => $page));
+
 $prevousurlstring = get_string('singlesubmissionheader', 'panoptosubmission');
 $PAGE->navbar->add($prevousurlstring, $previousurl);
 $PAGE->requires->css('/mod/panoptosubmission/styles.css');
@@ -110,7 +112,7 @@ if (!empty($teacher)) {
     $markingtreacherinfo = fullname($teacher).'<br />'.$datestring;
 }
 
-// Setup form data
+// Setup form data.
 $formdata                           = new stdClass();
 $formdata->submissionuserpic        = $submissionuserpic;
 $formdata->submissionuserinfo       = $submissionuserinfo;
@@ -133,12 +135,12 @@ $submissionform = new panoptosubmission_singlesubmission_form(null, $formdata);
 
 if ($submissionform->is_cancelled()) {
     redirect($previousurl);
-} else if ($submitted_data = $submissionform->get_data()) {
+} else if ($submitteddata = $submissionform->get_data()) {
 
-    if (!isset($submitted_data->cancel) && (isset($submitted_data->xgrade) || isset($submitted_data->advancedgrading)) && isset($submitted_data->submissioncomment_editor)) {
+    if (!isset($submitteddata->cancel) && (isset($submitteddata->xgrade) || 
+        isset($submitteddata->advancedgrading)) && isset($submitteddata->submissioncomment_editor)) {
 
-        // Flag used when an instructor is about to grade a user who does not have
-        // a submission
+        // Flag used when an instructor is about to grade a user who does not have a submission.
         $updategrade = true;
 
         $blanksubmission = false;
@@ -148,8 +150,8 @@ if ($submissionform->is_cancelled()) {
             $submission->panactivityid      = $cm->instance;
             $submission->userid             = $userid;
             $submission->grade              = -1;
-            $submission->submissioncomment  = $submitted_data->submissioncomment_editor['text'];
-            $submission->format             = $submitted_data->submissioncomment_editor['format'];
+            $submission->submissioncomment  = $submitteddata->submissioncomment_editor['text'];
+            $submission->format             = $submitteddata->submissioncomment_editor['format'];
             $submission->timemarked         = time();
             $submission->teacher            = $USER->id;
 
@@ -157,36 +159,36 @@ if ($submissionform->is_cancelled()) {
         }
 
         $cmgrade = $DB->get_record('panoptosubmission', array('id' => $cm->instance), 'grade');
-        
+
         $gradinginstance = panoptosubmission_get_grading_instance($cmgrade, $context, $submission, $gradingdisabled);
 
         if ($gradinginstance) {
-            $advancedgrade = $gradinginstance->submit_and_get_grade($submitted_data->advancedgrading,
+            $advancedgrade = $gradinginstance->submit_and_get_grade($submitteddata->advancedgrading,
                                                                     $submission->id);
 
             $currentgrade = $advancedgrade;
         } else {
-            $currentgrade = $submitted_data->xgrade;
+            $currentgrade = $submitteddata->xgrade;
         }
 
-        if(!$blanksubmission) {
+        if (!$blanksubmission) {
 
-            $submissionchanged = strcmp($submission->submissioncomment, $submitted_data->submissioncomment_editor['text']);
+            $submissionchanged = strcmp($submission->submissioncomment, $submitteddata->submissioncomment_editor['text']);
             if ($submission->grade == $currentgrade && !$submissionchanged) {
                 $updategrade = false;
             }
             if ($submissionchanged || $updategrade) {
                 $submission->grade = $currentgrade;
-                $submission->submissioncomment = $submitted_data->submissioncomment_editor['text'];
-                $submission->format = $submitted_data->submissioncomment_editor['format'];
+                $submission->submissioncomment = $submitteddata->submissioncomment_editor['text'];
+                $submission->format = $submitteddata->submissioncomment_editor['format'];
                 $submission->timemarked = time();
                 $submission->teacher = $USER->id;
                 $DB->update_record('panoptosubmission_submission', $submission);
             }
         } else {
 
-            // Check for unchanged values
-            if ('-1' == $currentgrade && empty($submitted_data->submissioncomment_editor['text'])) {
+            // Check for unchanged values.
+            if ('-1' == $currentgrade && empty($submitteddata->submissioncomment_editor['text'])) {
                 $updategrade = false;
             } else {
 
@@ -209,7 +211,7 @@ if ($submissionform->is_cancelled()) {
             $event->trigger();
         }
 
-        // Handle outcome data
+        // Handle outcome data.
         if (!empty($CFG->enableoutcomes)) {
             require_once($CFG->libdir.'/gradelib.php');
 
@@ -219,16 +221,17 @@ if ($submissionform->is_cancelled()) {
             if (!empty($gradinginfo->outcomes)) {
                 foreach ($gradinginfo->outcomes as $n => $old) {
                     $name = 'outcome_'.$n;
-                    if (isset($submitted_data->{$name}[$userid]) and
-                        $old->grades[$userid]->grade != $submitted_data->{$name}[$userid]) {
+                    if (isset($submitteddata->{$name}[$userid]) and
+                        $old->grades[$userid]->grade != $submitteddata->{$name}[$userid]) {
 
-                        $data[$n] = $submitted_data->{$name}[$userid];
+                        $data[$n] = $submitteddata->{$name}[$userid];
                     }
                 }
             }
 
             if (count($data) > 0) {
-                grade_update_outcomes('mod/panoptosubmission', $course->id, 'mod', 'panoptosubmission', $pansubmissionactivity->id, $userid, $data);
+                grade_update_outcomes('mod/panoptosubmission', 
+                    $course->id, 'mod', 'panoptosubmission', $pansubmissionactivity->id, $userid, $data);
             }
         }
 

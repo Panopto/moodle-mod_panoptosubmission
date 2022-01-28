@@ -22,6 +22,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
+/**
+ * This page creates an lti request and echos the content from the response. Used to view submissions and other Panopto content.
+ */
 function init_panoptosubmission_view() {
     global $CFG;
     if (empty($CFG)) {
@@ -42,10 +47,10 @@ function init_panoptosubmission_view() {
     require_login($course);
     require_capability('mod/lti:view', $context);
 
-    // Get a matching LTI tool for the course. 
+    // Get a matching LTI tool for the course.
     $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
 
-    // If no lti tool exists then we can not continue. 
+    // If no lti tool exists then we can not continue.
     if (is_null($toolid)) {
         print_error('no_existing_lti_tools', 'panoptosubmission');
         return;
@@ -63,12 +68,12 @@ function init_panoptosubmission_view() {
     $lti->debuglaunch = false;
     if ($customdata) {
         $decoded = json_decode($customdata, true);
-        
+
         foreach ($decoded as $key => $value) {
             $lti->custom->$key = $value;
         }
     }
-    
+
     echo \panoptosubmission_lti_utility::launch_tool($lti);
 }
 

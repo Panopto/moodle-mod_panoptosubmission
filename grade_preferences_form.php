@@ -29,6 +29,13 @@ require_once(dirname(__FILE__).'/locallib.php');
 require_once($CFG->dirroot . '/grade/grading/lib.php');
 require_once($CFG->libdir.'/formslib.php');
 
+/**
+ * This class contains the settings used to determine how the submissions will be graded
+ *
+ * @package mod_panoptosubmission
+ * @copyright  Panopto 2021
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class panoptosubmission_gradepreferences_form extends moodleform {
     /**
      * This function defines all of the elements displayed on the grade preferences form.
@@ -45,10 +52,10 @@ class panoptosubmission_gradepreferences_form extends moodleform {
 
         $context = context_module::instance($this->_customdata['cmid']);
 
-        $group_opt = array();
+        $groupopt = array();
         $groups    = array();
 
-        // If the user doesn't have access to all group print the groups they have access to
+        // If the user doesn't have access to all group print the groups they have access to.
         if (!has_capability('moodle/site:accessallgroups', $context)) {
 
             // Determine the groups mode
@@ -64,19 +71,19 @@ class panoptosubmission_gradepreferences_form extends moodleform {
                     break;
             }
 
-            $group_opt[0] = get_string('all', 'mod_panoptosubmission');
+            $groupopt[0] = get_string('all', 'mod_panoptosubmission');
 
             foreach ($groups as $group_obj) {
-                $group_opt[$group_obj->id] = $group_obj->name;
+                $groupopt[$group_obj->id] = $group_obj->name;
             }
 
         } else {
             $groups = groups_get_all_groups($COURSE->id);
 
-            $group_opt[0] = get_string('all', 'mod_panoptosubmission');
+            $groupopt[0] = get_string('all', 'mod_panoptosubmission');
 
             foreach ($groups as $group_obj) {
-                $group_opt[$group_obj->id] = $group_obj->name;
+                $groupopt[$group_obj->id] = $group_obj->name;
             }
 
         }
@@ -91,7 +98,7 @@ class panoptosubmission_gradepreferences_form extends moodleform {
             $mform->addHelpButton('quickgrade', 'quickgrade', 'panoptosubmission');
         }
 
-        $mform->addElement('select', 'group_filter', get_string('group_filter', 'mod_panoptosubmission'), $group_opt);
+        $mform->addElement('select', 'group_filter', get_string('group_filter', 'mod_panoptosubmission'), $groupopt);
 
         $filters = array(
             PANOPTOSUBMISSION_ALL => get_string('all', 'panoptosubmission'),

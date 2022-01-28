@@ -15,12 +15,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Message definitions for the Panopto Student Submission activity. 
+ * Message definitions for the Panopto Student Submission activity.
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+defined('MOODLE_INTERNAL') || die();
 
 $messageproviders = array(
     'panoptosubmission_updates' => array()

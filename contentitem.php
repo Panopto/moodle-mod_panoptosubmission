@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * LTI launch script for the Panopto Student Submission module. 
+ * LTI launch script for the Panopto Student Submission module.
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
@@ -35,13 +36,8 @@ $course = get_course($courseid);
 require_login($course);
 
 // Students will access this tool for the student submission workflow. Assume student can submit an assignment?
-// TODO: Investigate best way to handle this for users viewing imported content. 
-/*$context = context_course::instance($courseid);
-
+// TODO: Investigate best way to handle this for users viewing imported content.
 if (!\panoptosubmission_lti_utility::is_active_user_enrolled($context)) {
-    require_capability('moodle/course:manageactivities', $context);
-    require_capability('mod/lti:addcoursetool', $context);
-}*/ 
 
 $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
 
@@ -58,6 +54,7 @@ $returnurlparams = [
     'id' => $toolid,
     'sesskey' => sesskey()
 ];
+
 $returnurl = new \moodle_url('/mod/panoptosubmission/contentitem_return.php', $returnurlparams);
 
 // Prepare the request.

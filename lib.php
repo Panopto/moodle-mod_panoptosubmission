@@ -40,7 +40,7 @@ function panoptosubmission_add_instance($newactivity) {
 
     $newactivity->timecreated = time();
 
-    $newactivity->id =  $DB->insert_record('panoptosubmission', $newactivity);
+    $newactivity->id = $DB->insert_record('panoptosubmission', $newactivity);
 
     if ($newactivity->timedue) {
         $event = new stdClass();
@@ -84,7 +84,8 @@ function panoptosubmission_update_instance($targetinstance) {
     if ($targetinstance->timedue) {
         $event = new stdClass();
 
-        if ($event->id = $DB->get_field('event', 'id', array('modulename' => 'panoptosubmission', 'instance' => $targetinstance->id))) {
+        if ($event->id = $DB->get_field(
+            'event', 'id', array('modulename' => 'panoptosubmission', 'instance' => $targetinstance->id))) {
 
             $event->name        = $targetinstance->name;
             $event->description = format_module_intro('panoptosubmission', $targetinstance, $targetinstance->coursemodule, false);
@@ -158,9 +159,13 @@ function panoptosubmission_delete_instance($id) {
  * Return a small object with summary information about what a
  * user has done with a given particular instance of this module
  * Used for user activity reports.
-
  * $return->time = the time they did it
  * $return->info = a short text description
+ *
+ * @param object $course the current course
+ * @param object $user the current user
+ * @param object $mod the current module
+ * @param object $data extra data
  *
  * @return object Returns time and info properties.
  */
@@ -178,6 +183,11 @@ function panoptosubmission_user_outline($course, $user, $mod, $data) {
  * Print a detailed representation of what a user has done with
  * a given particular instance of this module, for user activity reports.
  *
+ * @param object $course the current course
+ * @param object $user the current user
+ * @param object $mod the current module
+ * @param object $data extra data
+ *
  * @return boolean always return true.
  */
 function panoptosubmission_user_complete($course, $user, $mod, $data) {
@@ -189,6 +199,9 @@ function panoptosubmission_user_complete($course, $user, $mod, $data) {
  * that has occurred in panoptosubmission activities and print it out.
  * Return true if there was output, or false is there was none.
  *
+ * @param object $course the current course
+ * @param bool $viewfullnames show full or only shortened names in the activity page
+ * @param string $timestart the time the activity started
  * @return boolean Always returns false.
  */
 function panoptosubmission_print_recent_activity($course, $viewfullnames, $timestart) {
@@ -197,7 +210,7 @@ function panoptosubmission_print_recent_activity($course, $viewfullnames, $times
 
 
 /**
- * Must return an array of users who are participants an instance of the 
+ * Must return an array of users who are participants an instance of the
  * Panopto Student Submission activity
  *
  * @param int $targetactivity ID of an instance of this module
@@ -215,6 +228,7 @@ function panoptosubmission_get_participants($targetactivity) {
  * as reference.
  *
  * @param int $targetactivity ID of an instance of this module
+ * @param int $scaleid the id of the scale the activity used.
  * @return bool Returns false as scales are not supportd by this module.
  */
 function panoptosubmission_scale_used($targetactivity, $scaleid) {
@@ -241,6 +255,8 @@ function panoptosubmission_scale_used_anywhere($scaleid) {
 }
 
 /**
+ * This function tells Moodle what features this plugin supports
+ *
  * @param string $feature FEATURE_xx constant for requested feature
  * @return mixed True if module supports feature, null if doesn't know
  */
@@ -283,9 +299,8 @@ function panoptosubmission_grading_areas_list() {
 /**
  * Create/update grade item for given Panopto video activity
  *
- * @global object
- * @param object targetinstance object with extra cmidnumber
- * @param mixed optional array/object of grade(s); 'reset' means reset grades in gradebook
+ * @param object $targetinstance object with extra cmidnumber
+ * @param mixed $grades optional array/object of grade(s); 'reset' means reset grades in gradebook
  * @return int, 0 if ok, error code otherwise
  */
 function panoptosubmission_grade_item_update($targetinstance, $grades = null) {
@@ -306,7 +321,7 @@ function panoptosubmission_grade_item_update($targetinstance, $grades = null) {
         $params['gradetype'] = GRADE_TYPE_TEXT;
     }
 
-    if ($grades  === 'reset') {
+    if ($grades === 'reset') {
         $params['reset'] = true;
         $grades = null;
     }
@@ -328,9 +343,8 @@ function panoptosubmission_update_grades($targetrecord, $userid = 0, $nullifnone
 /**
  * Removes all grades from gradebook
  *
- * @global object
  * @param int $courseid
- * @param string optional type
+ * @param string optional $type
  */
 function panoptosubmission_reset_gradebook($courseid, $type = '') {
     global $DB;
@@ -353,8 +367,6 @@ function panoptosubmission_reset_gradebook($courseid, $type = '') {
  * Actual implementation of the reset course functionality, delete all the
  * Panopto video submissions attempts for course $data->courseid.
  *
- * @global stdClass
- * @global object
  * @param object $data the data submitted from the reset course.
  * @return array status array
  */
@@ -397,7 +409,16 @@ function panoptosubmission_reset_userdata($data) {
 function panoptosubmission_grade_item_delete($targetrecord) {
     global $CFG;
     require_once($CFG->libdir.'/gradelib.php');
-    return grade_update('mod/panoptosubmission', $targetrecord->course, 'mod', 'panoptosubmission', $targetrecord->id, 0, null, array('deleted' => 1));
+    return grade_update(
+        'mod/panoptosubmission',
+        $targetrecord->course,
+        'mod',
+        'panoptosubmission',
+        $targetrecord->id,
+        0,
+        null,
+        array('deleted' => 1)
+    );
 }
 
 /**

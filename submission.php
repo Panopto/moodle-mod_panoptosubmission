@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * submission page for the Panopto Student Submission module. 
+ * submission page for the Panopto Student Submission module.
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
@@ -149,7 +149,7 @@ if ($submission) {
 
 $context = $PAGE->context;
 
-// Email an alert to the teacher
+// Email an alert to the teacher.
 if ($pansubmissionactivity->emailteachers) {
     panoptosubmission_email_teachers($cm, $pansubmissionactivity->name, $submission, $context);
 }

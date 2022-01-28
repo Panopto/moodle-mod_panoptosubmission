@@ -1,5 +1,20 @@
 <?php
 
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 namespace mod_panoptosubmission\privacy;
 
 use core_privacy\local\metadata\collection;
@@ -10,13 +25,25 @@ use core_privacy\local\request\writer;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * This class defines the privacy information for the panopto submission module
+ *
+ * @package mod_panoptosubmission
+ * @copyright  Panopto 2021
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class provider implements \core_privacy\local\metadata\provider,
     \core_privacy\local\request\user_preference_provider,
     \core_privacy\local\request\core_userlist_provider,
     \core_privacy\local\request\plugin\provider {
 
+    /**
+     *
+     * This function defines and returns the metadata that is stored by this module
+     *
+     * @param collection the object used to store and return the privacy definitions
+     * @return returns the collection that includes the new privacy definitions
+     */
     public static function get_metadata(collection $collection) : collection {
 
         $collection->add_subsystem_link('core_message', [], 'privacy:metadata:emailteachersexplanation');
@@ -37,10 +64,17 @@ class provider implements \core_privacy\local\metadata\provider,
             'privacy:metadata:panoptosubmission_submission'
         );
 
-        $collection->add_user_preference('panoptosubmission_filter', 'privacy:metadata:panoptosubmissionfilter');
-        $collection->add_user_preference('panoptosubmission_group_filter', 'privacy:metadata:panoptosubmissiongroupfilter');
-        $collection->add_user_preference('panoptosubmission_perpage', 'privacy:metadata:panoptosubmissionperpage');
-        $collection->add_user_preference('panoptosubmission_quickgrade', 'privacy:metadata:panoptosubmissionquickgrade');
+        $collection->add_user_preference('panoptosubmission_filter',
+            'privacy:metadata:panoptosubmissionfilter');
+        $collection->add_user_preference('panoptosubmission_group_filter',
+            'privacy:metadata:panoptosubmissiongroupfilter'
+        );
+        $collection->add_user_preference('panoptosubmission_perpage',
+            'privacy:metadata:panoptosubmissionperpage'
+        );
+        $collection->add_user_preference('panoptosubmission_quickgrade',
+            'privacy:metadata:panoptosubmissionquickgrade'
+        );
 
         return $collection;
     }
@@ -155,18 +189,23 @@ class provider implements \core_privacy\local\metadata\provider,
                 continue;
             }
 
-            // Cannot make use of helper::export_context_files(), need to manually export panoptosubmission details
+            // Cannot make use of helper::export_context_files(), need to manually export panoptosubmission details.
             $panoptosubmissiondata = self::get_panoptosubmission_by_context($context);
 
-            // Get panoptosubmission details object for output
+            // Get panoptosubmission details object for output.
             $panoptosubmission = self::get_panoptosubmission_output($panoptosubmissiondata);
             writer::with_context($context)->export_data([], $panoptosubmission);
 
-            // Check if the user has marked any panoptosubmission's submissions to determine panoptosubmission submissions to export
-            $teacher = (self::has_marked_panoptosubmission_submissions($panoptosubmissiondata->id, $user->id) == true) ? true : false;
+            // Check if the user has marked any panoptosubmission's submissions to determine submissions to export.
+            $teacher = (self::has_marked_panoptosubmission_submissions(
+                $panoptosubmissiondata->id, $user->id) == true) ? true : false;
 
-            // Get the panoptosubmission submissions submitted by & marked by the user for an panoptosubmission
-            $submissionsdata = self::get_panoptosubmission_submissions_by_panoptosubmission($panoptosubmissiondata->id, $user->id, $teacher);
+            // Get the panoptosubmission submissions submitted by & marked by the user for an panoptosubmission.
+            $submissionsdata = self::get_panoptosubmission_submissions_by_panoptosubmission(
+                $panoptosubmissiondata->id,
+                $user->id,
+                $teacher
+            );
 
             $gradingmanager = get_grading_manager($context, 'mod_assign', 'submissions');
             $controller = $gradingmanager->get_active_controller();
@@ -186,7 +225,7 @@ class provider implements \core_privacy\local\metadata\provider,
                     }
                 }
 
-                // Get panoptosubmission submission details object for output
+                // Get panoptosubmission submission details object for output.
                 $submission = self::get_panoptosubmission_submission_output($submissiondata);
 
                 writer::with_context($context)->export_data($subcontexts, $submission);
@@ -271,14 +310,14 @@ class provider implements \core_privacy\local\metadata\provider,
             return;
         }
 
-        // Fetch the panoptosubmission
+        // Fetch the panoptosubmission.
         $panoptosubmission = self::get_panoptosubmission_by_context($context);
         $userids = $userlist->get_userids();
 
         list($inorequalsql, $params) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $params['videoassignid'] = $panoptosubmission->id;
 
-        // Get panoptosubmission submissions ids
+        // Get panoptosubmission submissions ids.
         $sql = "
             SELECT s.id
             FROM {panoptosubmission_submission} s
@@ -433,7 +472,8 @@ class provider implements \core_privacy\local\metadata\provider,
      * @return array                Array of panoptosubmission submissions details.
      * @throws \dml_exception
      */
-    protected static function get_panoptosubmission_submissions_by_panoptosubmission($panoptosubmissionid, $userid, $teacher = false) {
+    protected static function get_panoptosubmission_submissions_by_panoptosubmission(
+        $panoptosubmissionid, $userid, $teacher = false) {
         global $DB;
 
         $params = [

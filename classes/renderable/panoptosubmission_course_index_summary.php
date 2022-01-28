@@ -1,4 +1,7 @@
 <?php
+
+// This file is part of Moodle - http://moodle.org/
+//
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -20,8 +23,6 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Renderable panopto submission index summary
  */
@@ -34,6 +35,8 @@ class panoptosubmission_course_index_summary implements renderable {
     public $courseformatname = '';
 
     /**
+     * This is the constructor for the object
+     * 
      * @param $usesections boolean True if this course format uses sections
      * @param $courseformatname string The id of this course format
      */

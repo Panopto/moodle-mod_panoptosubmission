@@ -24,7 +24,6 @@
 
 namespace mod_panoptosubmission\event;
 
-defined('MOODLE_INTERNAL') || die();
 /**
  * The single_submission_page_viewed event class.
  *
@@ -33,25 +32,46 @@ defined('MOODLE_INTERNAL') || die();
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class single_submission_page_viewed extends \core\event\base {
+
+    /**
+     * Initializes eventdata
+     *
+     */
     protected function init() {
         $this->data['crud'] = 'r'; // c(reate), r(ead), u(pdate), d(elete)
         $this->data['edulevel'] = self::LEVEL_TEACHING;
         $this->data['objecttable'] = 'panoptosubmission_submission';
     }
- 
+
+    /**
+     * This function returns the name of the event
+     * @return string the name of the event
+     */
     public static function get_name() {
         return get_string('eventsingle_submission_page_viewed', 'panoptosubmission');
     }
- 
+
+    /**
+     * Returns a descriptions of what triggered the event
+     * @return string a description of what triggered the event
+     */
     public function get_description() {
         return "The user with id '{$this->userid}' viewed the submission with id '{$this->objectid}'"
         . " for the Panopto Student Submission activity with the course module id of '{$this->contextinstanceid}'.";
     }
- 
+
+    /**
+     * Returns a url to the page to grade the submission
+     * @return string a url to the grade submission page
+     */
     public function get_url() {
         return new \moodle_url('/mod/panoptosubmission/single_submission.php', array('cmid' => $this->contextinstanceid));
     }
- 
+
+    /**
+     * returns an array of legacy log data
+     * @return array a array used to store the legacy log data
+     */
     public function get_legacy_logdata() {
         return array($this->courseid, 'panoptosubmission', 'view submission page',
             $this->get_url(), $this->objectid, $this->contextinstanceid);
