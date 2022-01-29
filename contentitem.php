@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -41,9 +40,9 @@ if (!\panoptosubmission_lti_utility::is_active_user_enrolled($context)) {
 
 $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
 
-// If no lti tool exists then we can not continue. 
+// If no lti tool exists then we can not continue.
 if (is_null($toolid)) {
-    print_error('no_existing_lti_tools', 'panoptosubmission');
+    throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
     return;
 }
 

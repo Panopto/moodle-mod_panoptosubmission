@@ -39,7 +39,7 @@ $url->param('cmid', $id);
 
 if (!empty($mode)) {
     if (!confirm_sesskey()) {
-        print_error('confirmsesskeybad', 'error');
+        throw new moodle_exception('confirmsesskeybad', 'error');
     }
 }
 
@@ -83,7 +83,7 @@ if ($data = $prefform->get_data()) {
     set_user_preference('panoptosubmission_filter', $data->filter);
 
 
-    // Make sure advanced grading is disabled before we enable quick grading
+    // Make sure advanced grading is disabled before we enable quick grading.
     $gradingmanager = get_grading_manager($this->get_context(), 'mod_panoptosubmission', 'submissions');
     $controller = $gradingmanager->get_active_controller();
     if (!empty($controller)) {
@@ -130,7 +130,7 @@ if (!empty($gradedata->mode)) {
 
             if (array_key_exists($userid, $gradedata->menu)) {
 
-                // Update grade
+                // Update grade.
                 if (($gradedata->menu[$userid] != $usersubmissions->grade)) {
 
                     $usersubmissions->grade = $gradedata->menu[$userid];
@@ -151,7 +151,7 @@ if (!empty($gradedata->mode)) {
                 }
             }
 
-            // trigger grade event.
+            // Trigger grade event.
             if ($DB->update_record('panoptosubmission_submission', $usersubmissions)) {
 
                 $grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
@@ -179,9 +179,9 @@ if (!empty($gradedata->mode)) {
             $usersubmissions->timemarked    = $time;
 
             // Need to prevent completely empty submissions from getting entered.
-            // into the video submissions' table.
+            // Into the video submissions' table.
             // Check for unchanged grade value and an empty feedback value.
-            $emptygrade = empty($gradedata->menu[$userid]) || 
+            $emptygrade = empty($gradedata->menu[$userid]) ||
                 (array_key_exists($userid, $gradedata->menu) && '-1' == $gradedata->menu[$userid]);
 
             $emptycomment = array_key_exists(
@@ -200,7 +200,7 @@ if (!empty($gradedata->mode)) {
                 $usersubmissions->submissioncomment = $gradedata->submissioncomment[$userid];
             }
 
-            // trigger grade event.
+            // Trigger grade event.
             if ($DB->insert_record('panoptosubmission_submission', $usersubmissions)) {
 
                 $grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);

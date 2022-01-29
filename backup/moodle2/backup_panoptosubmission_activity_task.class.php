@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -23,7 +22,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL')·||·die();
+defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/mod/panoptosubmission/backup/moodle2/backup_panoptosubmission_stepslib.php');
 
@@ -54,7 +53,7 @@ class backup_panoptosubmission_activity_task extends backup_activity_task {
     /**
      * Code the transformations to perform in the activity in
      * order to get transportable (encoded) links.
-     * 
+     *
      * @param mixed $content the content being encoded
      */
     public static function encode_content_links($content) {

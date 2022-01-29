@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -17,7 +16,7 @@
 
 /**
  * Panopto Submission restore stepslib.
- * 
+ *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,7 +24,7 @@
 
 /**
  * Panopto Submission restore stepslib structure step class implementation
- * 
+ *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -53,7 +52,7 @@ class restore_panoptosubmission_activity_structure_step extends restore_activity
 
     /**
      * Processes data from a Panopto submission for a restore operation
-     * 
+     *
      * @param object $data the submission data being processed
      */
     protected function process_panoptosubmission($data) {
@@ -71,7 +70,7 @@ class restore_panoptosubmission_activity_structure_step extends restore_activity
 
     /**
      * Processes data from a Panopto submission for a restore operation
-     * 
+     *
      * @param object $data the submission data being processed
      */
     protected function process_panoptosubmission_submission($data) {
@@ -90,7 +89,7 @@ class restore_panoptosubmission_activity_structure_step extends restore_activity
 
     /**
      * Runs after restore execution
-     * 
+     *
      */
     protected function after_execute() {
         $this->add_related_files('mod_panoptosubmission', 'submission', 'panoptosubmission_submission');

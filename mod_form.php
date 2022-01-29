@@ -57,11 +57,13 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
 
         $this->standard_intro_elements();
 
-        $mform->addElement('date_time_selector', 'timeavailable', get_string('availabledate', 'panoptosubmission'), array('optional' => true));
+        $mform->addElement('date_time_selector',
+            'timeavailable', get_string('availabledate', 'panoptosubmission'), array('optional' => true));
         $mform->addHelpButton('timeavailable', 'availabledate', 'panoptosubmission');
         $mform->setDefault('timeavailable', time());
 
-        $mform->addElement('date_time_selector', 'timedue', get_string('duedate', 'panoptosubmission'), array('optional' => true));
+        $mform->addElement('date_time_selector',
+            'timedue', get_string('duedate', 'panoptosubmission'), array('optional' => true));
         $mform->addHelpButton('timedue', 'duedate', 'panoptosubmission');
         $mform->setDefault('timedue', time() + 7 * 24 * 3600);
 

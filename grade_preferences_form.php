@@ -58,10 +58,10 @@ class panoptosubmission_gradepreferences_form extends moodleform {
         // If the user doesn't have access to all group print the groups they have access to.
         if (!has_capability('moodle/site:accessallgroups', $context)) {
 
-            // Determine the groups mode
+            // Determine the groups mode.
             switch($this->_customdata['groupmode']) {
                 case NOGROUPS:
-                    // No groups, do nothing
+                    // No groups, do nothing.
                     break;
                 case SEPARATEGROUPS:
                     $groups = groups_get_all_groups($COURSE->id, $USER->id);
@@ -73,8 +73,8 @@ class panoptosubmission_gradepreferences_form extends moodleform {
 
             $groupopt[0] = get_string('all', 'mod_panoptosubmission');
 
-            foreach ($groups as $group_obj) {
-                $groupopt[$group_obj->id] = $group_obj->name;
+            foreach ($groups as $groupobj) {
+                $groupopt[$groupobj->id] = $groupobj->name;
             }
 
         } else {
@@ -82,8 +82,8 @@ class panoptosubmission_gradepreferences_form extends moodleform {
 
             $groupopt[0] = get_string('all', 'mod_panoptosubmission');
 
-            foreach ($groups as $group_obj) {
-                $groupopt[$group_obj->id] = $group_obj->name;
+            foreach ($groups as $groupobj) {
+                $groupopt[$groupobj->id] = $groupobj->name;
             }
 
         }

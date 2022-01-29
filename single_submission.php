@@ -40,7 +40,7 @@ list($cm, $course, $pansubmissionactivity) = panoptosubmission_validate_cmid($id
 require_login($course->id, false, $cm);
 
 if (!confirm_sesskey()) {
-    print_error('confirmsesskeybad', 'error');
+    throw new moodle_exception('confirmsesskeybad', 'error');
 }
 
 global $CFG, $PAGE, $OUTPUT, $USER;
@@ -55,7 +55,7 @@ $PAGE->set_title(format_string($pansubmissionactivity->name));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_context($context);
 
-$previousurl = new moodle_url('/mod/panoptosubmission/grade_submissions.php', 
+$previousurl = new moodle_url('/mod/panoptosubmission/grade_submissions.php',
     array('cmid' => $cm->id, 'tifirst' => $tifirst, 'tilast' => $tilast, 'page' => $page));
 
 $prevousurlstring = get_string('singlesubmissionheader', 'panoptosubmission');
@@ -70,10 +70,10 @@ $event = \mod_panoptosubmission\event\single_submission_page_viewed::create(arra
 ));
 $event->trigger();
 
-// Get a single submission record
+// Get a single submission record.
 $submission = panoptosubmission_get_submission($cm->instance, $userid);
 
-// Get the submission user and the time they submitted the video
+// Get the submission user and the time they submitted the video.
 $param = array('id' => $userid);
 $user  = $DB->get_record('user', $param);
 
@@ -84,11 +84,11 @@ $datestring = ' - ';
 
 $submissionuserinfo = fullname($user);
 
-// Get grading information
+// Get grading information.
 $gradinginfo    = grade_get_grades($cm->course, 'mod', 'panoptosubmission', $cm->instance, array($userid));
 $gradingdisabled = $gradinginfo->items[0]->grades[$userid]->locked || $gradinginfo->items[0]->grades[$userid]->overridden;
 
-// Get marking teacher information and the time the submission was marked
+// Get marking teacher information and the time the submission was marked.
 $teacher = '';
 $submissioncomment = '';
 if (!empty($submission)) {
@@ -137,7 +137,7 @@ if ($submissionform->is_cancelled()) {
     redirect($previousurl);
 } else if ($submitteddata = $submissionform->get_data()) {
 
-    if (!isset($submitteddata->cancel) && (isset($submitteddata->xgrade) || 
+    if (!isset($submitteddata->cancel) && (isset($submitteddata->xgrade) ||
         isset($submitteddata->advancedgrading)) && isset($submitteddata->submissioncomment_editor)) {
 
         // Flag used when an instructor is about to grade a user who does not have a submission.
@@ -230,7 +230,7 @@ if ($submissionform->is_cancelled()) {
             }
 
             if (count($data) > 0) {
-                grade_update_outcomes('mod/panoptosubmission', 
+                grade_update_outcomes('mod/panoptosubmission',
                     $course->id, 'mod', 'panoptosubmission', $pansubmissionactivity->id, $userid, $data);
             }
         }

@@ -32,25 +32,45 @@ require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosub
  * Table class for displaying video submissions for grading
  */
 class submissions_table extends table_sql {
-    /* @var bool $quickgrade Set to true if a quick grade form needs to be rendered. */
+    /**
+     * @var bool $quickgrade Set to true if a quick grade form needs to be rendered.
+     */
     public $quickgrade;
-    /* @var object $currentgrades Current grade information for an activity */
+    /**
+     * @var object $currentgrades Current grade information for an activity
+     */
     public $currentgrades;
-    /* @var int $cminstance The course module instnace id. */
+    /**
+     * @var int $cminstance The course module instnace id.
+     */
     public $cminstance;
-    /* @var int $grademax The maximum grade for an activity */
+    /**
+     * @var int $grademax The maximum grade for an activity
+     */
     public $grademax;
-    /* @var string $tifirst First initial of the first name, needed for name filter  */
+    /**
+     * @var string $tifirst First initial of the first name, needed for name filter
+     */
     public $tifirst;
-    /* @var string $tilast First initial of the last name, needed for name filter  */
+    /**
+     * @var string $tilast First initial of the last name, needed for name filter
+     */
     public $tilast;
-    /* @var int $page The current page number. */
+    /**
+     * @var int $page The current page number.
+     */
     public $page;
-    /* @var int $courseid The current course ID */
+    /**
+     * @var int $courseid The current course ID
+     */
     public $courseid;
-    /* @var int $cols The number of columns of the quick grade textarea element. */
+    /**
+     * @var int $cols The number of columns of the quick grade textarea element.
+     */
     public $cols = 20;
-    /* @var int $rows The number of rows of the quick grade textarea element. */
+    /**
+     * @var int $rows The number of rows of the quick grade textarea element.
+     */
     public $rows = 4;
 
     /**
@@ -368,7 +388,6 @@ class submissions_table extends table_sql {
     /**
      *  Return a grade in user-friendly form, whether it's a scale or not
      *
-     * @global object
      * @param mixed $grade
      * @return string User-friendly representation of grade
      *
@@ -470,7 +489,7 @@ class submissions_table extends table_sql {
 class mod_panoptosubmission_renderer extends plugin_renderer_base {
     /**
      * The function displays information about the assignment settings.
-     * @param object $panoptosubmissiondata target row information
+     * @param object $pansubmissiondata target row information
      * @param object $context the context for the current assignment
      * @return string HTML markup.
      */
@@ -497,10 +516,10 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
             $param = array('panactivityid' => $pansubmissiondata->id, 'timecreated' => 0, 'timemodified' => 0);
 
-            $csql = "SELECT COUNT(*)
-                      FROM {panoptosubmission_submission}
-                     WHERE panactivityid = :panactivityid
-                           AND (timecreated > :timecreated OR timemodified > :timemodified) ";
+            $csql = "SELECT COUNT(*) " .
+                      "FROM {panoptosubmission_submission} " .
+                     "WHERE panactivityid = :panactivityid " .
+                           "AND (timecreated > :timecreated OR timemodified > :timemodified) ";
 
             $count = $DB->count_records_sql($csql, $param);
 
@@ -908,7 +927,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $baseurl = new moodle_url('/mod/panoptosubmission/grade_submissions.php', array('cmid' => $cm->id));
 
-
         $table->set_sql($columns, $from, $where, $param);
         $table->define_baseurl($baseurl);
         $table->collapsible(true);
@@ -1047,7 +1065,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         return $iframecontainer;
     }
-
 
     /**
      * This function displays HTML needed by the submissionpanel YUI module to display a popup window containing the LTI launch.
@@ -1201,7 +1218,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $output .= html_writer::end_tag('div');
 
-
         return $output;
     }
 
@@ -1221,7 +1237,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         // Check if the user is enrolled to the coruse and can submit to the assignment.
         if (!is_enrolled($context, $USER, 'mod/panoptosubmission:submit')) {
-            // can not submit assignments -> no feedback
+            // Can not submit assignments -> no feedback.
             return;
         }
 
@@ -1247,7 +1263,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         // We need the teacher info.
         if (!$teacher = $DB->get_record('user', array('id' => $gradeby))) {
-            print_error('cannotfindteacher');
+            throw new moodle_exception('cannotfindteacher');
         }
 
         // Print the feedback.

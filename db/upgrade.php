@@ -24,6 +24,7 @@
 
 /**
  * This is ran when the plugin is upgraded
+ * @param string $oldversion the version previously installed
  * @return whether the upgrade was a success
  */
 function xmldb_panoptosubmission_upgrade($oldversion) {

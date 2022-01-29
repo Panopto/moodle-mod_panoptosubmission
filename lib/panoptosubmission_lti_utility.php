@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -26,7 +25,7 @@ class panoptosubmission_lti_utility {
 
     /**
      * Get the id of the pre-configured LTI tool that matched the Panopto server a course is provisioned to.
-     *  If multiple LTI tools are configured to a single server this will get the first one.
+     * If multiple LTI tools are configured to a single server this will get the first one.
      *
      * @param int $courseid - the id of the course we are targetting in moodle.
      * @return int the id of the first matching tool
@@ -49,7 +48,7 @@ class panoptosubmission_lti_utility {
                 $type->state == LTI_TOOL_STATE_CONFIGURED) {
                 $currentconfig = lti_get_type_config($type->id);
 
-                if(!empty($currentconfig['customparameters']) &&
+                if (!empty($currentconfig['customparameters']) &&
                     strpos($currentconfig['customparameters'], 'panopto_student_submission_tool') !== false) {
                     return $type->id;
                 }
@@ -87,6 +86,7 @@ class panoptosubmission_lti_utility {
 
         if (empty($CFG)) {
             require_once(dirname(__FILE__) . '/../../../../../config.php');
+            require_login();
         }
 
         require_once($CFG->dirroot . '/mod/lti/lib.php');
@@ -263,8 +263,9 @@ class panoptosubmission_lti_utility {
                 $serviceparameters = $service->get_launch_parameters('basic-lti-launch-request',
                         $course->id, $USER->id , $typeid, $instance->typeid);
                 foreach ($serviceparameters as $paramkey => $paramvalue) {
-                    $requestparams['custom_' . $paramkey] = lti_parse_custom_parameter($toolproxy, $tool, $requestparams, $paramvalue,
-                        $islti2);
+                    $requestparams['custom_' . $paramkey] = lti_parse_custom_parameter(
+                        $toolproxy, $tool, $requestparams, $paramvalue, $islti2
+                    );
                 }
             }
         }
@@ -317,8 +318,8 @@ class panoptosubmission_lti_utility {
     /**
      * Returns true or false depending on if the active user is enrolled in a context
      *
-     *  @param $targetcontext the context we are checking enrollment for
-     *  @return boolean true or false if the user is enrolled in the context
+     * @param object $targetcontext the context we are checking enrollment for
+     * @return bool true or false if the user is enrolled in the context
      */
     public static function is_active_user_enrolled($targetcontext) {
         global $USER;

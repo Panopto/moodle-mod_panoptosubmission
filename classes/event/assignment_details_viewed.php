@@ -32,13 +32,13 @@ namespace mod_panoptosubmission\event;
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class assignment_details_viewed extends \core\event\base {
-    
+
     /**
      * Initializes eventdata
      *
      */
     protected function init() {
-        $this->data['crud'] = 'r'; // C(reate), r(ead), u(pdate), d(elete).
+        $this->data['crud'] = 'r';
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
         $this->data['objecttable'] = 'panoptosubmission';
     }

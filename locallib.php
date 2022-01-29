@@ -140,11 +140,11 @@ function panoptosubmission_get_submission_grade_object($targetinstanceid, $useri
 
     $param = array('panactivityid' => $targetinstanceid, 'userid' => $userid);
 
-    $sql = "SELECT u.id, u.id AS userid, s.grade AS rawgrade, s.submissioncomment AS feedback, s.format AS feedbackformat,
-                   s.teacher AS usermodified, s.timemarked AS dategraded, s.timemodified AS datesubmitted
-              FROM {user} u, {panoptosubmission_submission} s
-             WHERE u.id = s.userid AND s.panactivityid = :panactivityid
-                   AND u.id = :userid";
+    $sql = "SELECT u.id, u.id AS userid, s.grade AS rawgrade, s.submissioncomment AS feedback, s.format AS feedbackformat, " .
+                   "s.teacher AS usermodified, s.timemarked AS dategraded, s.timemodified AS datesubmitted " .
+              "FROM {user} u, {panoptosubmission_submission} s " .
+             "WHERE u.id = s.userid AND s.panactivityid = :panactivityid " .
+                   "AND u.id = :userid";
 
     $data = $DB->get_record_sql($sql, $param);
 
@@ -160,20 +160,21 @@ function panoptosubmission_get_submission_grade_object($targetinstanceid, $useri
  *
  * @param int $cmid the id of the context for the module instance
  * @return array an array with the following values array(course module object, $course object, activity instance object).
+ * @throws moodle_exception
  */
 function panoptosubmission_validate_cmid ($cmid) {
     global $DB;
 
     if (!$cm = get_coursemodule_from_id('panoptosubmission', $cmid)) {
-        print_error('invalidcoursemodule');
+        throw new moodle_exception('invalidcoursemodule');
     }
 
     if (!$course = $DB->get_record('course', array('id' => $cm->course))) {
-        print_error('coursemisconf');
+        throw new moodle_exception('coursemisconf');
     }
 
     if (!$targetpanoptosubmission = $DB->get_record('panoptosubmission', array('id' => $cm->instance))) {
-        print_error('invalidid', 'panoptosubmission');
+        throw new moodle_exception('invalidid', 'panoptosubmission');
     }
 
     return array($cm, $course, $targetpanoptosubmission);
@@ -312,7 +313,7 @@ function panoptosubmission_get_graders($cm, $user, $context) {
 /**
  * Creates the text content for emails to teachers
  *
- * @param $info object The info used by the 'emailteachermail' language string
+ * @param object $info The info used by the 'emailteachermail' language string
  * @return string
  */
 function panoptosubmission_email_teachers_text($info) {

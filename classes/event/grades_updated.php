@@ -38,7 +38,7 @@ class grades_updated extends \core\event\base {
      *
      */
     protected function init() {
-        $this->data['crud'] = 'u'; // C(reate), r(ead), u(pdate), d(elete).
+        $this->data['crud'] = 'u';
         $this->data['edulevel'] = self::LEVEL_TEACHING;
     }
 

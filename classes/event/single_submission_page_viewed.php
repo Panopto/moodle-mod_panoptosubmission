@@ -38,7 +38,7 @@ class single_submission_page_viewed extends \core\event\base {
      *
      */
     protected function init() {
-        $this->data['crud'] = 'r'; // c(reate), r(ead), u(pdate), d(elete)
+        $this->data['crud'] = 'r';
         $this->data['edulevel'] = self::LEVEL_TEACHING;
         $this->data['objecttable'] = 'panoptosubmission_submission';
     }

@@ -63,7 +63,7 @@ class panoptosubmission_singlesubmission_form extends moodleform {
         /* Submission section */
         $mform->addElement('header', 'single_submission_1', get_string('submission', 'panoptosubmission'));
 
-        $mform->addelement('static', 'submittinguser', 
+        $mform->addelement('static', 'submittinguser',
             $this->_customdata->submissionuserpic, $this->_customdata->submissionuserinfo);
 
         $submission     = $this->_customdata->submission;
@@ -158,7 +158,7 @@ class panoptosubmission_singlesubmission_form extends moodleform {
             }
         }
 
-        if (has_capability('gradereport/grader:view', $this->_customdata->context) && 
+        if (has_capability('gradereport/grader:view', $this->_customdata->context) &&
             has_capability('moodle/grade:viewall', $this->_customdata->context)) {
 
             if (empty($gradinginfo) || !array_key_exists($this->_customdata->userid, $gradinginfo->items[0]->grades)) {

@@ -293,7 +293,7 @@ function panoptosubmission_supports($feature) {
  * @return array('string'=>'string') An array with area names as keys and descriptions as values
  */
 function panoptosubmission_grading_areas_list() {
-    return array('submissions'=>get_string('submissions', 'panoptosubmission'));
+    return array('submissions' => get_string('submissions', 'panoptosubmission'));
 }
 
 /**
@@ -326,7 +326,8 @@ function panoptosubmission_grade_item_update($targetinstance, $grades = null) {
         $grades = null;
     }
 
-    return grade_update('mod/panoptosubmission', $targetinstance->course, 'mod', 'panoptosubmission', $targetinstance->id, 0, $grades, $params);
+    return grade_update('mod/panoptosubmission',
+        $targetinstance->course, 'mod', 'panoptosubmission', $targetinstance->id, 0, $grades, $params);
 }
 
 /**
@@ -343,15 +344,15 @@ function panoptosubmission_update_grades($targetrecord, $userid = 0, $nullifnone
 /**
  * Removes all grades from gradebook
  *
- * @param int $courseid
- * @param string optional $type
+ * @param int $courseid id of the current course
+ * @param string $type Not used
  */
 function panoptosubmission_reset_gradebook($courseid, $type = '') {
     global $DB;
 
-    $sql = "SELECT l.*, cm.idnumber as cmidnumber, l.course as courseid
-              FROM {panoptosubmission} l, {course_modules} cm, {modules} m
-             WHERE m.name = 'panoptosubmission' AND m.id = cm.module AND cm.instance = l.id AND l.course = :course";
+    $sql = "SELECT l.*, cm.idnumber as cmidnumber, l.course as courseid " .
+              "FROM {panoptosubmission} l, {course_modules} cm, {modules} m " .
+             "WHERE m.name = 'panoptosubmission' AND m.id = cm.module AND cm.instance = l.id AND l.course = :course";
 
     $params = array ('course' => $courseid);
 
@@ -377,22 +378,23 @@ function panoptosubmission_reset_userdata($data) {
     $status = array();
 
     if (!empty($data->reset_panoptosubmission)) {
-        $panoptosubmissionsql = "SELECT l.id
-                              FROM {panoptosubmission} l
-                             WHERE l.course=:course";
+        $panoptosubmissionsql = "SELECT l.id " .
+                              "FROM {panoptosubmission} l " .
+                             "WHERE l.course=:course";
 
         $params = array ("course" => $data->courseid);
         $DB->delete_records_select('panoptosubmission_submission', "panactivityid IN ($panoptosubmissionsql)", $params);
 
-        // remove all grades from gradebook
+        // Remove all grades from gradebook.
         if (empty($data->reset_gradebook_grades)) {
             panoptosubmission_reset_gradebook($data->courseid);
         }
 
-        $status[] = array('component' => $componentstr, 'item' => get_string('deleteallsubmissions', 'panoptosubmission'), 'error' => false);
+        $status[] = array('component' => $componentstr,
+            'item' => get_string('deleteallsubmissions', 'panoptosubmission'), 'error' => false);
     }
 
-    // updating dates - shift may be negative too
+    // Updating dates - shift may be negative too.
     if ($data->timeshift) {
         shift_course_mod_dates('panoptosubmission', array('timedue', 'timeavailable'), $data->timeshift, $data->courseid);
         $status[] = array('component' => $componentstr, 'item' => get_string('datechanged'), 'error' => false);

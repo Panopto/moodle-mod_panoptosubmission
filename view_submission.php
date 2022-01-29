@@ -52,7 +52,7 @@ function init_panoptosubmission_view() {
 
     // If no lti tool exists then we can not continue.
     if (is_null($toolid)) {
-        print_error('no_existing_lti_tools', 'panoptosubmission');
+        throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
         return;
     }
 

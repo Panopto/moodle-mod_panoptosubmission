@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -41,7 +40,7 @@ class provider implements \core_privacy\local\metadata\provider,
      *
      * This function defines and returns the metadata that is stored by this module
      *
-     * @param collection the object used to store and return the privacy definitions
+     * @param collection $collection the object used to store and return the privacy definitions
      * @return returns the collection that includes the new privacy definitions
      */
     public static function get_metadata(collection $collection) : collection {
@@ -88,7 +87,8 @@ class provider implements \core_privacy\local\metadata\provider,
         $context = \context_system::instance();
         $assignmentpreferences = [
             'panoptosubmission_filter' => get_string('privacy:metadata:panoptosubmissionfilter', 'mod_panoptosubmission'),
-            'panoptosubmission_group_filter' => get_string('privacy:metadata:panoptosubmissiongroupfilter', 'mod_panoptosubmission'),
+            'panoptosubmission_group_filter' => get_string(
+                'privacy:metadata:panoptosubmissiongroupfilter', 'mod_panoptosubmission'),
             'panoptosubmission_perpage' => get_string('privacy:metadata:panoptosubmissionperpage', 'mod_panoptosubmission'),
             'panoptosubmission_quickgrade' => get_string('privacy:metadata:panoptosubmissionquickgrade', 'mod_panoptosubmission')
         ];
@@ -112,15 +112,13 @@ class provider implements \core_privacy\local\metadata\provider,
     public static function get_contexts_for_userid(int $userid) : contextlist {
         $contextlist = new \core_privacy\local\request\contextlist();
 
-        $sql = "SELECT DISTINCT
-                       ctx.id
-                  FROM {context} ctx
-                  JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :contextlevel
-                  JOIN {modules} m ON cm.module = m.id AND m.name = :modulename
-                  JOIN {panoptosubmission} a ON cm.instance = a.id
-                  JOIN {panoptosubmission_submission} s ON s.panactivityid = a.id
-                 WHERE s.userid = :userid
-                    OR s.teacher = :teacher";
+        $sql = "SELECT DISTINCT ctx.id FROM {context} ctx " .
+                  "JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :contextlevel " .
+                  "JOIN {modules} m ON cm.module = m.id AND m.name = :modulename " .
+                  "JOIN {panoptosubmission} a ON cm.instance = a.id " .
+                  "JOIN {panoptosubmission_submission} s ON s.panactivityid = a.id " .
+                 "WHERE s.userid = :userid " .
+                    "OR s.teacher = :teacher";
 
         $params = [
             'modulename' => 'panoptosubmission',
@@ -152,22 +150,20 @@ class provider implements \core_privacy\local\metadata\provider,
             'contextid' => $context->id
         ];
 
-        $sql = "SELECT s.userid
-                  FROM {panoptosubmission_submission} s
-                  JOIN {panoptosubmission} a ON s.panactivityid = a.id
-                  JOIN {modules} m ON m.name = :modulename
-                  JOIN {course_modules} cm ON a.id = cm.instance AND cm.module = m.id
-                  JOIN {context} ctx ON ctx.instanceid = cm.id AND ctx.contextlevel = :contextlevel
-                 WHERE ctx.id = :contextid";
+        $sql = "SELECT s.userid FROM {panoptosubmission_submission} s " .
+                  "JOIN {panoptosubmission} a ON s.panactivityid = a.id " .
+                  "JOIN {modules} m ON m.name = :modulename " .
+                  "JOIN {course_modules} cm ON a.id = cm.instance AND cm.module = m.id " .
+                  "JOIN {context} ctx ON ctx.instanceid = cm.id AND ctx.contextlevel = :contextlevel " .
+                 "WHERE ctx.id = :contextid";
         $userlist->add_from_sql('userid', $sql, $params);
 
-        $sql = "SELECT s.teacher
-                  FROM {panoptosubmission_submission} s
-                  JOIN {panoptosubmission} a ON s.panactivityid = a.id
-                  JOIN {modules} m ON m.name = :modulename
-                  JOIN {course_modules} cm ON a.id = cm.instance AND cm.module = m.id
-                  JOIN {context} ctx ON ctx.instanceid = cm.id AND ctx.contextlevel = :contextlevel
-                 WHERE ctx.id = :contextid";
+        $sql = "SELECT s.teacher FROM {panoptosubmission_submission} s " .
+                  "JOIN {panoptosubmission} a ON s.panactivityid = a.id " .
+                  "JOIN {modules} m ON m.name = :modulename " .
+                  "JOIN {course_modules} cm ON a.id = cm.instance AND cm.module = m.id " .
+                  "JOIN {context} ctx ON ctx.instanceid = cm.id AND ctx.contextlevel = :contextlevel " .
+                 "WHERE ctx.id = :contextid";
         $userlist->add_from_sql('teacher', $sql, $params);
     }
 
@@ -217,7 +213,7 @@ class provider implements \core_privacy\local\metadata\provider,
 
                 if ($teacher == true) {
                     if ($submissiondata->teacher == $user->id) {
-                        // Export panoptosubmission submissions that have been marked by the user
+                        // Export panoptosubmission submissions that have been marked by the user.
                         $subcontexts = [
                             get_string('privacy:markedsubmissionspath', 'mod_panoptosubmission'),
                             transform::user($submissiondata->userid)
@@ -232,7 +228,8 @@ class provider implements \core_privacy\local\metadata\provider,
 
                 // Check for advanced grading and retrieve that information.
                 if (isset($controller)) {
-                    \core_grading\privacy\provider::export_item_data($context, $submissiondata->id, get_string('privacy:submissionpath', 'mod_panoptosubmission'));
+                    \core_grading\privacy\provider::export_item_data($context, $submissiondata->id, get_string(
+                        'privacy:submissionpath', 'mod_panoptosubmission'));
                 }
             }
         }
@@ -257,7 +254,6 @@ class provider implements \core_privacy\local\metadata\provider,
             $DB->delete_records('panoptosubmission_submission', ['panactivityid' => $panoptosubmission->id]);
         }
 
-
         // Delete advanced grading information.
         $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
         $controller = $gradingmanager->get_active_controller();
@@ -281,7 +277,9 @@ class provider implements \core_privacy\local\metadata\provider,
         $userid = $contextlist->get_user()->id;
 
         // Only retrieve panoptosubmission submissions submitted by the user for deletion.
-        $panoptosubmissionsubmissionids = array_keys(self::get_panoptosubmission_submissions_by_contextlist($contextlist, $userid));
+        $panoptosubmissionsubmissionids = array_keys(
+            self::get_panoptosubmission_submissions_by_contextlist($contextlist, $userid)
+        );
 
         $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
         $controller = $gradingmanager->get_active_controller();
@@ -318,12 +316,11 @@ class provider implements \core_privacy\local\metadata\provider,
         $params['videoassignid'] = $panoptosubmission->id;
 
         // Get panoptosubmission submissions ids.
-        $sql = "
-            SELECT s.id
-            FROM {panoptosubmission_submission} s
-            JOIN {panoptosubmission} a ON s.panactivityid = a.id
-            WHERE a.id = :videoassignid
-            AND s.userid $inorequalsql";
+        $sql = "SELECT s.id " .
+            "FROM {panoptosubmission_submission} s " .
+            "JOIN {panoptosubmission} a ON s.panactivityid = a.id " .
+            "WHERE a.id = :videoassignid " .
+            "AND s.userid $inorequalsql";
 
         $submissionids = $DB->get_records_sql($sql, $params);
 
@@ -358,21 +355,21 @@ class provider implements \core_privacy\local\metadata\provider,
             'userid' => $userid
         ];
 
-        $sql = "SELECT s.id as id,
-                       s.panactivityid as panactivityid,
-                       s.source as source,
-                       s.grade as grade,
-                       s.submissioncomment as submissioncomment,
-                       s.teacher as teacher,
-                       s.timemarked as timemarked,
-                       s.timecreated as timecreated,
-                       s.timemodified as timemodified
-                  FROM {context} ctx
-                  JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :contextlevel
-                  JOIN {modules} m ON cm.module = m.id AND m.name = :modulename
-                  JOIN {panoptosubmission} a ON cm.instance = a.id
-                  JOIN {panoptosubmission_submission} s ON s.panactivityid = a.id
-                 WHERE (s.userid = :userid)";
+        $sql = "SELECT s.id as id, " .
+                       "s.panactivityid as panactivityid, " .
+                       "s.source as source, " .
+                       "s.grade as grade, " .
+                       "s.submissioncomment as submissioncomment, " .
+                       "s.teacher as teacher, " .
+                       "s.timemarked as timemarked, " .
+                       "s.timecreated as timecreated, " .
+                       "s.timemodified as timemodified " .
+                  "FROM {context} ctx " .
+                  "JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :contextlevel " .
+                  "JOIN {modules} m ON cm.module = m.id AND m.name = :modulename " .
+                  "JOIN {panoptosubmission} a ON cm.instance = a.id " .
+                  "JOIN {panoptosubmission_submission} s ON s.panactivityid = a.id " .
+                 "WHERE (s.userid = :userid)";
 
         $sql .= " AND ctx.id {$contextsql}";
         $params += $contextparams;
@@ -396,18 +393,18 @@ class provider implements \core_privacy\local\metadata\provider,
             'contextid' => $context->id
         ];
 
-        $sql = "SELECT a.id,
-                       a.name,
-                       a.intro,
-                       a.grade,
-                       a.timedue,
-                       a.timeavailable,
-                       a.timemodified
-                  FROM {panoptosubmission} a
-                  JOIN {course_modules} cm ON a.id = cm.instance
-                  JOIN {modules} m ON m.id = cm.module AND m.name = :modulename
-                  JOIN {context} ctx ON ctx.instanceid = cm.id AND ctx.contextlevel = :contextmodule
-                 WHERE ctx.id = :contextid";
+        $sql = "SELECT a.id, " .
+                       "a.name, " .
+                       "a.intro, " .
+                       "a.grade, " .
+                       "a.timedue, " .
+                       "a.timeavailable, " .
+                       "a.timemodified " .
+                  "FROM {panoptosubmission} a " .
+                  "JOIN {course_modules} cm ON a.id = cm.instance " .
+                  "JOIN {modules} m ON m.id = cm.module AND m.name = :modulename " .
+                  "JOIN {context} ctx ON ctx.instanceid = cm.id AND ctx.contextlevel = :contextmodule " .
+                 "WHERE ctx.id = :contextid";
 
         return $DB->get_record_sql($sql, $params);
     }
@@ -453,10 +450,10 @@ class provider implements \core_privacy\local\metadata\provider,
             'teacher'    => $userid
         ];
 
-        $sql = "SELECT count(s.id) as nomarked
-                  FROM {panoptosubmission_submission} s
-                 WHERE s.panactivityid = :panactivityid
-                   AND s.teacher = :teacher";
+        $sql = "SELECT count(s.id) as nomarked " .
+                  "FROM {panoptosubmission_submission} s " .
+                 "WHERE s.panactivityid = :panactivityid " .
+                   "AND s.teacher = :teacher";
 
         $results = $DB->get_record_sql($sql, $params);
 
@@ -481,19 +478,19 @@ class provider implements \core_privacy\local\metadata\provider,
             'userid' => $userid
         ];
 
-        $sql = "SELECT s.id as id,
-                       s.panactivityid as panactivityid,
-                       s.source as source,
-                       s.grade as grade,
-                       s.submissioncomment as submissioncomment,
-                       s.teacher as teacher,
-                       s.timemarked as timemarked,
-                       s.timecreated as timecreated,
-                       s.timemodified as timemodified,
-                       s.userid as userid
-                  FROM {panoptosubmission_submission} s
-                 WHERE s.panactivityid = :panactivityid
-                   AND (s.userid = :userid";
+        $sql = "SELECT s.id as id, " .
+                       "s.panactivityid as panactivityid, " .
+                       "s.source as source, " .
+                       "s.grade as grade, " .
+                       "s.submissioncomment as submissioncomment, " .
+                       "s.teacher as teacher, " .
+                       "s.timemarked as timemarked, " .
+                       "s.timecreated as timecreated, " .
+                       "s.timemodified as timemodified, " .
+                       "s.userid as userid " .
+                  "FROM {panoptosubmission_submission} s " .
+                 "WHERE s.panactivityid = :panactivityid " .
+                   "AND (s.userid = :userid";
 
         if ($teacher == true) {
             $sql .= " OR s.teacher = :teacher";

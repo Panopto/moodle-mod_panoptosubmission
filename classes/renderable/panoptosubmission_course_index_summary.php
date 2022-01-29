@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -36,9 +35,9 @@ class panoptosubmission_course_index_summary implements renderable {
 
     /**
      * This is the constructor for the object
-     * 
-     * @param $usesections boolean True if this course format uses sections
-     * @param $courseformatname string The id of this course format
+     *
+     * @param bool $usesections True if this course format uses sections
+     * @param string $courseformatname The id of this course format
      */
     public function __construct($usesections, $courseformatname) {
         $this->usesections = $usesections;
@@ -52,7 +51,7 @@ class panoptosubmission_course_index_summary implements renderable {
      * @param string $cmname The name of the activity
      * @param string $sectionname The name of the target course section
      * @param int $timedue The due date for the activity, 0 if no duedate is defined
-     * @param string $submissioninfo The number of assignments that were submitted, or depending on the 
+     * @param string $submissioninfo The number of assignments that were submitted, or depending on the
      *  user capabilities the status of their submission.
      * @param string $gradeinfo The current users grade if the activity has been graded.
      */
