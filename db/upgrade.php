@@ -15,13 +15,18 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Panopto Student Submission upgrade script.  
+ * Panopto Student Submission upgrade script.
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * This is ran when the plugin is upgraded
+ * @param string $oldversion the version previously installed
+ * @return whether the upgrade was a success
+ */
 function xmldb_panoptosubmission_upgrade($oldversion) {
     return true;
 }

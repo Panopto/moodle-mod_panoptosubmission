@@ -43,7 +43,7 @@
         <FIELD NAME="thumbnailsource" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The source of the thumbnail preview image" PREVIOUS="height" NEXT="thumbnailwidth"/>
         <FIELD NAME="thumbnailwidth" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="thumbnail width." PREVIOUS="thumbnailsource" NEXT="thumbnailheight"/>
         <FIELD NAME="thumbnailheight" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="thumbnail height." PREVIOUS="thumbnailwidth" NEXT="grade"/>
-        
+
         <FIELD NAME="grade" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" COMMENT="Grade score for the submission" PREVIOUS="height" NEXT="submissioncomment"/>
         <FIELD NAME="submissioncomment" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="Submission teacher comment" PREVIOUS="grade" NEXT="format"/>
         <FIELD NAME="format" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="submissioncomment" NEXT="teacher"/>

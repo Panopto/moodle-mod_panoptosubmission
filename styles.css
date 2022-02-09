@@ -29,7 +29,7 @@
     transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
     -moz-transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
     -webkit-transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
-} 
+}
 
 .panopto-session-container.session-hidden .panopto-thumbnail-container {
     opacity: 1;
@@ -38,7 +38,7 @@
 .panopto-session-container.session-hidden .panopto-player-iframe {
     opacity: 0;
     height: 0px;
-} 
+}
 
 .panopto-thumbnail {
     display: block;

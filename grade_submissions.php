@@ -28,7 +28,7 @@ require_once(dirname(__FILE__).'/renderer.php');
 require_once(dirname(__FILE__).'/locallib.php');
 require_once(dirname(__FILE__).'/grade_preferences_form.php');
 
-$id      = required_param('cmid', PARAM_INT);           // Course Module ID
+$id      = required_param('cmid', PARAM_INT);           // Course Module ID.
 $mode    = optional_param('mode', 0, PARAM_TEXT);
 $tifirst = optional_param('tifirst', '', PARAM_TEXT);
 $tilast  = optional_param('tilast', '', PARAM_TEXT);
@@ -39,7 +39,7 @@ $url->param('cmid', $id);
 
 if (!empty($mode)) {
     if (!confirm_sesskey()) {
-        print_error('confirmsesskeybad', 'error');
+        throw new moodle_exception('confirmsesskeybad', 'error');
     }
 }
 
@@ -57,22 +57,23 @@ $PAGE->navbar->add($currentcrumb);
 
 $renderer = $PAGE->get_renderer('mod_panoptosubmission');
 $courseid = $PAGE->context->get_course_context(false);
+$context = context_module::instance($cm->id);
 
 echo $OUTPUT->header();
 
-require_capability('mod/panoptosubmission:gradesubmission', context_module::instance($cm->id));
+require_capability('mod/panoptosubmission:gradesubmission', $context);
 
 $event = \mod_panoptosubmission\event\grade_submissions_page_viewed::create(array(
     'objectid'  => $pansubmissionactivity->id,
-    'context'   => context_module::instance($cm->id)
+    'context'   => $context
 ));
 $event->trigger();
 
-// Ensure we use the appropriate group mode, either course or module
+// Ensure we use the appropriate group mode, either course or module.
 if (($course->groupmodeforce) == 1) {
-    $prefform =  new panoptosubmission_gradepreferences_form(null, array('cmid' => $cm->id, 'groupmode' => $course->groupmode));
+    $prefform = new panoptosubmission_gradepreferences_form(null, array('cmid' => $cm->id, 'groupmode' => $course->groupmode));
 } else {
-    $prefform =  new panoptosubmission_gradepreferences_form(null, array('cmid' => $cm->id, 'groupmode' => $cm->groupmode));
+    $prefform = new panoptosubmission_gradepreferences_form(null, array('cmid' => $cm->id, 'groupmode' => $cm->groupmode));
 }
 
 $data = null;
@@ -83,8 +84,8 @@ if ($data = $prefform->get_data()) {
     set_user_preference('panoptosubmission_filter', $data->filter);
 
 
-    // Make sure advanced grading is disabled before we enable quick grading
-    $gradingmanager = get_grading_manager($this->get_context(), 'mod_panoptosubmission', 'submissions');
+    // Make sure advanced grading is disabled before we enable quick grading.
+    $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
     $controller = $gradingmanager->get_active_controller();
     if (!empty($controller)) {
         unset($data->quickgrade);
@@ -113,7 +114,7 @@ $data->group_filter = get_user_preferences('panoptosubmission_group_filter', 0);
 
 $gradedata = data_submitted();
 
-// Check if fast grading was passed to the form and process the data
+// Check if fast grading was passed to the form and process the data.
 if (!empty($gradedata->mode)) {
 
     $usersubmission = array();
@@ -130,7 +131,7 @@ if (!empty($gradedata->mode)) {
 
             if (array_key_exists($userid, $gradedata->menu)) {
 
-                // Update grade
+                // Update grade.
                 if (($gradedata->menu[$userid] != $usersubmissions->grade)) {
 
                     $usersubmissions->grade = $gradedata->menu[$userid];
@@ -151,7 +152,7 @@ if (!empty($gradedata->mode)) {
                 }
             }
 
-            // trigger grade event
+            // Trigger grade event.
             if ($DB->update_record('panoptosubmission_submission', $usersubmissions)) {
 
                 $grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
@@ -162,7 +163,7 @@ if (!empty($gradedata->mode)) {
 
                 // Add to log only if updating.
                 $event = \mod_panoptosubmission\event\grades_updated::create(array(
-                    'context'   => context_module::instance($cm->id),
+                    'context'   => $context,
                     'other'     => array(
                         'crud'    => 'u'
                     )
@@ -171,19 +172,22 @@ if (!empty($gradedata->mode)) {
             }
 
         } else {
-            // No user submission however the instructor has submitted grade data
+            // No user submission however the instructor has submitted grade data.
             $usersubmissions                = new stdClass();
             $usersubmissions->panactivityid   = $cm->instance;
             $usersubmissions->userid        = $userid;
             $usersubmissions->teacher       = $USER->id;
             $usersubmissions->timemarked    = $time;
 
-            // Need to prevent completely empty submissions from getting entered
-            // into the video submissions' table
-            // Check for unchanged grade value and an empty feedback value
-            $emptygrade = empty($gradedata->menu[$userid]) || (array_key_exists($userid, $gradedata->menu) && '-1' == $gradedata->menu[$userid]);
+            // Need to prevent completely empty submissions from getting entered.
+            // Into the video submissions' table.
+            // Check for unchanged grade value and an empty feedback value.
+            $emptygrade = empty($gradedata->menu[$userid]) ||
+                (array_key_exists($userid, $gradedata->menu) && '-1' == $gradedata->menu[$userid]);
 
-            $emptycomment = array_key_exists($userid, $gradedata->submissioncomment) && empty($gradedata->submissioncomment[$userid]);
+            $emptycomment = array_key_exists(
+                $userid, $gradedata->submissioncomment) && empty($gradedata->submissioncomment[$userid]
+            );
 
             if ($emptygrade && $emptycomment ) {
                 continue;
@@ -197,7 +201,7 @@ if (!empty($gradedata->mode)) {
                 $usersubmissions->submissioncomment = $gradedata->submissioncomment[$userid];
             }
 
-            // trigger grade event
+            // Trigger grade event.
             if ($DB->insert_record('panoptosubmission_submission', $usersubmissions)) {
 
                 $grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
@@ -206,9 +210,9 @@ if (!empty($gradedata->mode)) {
 
                 panoptosubmission_grade_item_update($pansubmissionactivity, $grade);
 
-                // Add to log only if updating
+                // Add to log only if updating.
                 $event = \mod_panoptosubmission\event\grades_updated::create(array(
-                    'context'   => context_module::instance($cm->id),
+                    'context'   => $context,
                     'other'     => array(
                         'crud'      => 'c'
                     )
@@ -222,7 +226,9 @@ if (!empty($gradedata->mode)) {
     }
 }
 
-$renderer->display_submissions_table($cm, $data->group_filter, $data->filter, $data->perpage, $data->quickgrade, $tifirst, $tilast, $page);
+$renderer->display_submissions_table(
+    $cm, $data->group_filter, $data->filter, $data->perpage, $data->quickgrade, $tifirst, $tilast, $page
+);
 
 $prefform->set_data($data);
 $prefform->display();

@@ -1,4 +1,6 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -20,8 +22,20 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * Panopto Submission backup stepslib backup structure class
+ *
+ * @package mod_panoptosubmission
+ * @copyright  Panopto 2021
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class backup_panoptosubmission_activity_structure_step extends backup_activity_structure_step {
 
+    /**
+     * Defines the structure needed to backup panopto student submissions
+     *
+     * @return the backup structure object
+     */
     protected function define_structure() {
         $userinfo = $this->get_setting_value('userinfo');
 

@@ -118,9 +118,9 @@ Y.extend(PANOPTOSUBMISSIONFRAME, Y.Base, {
         if (!iframenode.hasClass('session-hidden')) {
             iframenode.setAttribute('src', newSubmissionSource.toString());
         }
-        
+
         contentwrappernode.removeClass('no-session');
-        
+
         Y.one('#id_add_video').set('value', M.util.get_string('replacevideo', 'panoptosubmission'));
         // Update button classes.
         Y.one('#id_add_video').addClass('btn-secondary');
