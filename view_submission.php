@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * This page creates an lti request and echos the content from the response. Used to view submissions and other Panopto content.
  */
@@ -45,7 +43,6 @@ function init_panoptosubmission_view() {
     $context = context_course::instance($courseid);
 
     require_login($course);
-    require_capability('mod/lti:view', $context);
 
     // Get a matching LTI tool for the course.
     $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
