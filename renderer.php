@@ -226,7 +226,7 @@ class submissions_table extends table_sql {
 
         } else if (!empty($this->quickgrade)) {
 
-            $gradesmenu = make_gradesmenu($this->cminstance->grade);
+            $gradesmenu = make_grades_menu($this->cminstance->grade);
 
             $default = array(-1 => get_string('nograde'));
 
@@ -861,7 +861,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                     if (0 != $groupfilter) {
                         $groupscolumn = ', gm.groupid ';
                         $groupsjoin = ' RIGHT JOIN {groups_members} gm ON gm.userid = u.id' .
-                            'RIGHT JOIN {groups} g ON g.id = gm.groupid ';
+                            ' RIGHT JOIN {groups} g ON g.id = gm.groupid ';
                         $param['courseid'] = $cm->course;
                         $groupswhere  .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
@@ -875,7 +875,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                     if (0 == $groupfilter) {
                         $groupscolumn = ', gm.groupid ';
                         $groupsjoin   = ' INNER JOIN {groups_members} gm ON gm.userid = u.id' .
-                            'INNER JOIN {groups} g ON g.id = gm.groupid ';
+                            ' INNER JOIN {groups} g ON g.id = gm.groupid ';
                         $param['courseid'] = $cm->course;
                         $groupswhere  .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
@@ -883,7 +883,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                     } else {
                         $groupscolumn = ', gm.groupid ';
                         $groupsjoin   = ' INNER JOIN {groups_members} gm ON gm.userid = u.id' .
-                            'INNER JOIN {groups} g ON g.id = gm.groupid ';
+                            ' INNER JOIN {groups} g ON g.id = gm.groupid ';
                         $param['courseid'] = $cm->course;
                         $groupswhere  .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
@@ -899,7 +899,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
                         $groupscolumn = ', gm.groupid ';
                         $groupsjoin   = ' RIGHT JOIN {groups_members} gm ON gm.userid = u.id' .
-                            'RIGHT JOIN {groups} g ON g.id = gm.groupid ';
+                            ' RIGHT JOIN {groups} g ON g.id = gm.groupid ';
 
                         $param['courseid'] = $cm->course;
                         $groupswhere  .= ' AND g.courseid = :courseid ';
@@ -931,7 +931,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $table->define_baseurl($baseurl);
         $table->collapsible(true);
 
-        $table->definecolumns($definecolumns);
+        $table->define_columns($definecolumns);
 
         $col1 = get_string('userpicture', 'panoptosubmission');
         $col2 = get_string('fullname', 'panoptosubmission');

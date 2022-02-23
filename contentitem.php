@@ -34,10 +34,6 @@ $courseid = required_param('courseid', PARAM_INT);
 $course = get_course($courseid);
 require_login($course);
 
-// Students will access this tool for the student submission workflow. Assume student can submit an assignment?
-// TODO: Investigate best way to handle this for users viewing imported content.
-if (!\panoptosubmission_lti_utility::is_active_user_enrolled($context)) {
-
 $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
 
 // If no lti tool exists then we can not continue.
