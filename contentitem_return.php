@@ -47,7 +47,6 @@ $framewidth = 720;
 if (!empty($contentitems->{'@graph'}[0]->placementAdvice->displayWidth)) {
     $framewidth = $contentitems->{'@graph'}[0]->placementAdvice->displayWidth;
 }
-
 $frameheight = 480;
 if (!empty($contentitems->{'@graph'}[0]->placementAdvice->displayHeight)) {
     $frameheight = $contentitems->{'@graph'}[0]->placementAdvice->displayHeight;
@@ -65,7 +64,7 @@ if (!empty($contentitems->{'@graph'}[0]->thumbnail->height)) {
 
 $customdata = $contentitems->{'@graph'}[0]->custom;
 
-// In this version of Moodle LTI contentitem request we do not want the interactive viewer. 
+// In this version of Moodle LTI contentitem request we do not want the interactive viewer.
 unset($customdata->use_panopto_interactive_view);
 
 $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
@@ -75,7 +74,7 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
     <?php if (count($errors) > 0): ?>
         parent.document.CALLBACKS.handleError(<?php echo json_encode($errors); ?>);
     <?php else: ?>
-        // This event should close the panopto popup and pass the new content url to the existing iframe. 
+        // This event should close the panopto popup and pass the new content url to the existing iframe.
         var sessionSelectedEvent;
         var detailObject = {
             'detail': {

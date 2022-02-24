@@ -24,7 +24,6 @@
 
 namespace mod_panoptosubmission\event;
 
-defined('MOODLE_INTERNAL') || die();
 /**
  * The grades_updated event class.
  *
@@ -33,24 +32,45 @@ defined('MOODLE_INTERNAL') || die();
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class grades_updated extends \core\event\base {
+
+    /**
+     * Initializes eventdata
+     *
+     */
     protected function init() {
-        $this->data['crud'] = 'u'; // c(reate), r(ead), u(pdate), d(elete)
+        $this->data['crud'] = 'u';
         $this->data['edulevel'] = self::LEVEL_TEACHING;
     }
- 
+
+    /**
+     * This function returns the name of the event
+     * @return string the name of the event
+     */
     public static function get_name() {
         return get_string('eventgrades_updated', 'panoptosubmission');
     }
- 
+
+    /**
+     * Returns a descriptions of what triggered the event
+     * @return string a description of what triggered the event
+     */
     public function get_description() {
         return "The user with id '{$this->userid}' updated the grades"
         . " for the Panopto Student Submission activity with the course module id of '{$this->contextinstanceid}'.";
     }
- 
+
+    /**
+     * Returns a url to the page to grade the submission
+     * @return string a url to the grade submission page
+     */
     public function get_url() {
         return new \moodle_url('/mod/panoptosubmission/grade_submissions.php', array('cmid' => $this->contextinstanceid));
     }
- 
+
+    /**
+     * returns an array of legacy log data
+     * @return array a array used to store the legacy log data
+     */
     public function get_legacy_logdata() {
         return array($this->courseid, 'panoptosubmission', 'update grades',
             $this->get_url(), $this->contextinstanceid);

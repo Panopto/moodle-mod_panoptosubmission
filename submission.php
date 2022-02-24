@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * submission page for the Panopto Student Submission module. 
+ * submission page for the Panopto Student Submission module.
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
@@ -26,7 +26,7 @@ require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
 require_once(dirname(__FILE__).'/locallib.php');
 
 if (!confirm_sesskey()) {
-    print_error('confirmsesskeybad', 'error');
+    throw new moodle_exception('confirmsesskeybad', 'error');
 }
 
 $source = required_param('source', PARAM_URL);
@@ -42,15 +42,15 @@ $thumbnailheight  = required_param('thumbnailheight', PARAM_TEXT);
 global $USER, $OUTPUT, $DB, $PAGE;
 
 if (! $cm = get_coursemodule_from_id('panoptosubmission', $cmid)) {
-    print_error('invalidcoursemodule');
+    throw new moodle_exception('invalidcoursemodule');
 }
 
 if (! $course = $DB->get_record('course', array('id' => $cm->course))) {
-    print_error('coursemisconf');
+    throw new moodle_exception('coursemisconf');
 }
 
 if (! $pansubmissionactivity = $DB->get_record('panoptosubmission', array('id' => $cm->instance))) {
-    print_error('invalidid', 'panoptosubmission');
+    throw new moodle_exception('invalidid', 'panoptosubmission');
 }
 
 require_course_login($course->id, true, $cm);
@@ -61,7 +61,7 @@ $PAGE->set_heading($course->fullname);
 
 
 if (panoptosubmission_submission_past_due($pansubmissionactivity)) {
-    print_error('assignmentexpired', 'panoptosubmission', 'course/view.php?id=' . $course->id);
+    throw new moodle_exception('assignmentexpired', 'panoptosubmission', 'course/view.php?id=' . $course->id);
 }
 
 echo $OUTPUT->header();
@@ -149,7 +149,7 @@ if ($submission) {
 
 $context = $PAGE->context;
 
-// Email an alert to the teacher
+// Email an alert to the teacher.
 if ($pansubmissionactivity->emailteachers) {
     panoptosubmission_email_teachers($cm, $pansubmissionactivity->name, $submission, $context);
 }

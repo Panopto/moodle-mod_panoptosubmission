@@ -22,6 +22,8 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 define('PANOPTOSUBMISSION_ALL', 0);
 define('PANOPTOSUBMISSION_REQ_GRADING', 1);
 define('PANOPTOSUBMISSION_SUBMITTED', 2);
@@ -34,7 +36,7 @@ require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
  * Check if the assignment submission end date has passed or if late submissions
  * are prohibited
  *
- * @param object targetactivity - Instance of a Panopto Student Submission activity
+ * @param object $targetactivity - Instance of a Panopto Student Submission activity
  * @return bool - true if past due, otherwise false
  */
 function panoptosubmission_submission_past_due($targetactivity) {
@@ -50,7 +52,7 @@ function panoptosubmission_submission_past_due($targetactivity) {
 /**
  * Check if the assignment submission start date is set and if it has arrived yet.
  *
- * @param object targetactivity - Instance of a Panopto Student Submission activity
+ * @param object $targetactivity - Instance of a Panopto Student Submission activity
  * @return bool - true if available, otherwise false
  */
 function panoptosubmission_submission_available_yet($targetactivity) {
@@ -65,7 +67,7 @@ function panoptosubmission_submission_available_yet($targetactivity) {
 
 /**
  * Retrieve a list of users who have submitted assignments
- * 
+ *
  * @param int $targetinstance The assignment id.
  * @param string $filter Filter results by assignments that have been submitted or
  * assignment that need to be graded or no filter at all.
@@ -88,7 +90,8 @@ function panoptosubmission_get_submissions($targetinstance, $filter = '') {
     $where .= ' panactivityid = :instanceid';
 
     // Reordering the fields returned to make it easier to use in the grade_get_grades function.
-    $columns = 'userid,panactivityid,grade,submissioncomment,format,teacher,mailed,timemarked,timecreated,timemodified,source,width,height';
+    $columns = 'userid,panactivityid,grade,submissioncomment,format,teacher,mailed,' .
+        'timemarked,timecreated,timemodified,source,width,height';
     $records = $DB->get_records_select('panoptosubmission_submission', $where, $param, 'timemodified DESC', $columns);
 
     if (empty($records)) {
@@ -113,7 +116,8 @@ function panoptosubmission_get_submission($targetinstanceid, $userid) {
     $where .= ' panactivityid = :instanceid AND userid = :userid';
 
     // Reordering the fields returned to make it easier to use in the grade_get_grades function.
-    $columns = 'userid,id,panactivityid,grade,submissioncomment,format,teacher,mailed,timemarked,timecreated,timemodified,source,width,height';
+    $columns = 'userid,id,panactivityid,grade,submissioncomment,format,teacher,mailed,' .
+        'timemarked,timecreated,timemodified,source,width,height';
     $record = $DB->get_record_select('panoptosubmission_submission', $where, $param, '*');
 
     if (empty($record)) {
@@ -126,7 +130,7 @@ function panoptosubmission_get_submission($targetinstanceid, $userid) {
 
 /**
  * This function retrieves the submission grade object.
- * 
+ *
  * @param int $targetinstanceid The activity instance id.
  * @param int $userid The user id.
  * @return object A data object consisting of the user's submission.
@@ -136,11 +140,11 @@ function panoptosubmission_get_submission_grade_object($targetinstanceid, $useri
 
     $param = array('panactivityid' => $targetinstanceid, 'userid' => $userid);
 
-    $sql = "SELECT u.id, u.id AS userid, s.grade AS rawgrade, s.submissioncomment AS feedback, s.format AS feedbackformat,
-                   s.teacher AS usermodified, s.timemarked AS dategraded, s.timemodified AS datesubmitted
-              FROM {user} u, {panoptosubmission_submission} s
-             WHERE u.id = s.userid AND s.panactivityid = :panactivityid
-                   AND u.id = :userid";
+    $sql = "SELECT u.id, u.id AS userid, s.grade AS rawgrade, s.submissioncomment AS feedback, s.format AS feedbackformat, " .
+                   "s.teacher AS usermodified, s.timemarked AS dategraded, s.timemodified AS datesubmitted " .
+              "FROM {user} u, {panoptosubmission_submission} s " .
+             "WHERE u.id = s.userid AND s.panactivityid = :panactivityid " .
+                   "AND u.id = :userid";
 
     $data = $DB->get_record_sql($sql, $param);
 
@@ -153,21 +157,24 @@ function panoptosubmission_get_submission_grade_object($targetinstanceid, $useri
 
 /**
  * This function validates the course module id and returns the course module object, course object and activity instance object.
+ *
+ * @param int $cmid the id of the context for the module instance
  * @return array an array with the following values array(course module object, $course object, activity instance object).
+ * @throws moodle_exception
  */
 function panoptosubmission_validate_cmid ($cmid) {
     global $DB;
 
     if (!$cm = get_coursemodule_from_id('panoptosubmission', $cmid)) {
-        print_error('invalidcoursemodule');
+        throw new moodle_exception('invalidcoursemodule');
     }
 
     if (!$course = $DB->get_record('course', array('id' => $cm->course))) {
-        print_error('coursemisconf');
+        throw new moodle_exception('coursemisconf');
     }
 
     if (!$targetpanoptosubmission = $DB->get_record('panoptosubmission', array('id' => $cm->instance))) {
-        print_error('invalidid', 'panoptosubmission');
+        throw new moodle_exception('invalidid', 'panoptosubmission');
     }
 
     return array($cm, $course, $targetpanoptosubmission);
@@ -175,6 +182,9 @@ function panoptosubmission_validate_cmid ($cmid) {
 
 /**
  * This function returns HTML markup to signify a submission was late.
+ *
+ * @param string $timesubmitted the time the assignment was submitted
+ * @param string $timedue the time the assignment was due
  * @return string HTML markup
  */
 function panoptosubmission_display_lateness($timesubmitted, $timedue) {
@@ -204,7 +214,7 @@ function panoptosubmission_display_lateness($timesubmitted, $timedue) {
 function panoptosubmission_email_teachers($cm, $name, $submission, $context) {
     global $CFG, $DB, $COURSE;
 
-    $user = $DB->get_record('user', array('id'=>$submission->userid));
+    $user = $DB->get_record('user', array('id' => $submission->userid));
 
     if ($teachers = panoptosubmission_get_graders($cm, $user, $context)) {
 
@@ -267,7 +277,7 @@ function panoptosubmission_get_graders($cm, $user, $context) {
             foreach ($groups as $group) {
                 foreach ($potgraders as $potgrader) {
                     if ($potgrader->id == $user->id) {
-                        continue; // do not send self
+                        continue; // Do not send self.
                     }
                     if (groups_is_member($group->id, $potgrader->id)) {
                         $graders[$potgrader->id] = $potgrader;
@@ -275,13 +285,13 @@ function panoptosubmission_get_graders($cm, $user, $context) {
                 }
             }
         } else {
-            // user not in group, try to find graders without group
+            // User not in group, try to find graders without group.
             foreach ($potgraders as $potgrader) {
                 if ($potgrader->id == $user->id) {
-                    // do not send self.
+                    // Do not send self.
                     continue;
                 }
-                // ugly hack.
+                // Ugly hack.
                 if (!groups_get_all_groups($cm->course, $potgrader->id)) {
                     $graders[$potgrader->id] = $potgrader;
                 }
@@ -290,7 +300,7 @@ function panoptosubmission_get_graders($cm, $user, $context) {
     } else {
         foreach ($potgraders as $potgrader) {
             if ($potgrader->id == $user->id) {
-                // do not send self.
+                // Do not send self.
                 continue;
             }
             $graders[$potgrader->id] = $potgrader;
@@ -303,7 +313,7 @@ function panoptosubmission_get_graders($cm, $user, $context) {
 /**
  * Creates the text content for emails to teachers
  *
- * @param $info object The info used by the 'emailteachermail' language string
+ * @param object $info The info used by the 'emailteachermail' language string
  * @return string
  */
 function panoptosubmission_email_teachers_text($info) {
@@ -314,7 +324,8 @@ function panoptosubmission_email_teachers_text($info) {
     $posttext = '';
 
     if (!empty($course)) {
-        $posttext  = format_string($course->shortname, true, $course->id) . ' -> ' . get_string('modulenameplural', 'panoptosubmission') . '  -> ';
+        $posttext  = format_string($course->shortname, true, $course->id) . ' -> ' .
+            get_string('modulenameplural', 'panoptosubmission') . '  -> ';
         $posttext .= format_string($info->assignment, true, $course->id) . "\n";
         $posttext .= '---------------------------------------------------------------------' . "\n";
         $posttext .= get_string('emailteachermail', 'panoptosubmission', $info) . "\n";
@@ -355,6 +366,7 @@ function panoptosubmission_email_teachers_html($info) {
 /**
  * This function retrieves a list of enrolled users with the capability to submit to the activity.
  *
+ * @param object $cm the context object for the module instance
  * @return array An array of user objects.
  */
 function panoptosubmission_get_assignment_students($cm) {
@@ -364,6 +376,15 @@ function panoptosubmission_get_assignment_students($cm) {
     return $users;
 }
 
+/**
+ * Returns the grading instance for the assignment
+ *
+ * @param object $cminstance Panopto video assignment course module object.
+ * @param object $context A context object.
+ * @param object $submission The current submission object
+ * @param bool $gradingdisabled whether or not advanced grading is disabled
+ * @return array An array of grading userids
+ */
 function panoptosubmission_get_grading_instance($cminstance, $context, $submission, $gradingdisabled) {
     global $CFG, $USER;
 
