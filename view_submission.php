@@ -37,10 +37,19 @@ function init_panoptosubmission_view() {
     $courseid  = required_param('course', PARAM_INT);
     $contenturl = urldecode(optional_param('contenturl', '', PARAM_URL));
     $customdata = urldecode(optional_param('custom', '', PARAM_RAW_TRIMMED));
+    $resourcelinkid = optional_param('resourcelinkid', '', PARAM_RAW_TRIMMED);
 
     $course = get_course($courseid);
 
     $context = context_course::instance($courseid);
+
+    if (empty($resourcelinkid)) {
+        $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
+        $resourcelinkid = sha1($ltiviewerurl->out(false) . 
+            '&' . $courseid . 
+            '&' . $course->timecreated
+        );
+    }
 
     require_login($course);
 
@@ -56,7 +65,7 @@ function init_panoptosubmission_view() {
     $lti = new stdClass();
 
     // Give it some random id, this is not used in the code but will create a PHP notice if not provided.
-    $lti->id = 99999;
+    $lti->id = $resourcelinkid;
     $lti->typeid = $toolid;
     $lti->launchcontainer = LTI_LAUNCH_CONTAINER_WINDOW;
     $lti->toolurl = $contenturl;

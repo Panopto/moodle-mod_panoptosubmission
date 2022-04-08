@@ -1088,12 +1088,16 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         );
 
         if (!is_null($submission) && !empty($submission->source)) {
-
             $contenturl = new moodle_url($submission->source);
-
-            $ltiviewerparams['custom'] = $submission->customdata;
-            $ltiviewerparams['contenturl'] = $contenturl->out(false);
+            $resourcelinkid = sha1($submission->source . '&' . $courseid . '&' . $submission->id . '&' . $submission->timemodified);
+        } else {
+            $viewsubmissionurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
+            $resourcelinkid = sha1($viewsubmissionurl->out(false) . '&' . $courseid . '&' . $cmid);
         }
+
+        $ltiviewerparams['custom'] = $submission->customdata;
+        $ltiviewerparams['contenturl'] = $contenturl->out(false);
+        $ltiviewerparams['resourcelinkid'] = $resourcelinkid;
 
         $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php", $ltiviewerparams);
         $params['src'] = $ltiviewerurl->out(false);
