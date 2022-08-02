@@ -171,7 +171,7 @@ class submissions_table extends table_sql {
         }
 
         $due = $this->cminstance->timedue;
-        if ($submitted && ($data->timemodified > $due)) {
+        if (!empty($this->quickgrade) && $submitted && ($data->timemodified > $due)) {
             $latestr = get_string('late', 'panoptosubmission', format_time($data->timemodified - $due));
             $lateattributes = array(
                 'class' => 'panopto-latesubmission'
