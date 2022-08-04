@@ -92,4 +92,33 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
 
         $this->add_action_buttons();
     }
+
+
+
+    /**
+     * Perform minimal validation on the settings form
+     * @param array $data
+     * @param array $files
+     */
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        if (!empty($data['timeavailable']) && !empty($data['timedue'])) {
+            if ($data['timedue'] < $data['timeavailable']) {
+                $errors['timedue'] = get_string('duedatevalidation', 'panoptosubmission');
+            }
+        }
+        if (!empty($data['cutofftime']) && !empty($data['timedue'])) {
+            if ($data['cutofftime'] < $data['timedue'] ) {
+                $errors['cutofftime'] = get_string('cutoffdatevalidation', 'panoptosubmission');
+            }
+        }
+        if (!empty($data['timeavailable']) && !empty($data['cutofftime'])) {
+            if ($data['cutofftime'] < $data['timeavailable']) {
+                $errors['cutofftime'] = get_string('cutoffdatefromdatevalidation', 'panoptosubmission');
+            }
+        }
+
+        return $errors;
+    }
 }
