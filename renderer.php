@@ -519,6 +519,13 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             $html .= html_writer::end_tag('p');
         }
 
+        if (!empty($pansubmissiondata->cutofftime)) {
+            $html .= html_writer::start_tag('p');
+            $html .= html_writer::tag('b', get_string('cutoffdate', 'panoptosubmission').': ');
+            $html .= userdate($pansubmissiondata->cutofftime);
+            $html .= html_writer::end_tag('p');
+        }
+
         // Display a count of the numuber of submissions.
         if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
 

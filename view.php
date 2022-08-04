@@ -69,6 +69,7 @@ echo $OUTPUT->box_end();
 
 $submitdisabled = false;
 if (panoptosubmission_submission_past_due($panactivityinstance) ||
+    panoptosubmission_submission_past_cutoff($panactivityinstance) ||
     !panoptosubmission_submission_available_yet($panactivityinstance)) {
     $submitdisabled = true;
 }
