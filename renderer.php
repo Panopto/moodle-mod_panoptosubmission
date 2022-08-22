@@ -460,7 +460,7 @@ class submissions_table extends table_sql {
             $class = 'btn btn-secondary';
             $buttontext = get_string('update');
         } else {
-            $buttontext  = get_string('gradenoun');
+            $buttontext  = get_string('gradenoun', 'panoptosubmission');
         }
 
         $attr = array('id' => 'up'.$rowdata->id,
@@ -1293,7 +1293,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         echo '<td class="left side">&nbsp;</td>';
         echo '<td class="content">';
         echo '<div class="grade">';
-        echo get_string("gradenoun").': '.$grade->str_long_grade;
+        echo get_string("gradenoun", "panoptosubmission").': '.$grade->str_long_grade;
         echo '</div>';
         echo '<div class="clearer"></div>';
 
@@ -1316,7 +1316,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $courseformatname  = $indexsummary->courseformatname;
         $strduedate = get_string('duedate', 'panoptosubmission');
         $strsubmission = get_string('submission', 'panoptosubmission');
-        $strgrade = get_string('gradenoun');
+        $strgrade = get_string('gradenoun', 'panoptosubmission');
 
         $table = new html_table();
         if ($indexsummary->usesections) {
