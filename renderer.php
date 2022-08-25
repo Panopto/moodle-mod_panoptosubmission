@@ -170,6 +170,15 @@ class submissions_table extends table_sql {
             $output .= html_writer::tag('div', get_string('needs_grade', 'panoptosubmission'), $gradedstatusattributes);
         }
 
+        $due = $this->cminstance->timedue;
+        if (!empty($this->quickgrade) && $submitted && ($data->timemodified > $due)) {
+            $latestr = get_string('late', 'panoptosubmission', format_time($data->timemodified - $due));
+            $lateattributes = array(
+                'class' => 'panopto-latesubmission'
+            );
+            $output .= html_writer::tag('div', $latestr, $lateattributes);
+        }
+
         if (!$submitted) {
             $gradedstatusattributes = array(
                 'class' => 'panopto-status-not-submitted'
@@ -177,7 +186,6 @@ class submissions_table extends table_sql {
             $output .= html_writer::tag('div', get_string('nosubmission', 'panoptosubmission'), $gradedstatusattributes);
 
             $now = time();
-            $due = $this->cminstance->timedue;
             if ($due && ($now > $due)) {
                 $overduestr = get_string('overdue', 'assign', format_time($now - $due));
                 $overdueattributes = array(
