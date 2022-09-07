@@ -44,12 +44,12 @@ class panoptosubmission_lti_utility {
                 ]
             );
 
-            if (!empty($targetservername) && strpos($type->config['toolurl'], $targetservername) !== false &&
+            if (!empty($targetservername) && stripos($type->config['toolurl'], $targetservername) !== false &&
                 $type->state == LTI_TOOL_STATE_CONFIGURED) {
                 $currentconfig = lti_get_type_config($type->id);
 
                 if (!empty($currentconfig['customparameters']) &&
-                    strpos($currentconfig['customparameters'], 'panopto_student_submission_tool') !== false) {
+                    stripos($currentconfig['customparameters'], 'panopto_student_submission_tool') !== false) {
                     return $type->id;
                 }
             }

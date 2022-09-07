@@ -76,6 +76,10 @@
     color: red;
 }
 
+.panopto-latesubmission {
+    color: red;
+}
+
 .panopto-grade-input-container {
     white-space: nowrap;
 }
