@@ -31,6 +31,7 @@ define('PANOPTOSUBMISSION_SUBMITTED', 2);
 require_once($CFG->libdir . '/gradelib.php');
 require_once($CFG->dirroot . '/grade/grading/lib.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
+require_once($CFG->dirroot . '/blocks/panopto/lib/block_panopto_lib.php');
 
 /**
  * Check if the assignment submission end date has passed or if late submissions
@@ -417,4 +418,31 @@ function panoptosubmission_get_grading_instance($cminstance, $context, $submissi
         $gradinginstance->get_controller()->set_grade_range($grademenu, $allowgradedecimals);
     }
     return $gradinginstance;
+}
+
+/**
+ * Provision the course.
+ *
+ * @param int $courseid - the id of the course we are targetting in moodle.
+ * @return bool if success or failure
+ */
+function panoptosubmission_provision_course($courseid) {
+    $targetautoservername = get_config('block_panopto', 'automatic_operation_target_server');
+    if (empty($targetautoservername)) {
+        return false;
+    }
+
+    try {
+            $targetserver = panopto_get_target_panopto_server();
+
+            $panopto = new \panopto_data($courseid);
+            $panopto->servername = $targetserver->name;
+            $panopto->applicationkey = $targetserver->appkey;
+            $provisioninginfo = $panopto->get_provisioning_info();
+            $panopto->provision_course($provisioninginfo, false);
+            return true;
+    } catch (Exception $e) {
+        \panopto_data::print_log($e->getMessage());
+        return false;
+    }
 }
