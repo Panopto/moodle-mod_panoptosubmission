@@ -421,25 +421,28 @@ function panoptosubmission_get_grading_instance($cminstance, $context, $submissi
 }
 
 /**
- * Provision the course.
+ * Provision the course if not provisioned already.
  *
  * @param int $courseid - the id of the course we are targetting in moodle.
  * @return bool if success or failure
  */
-function panoptosubmission_provision_course($courseid) {
+function panoptosubmission_verify_panopto($courseid) {
     $targetautoservername = get_config('block_panopto', 'automatic_operation_target_server');
     if (empty($targetautoservername)) {
+        throw new moodle_exception('no_automatic_operation_target_server', 'panoptosubmission');
         return false;
     }
 
     try {
             $targetserver = panopto_get_target_panopto_server();
-
             $panopto = new \panopto_data($courseid);
-            $panopto->servername = $targetserver->name;
-            $panopto->applicationkey = $targetserver->appkey;
-            $provisioninginfo = $panopto->get_provisioning_info();
-            $panopto->provision_course($provisioninginfo, false);
+
+            if (!$panopto->has_valid_panopto()) {
+                $panopto->servername = $targetserver->name;
+                $panopto->applicationkey = $targetserver->appkey;
+                $provisioninginfo = $panopto->get_provisioning_info();
+                $panopto->provision_course($provisioninginfo, false);
+            }
             return true;
     } catch (Exception $e) {
         \panopto_data::print_log($e->getMessage());

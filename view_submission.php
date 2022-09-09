@@ -54,18 +54,17 @@ function init_panoptosubmission_view() {
 
     require_login($course);
 
-    // Get a matching LTI tool for the course.
-    $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
-
     // Provision the course if we can.
-    if (is_null($toolid) && !panoptosubmission_provision_course($courseid)) {
-        throw new moodle_exception('no_automatic_operation_target_server', 'panoptosubmission');
-        return;
-    }
+    if (panoptosubmission_verify_panopto($courseid)) {
+        // Get a matching LTI tool for the course.
+        $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
 
-    // If no lti tool exists then we can not continue.
-    if (is_null($toolid)) {
-        throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
+        if (is_null($toolid)) {
+            throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
+            return;
+        }
+    } else {
+        // If we were unable to provision the course, we cannot continue.
         return;
     }
 
