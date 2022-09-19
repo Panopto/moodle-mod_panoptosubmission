@@ -38,9 +38,7 @@ $url = new moodle_url('/mod/panoptosubmission/grade_submissions.php');
 $url->param('cmid', $id);
 
 if (!empty($mode)) {
-    if (!confirm_sesskey()) {
-        throw new moodle_exception('confirmsesskeybad', 'error');
-    }
+    require_sesskey();
 }
 
 list($cm, $course, $pansubmissionactivity) = panoptosubmission_validate_cmid($id);

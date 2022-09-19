@@ -25,9 +25,7 @@
 require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
 require_once(dirname(__FILE__).'/locallib.php');
 
-if (!confirm_sesskey()) {
-    throw new moodle_exception('confirmsesskeybad', 'error');
-}
+require_sesskey();
 
 $source = required_param('source', PARAM_URL);
 $customdata = required_param('customdata', PARAM_TEXT);
