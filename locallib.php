@@ -441,6 +441,12 @@ function panoptosubmission_verify_panopto($courseid) {
                 $panopto->servername = $targetserver->name;
                 $panopto->applicationkey = $targetserver->appkey;
                 $provisioninginfo = $panopto->get_provisioning_info();
+
+                if (   (isset($provisioninginfo->unknownerror) && $provisioninginfo->unknownerror === true)
+                    || (isset($provisioninginfo->accesserror) && $provisioninginfo->accesserror === true)) {
+                    return false;
+                }
+
                 $panopto->provision_course($provisioninginfo, false);
             }
             return true;
