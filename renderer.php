@@ -772,7 +772,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
     public function display_submissions_table(
         $cm, $groupfilter = 0, $filter = 'all', $perpage, $quickgrade = false, $tifirst = '', $tilast = '', $page = 0) {
 
-        global $DB, $COURSE, $USER;
+        global $DB, $COURSE, $USER, $CFG;
 
         // Get a list of users who have submissions and retrieve grade data for those users.
         $users = panoptosubmission_get_submissions($cm->instance, $filter);
@@ -922,9 +922,14 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $table = new submissions_table('panopto_submit_table', $cm, $currentgrades, $quickgrade, $tifirst, $tilast, $page);
 
+        // If Moodle version is less than 3.11.0 use user_picture, otherwise use core_user api
+        $userfields = $CFG->version < 2021051700
+            ? user_picture::fields('u')
+            : \core_user\fields::for_userpic()->get_sql('u', false, '', '', false)->selects;
+
         // In order for the sortable first and last names to work.  User ID has to be the first column returned and must be.
         // Returned as id.  Otherwise the table will display links to user profiles that are incorrect or do not exist.
-        $columns = user_picture::fields('u').', ps.id AS submitid, ';
+        $columns = $userfields .', ps.id AS submitid, ';
         $columns .= ' ps.grade, ps.submissioncomment, ps.timemodified, ps.source, ps.width, ps.height, ps.timemarked, ';
         $columns .= '1 AS status, 1 AS selectgrade ' . $groupscolumn;
         $where .= ' u.deleted = 0 AND u.id IN (' . implode(',', $students) . ') ' . $groupswhere;
