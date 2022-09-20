@@ -91,11 +91,11 @@ class panoptosubmission_singlesubmission_form extends moodleform {
             $gradingdisabled
         );
 
-        $mform->addElement('header', 'gradeheader', get_string('grade'));
+        $mform->addElement('header', 'gradeheader', get_string('gradeverb', 'panoptosubmission'));
         if ($gradinginstance) {
             $gradingelement = $mform->addElement('grading',
                                                  'advancedgrading',
-                                                 get_string('grade').':',
+                                                 get_string('gradeverb', 'panoptosubmission').':',
                                                  array('gradinginstance' => $gradinginstance));
             if ($gradingdisabled) {
                 $gradingelement->freeze();
@@ -118,7 +118,7 @@ class panoptosubmission_singlesubmission_form extends moodleform {
                 $mform->setDefault('xgrade', $currentgrade);
             } else {
                 $attributes = array();
-                $mform->addElement('select', 'xgrade', get_string('grade') . ':', $grademenu, $attributes);
+                $mform->addElement('select', 'xgrade', get_string('gradenoun', 'panoptosubmission') . ':', $grademenu, $attributes);
 
                 if (isset($submission->grade)) {
                     $mform->setDefault('xgrade', $this->_customdata->submission->grade);

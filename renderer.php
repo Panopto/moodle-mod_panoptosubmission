@@ -468,7 +468,7 @@ class submissions_table extends table_sql {
             $class = 'btn btn-secondary';
             $buttontext = get_string('update');
         } else {
-            $buttontext  = get_string('grade');
+            $buttontext  = get_string('gradenoun', 'panoptosubmission');
         }
 
         $attr = array('id' => 'up'.$rowdata->id,
@@ -779,7 +779,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
     public function display_submissions_table(
         $cm, $groupfilter = 0, $filter = 'all', $perpage, $quickgrade = false, $tifirst = '', $tilast = '', $page = 0) {
 
-        global $DB, $COURSE, $USER;
+        global $DB, $COURSE, $USER, $CFG;
 
         // Get a list of users who have submissions and retrieve grade data for those users.
         $users = panoptosubmission_get_submissions($cm->instance, $filter);
@@ -929,9 +929,14 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $table = new submissions_table('panopto_submit_table', $cm, $currentgrades, $quickgrade, $tifirst, $tilast, $page);
 
+        // If Moodle version is less than 3.11.0 use user_picture, otherwise use core_user api
+        $userfields = $CFG->version < 2021051700
+            ? user_picture::fields('u')
+            : \core_user\fields::for_userpic()->get_sql('u', false, '', '', false)->selects;
+
         // In order for the sortable first and last names to work.  User ID has to be the first column returned and must be.
         // Returned as id.  Otherwise the table will display links to user profiles that are incorrect or do not exist.
-        $columns = user_picture::fields('u').', ps.id AS submitid, ';
+        $columns = $userfields .', ps.id AS submitid, ';
         $columns .= ' ps.grade, ps.submissioncomment, ps.timemodified, ps.source, ps.width, ps.height, ps.timemarked, ';
         $columns .= '1 AS status, 1 AS selectgrade ' . $groupscolumn;
         $where .= ' u.deleted = 0 AND u.id IN (' . implode(',', $students) . ') ' . $groupswhere;
@@ -952,7 +957,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $col2 = get_string('fullname', 'panoptosubmission');
         $col3 = get_string('useremail', 'panoptosubmission');
         $col4 = get_string('status', 'panoptosubmission');
-        $col5 = get_string('grade', 'panoptosubmission');
+        $col5 = get_string('gradenoun', 'panoptosubmission');
         $col6 = get_string('timemodified', 'panoptosubmission');
         $col7 = get_string('grademodified', 'panoptosubmission');
         $col8 = get_string('submissioncomment', 'panoptosubmission');
@@ -1308,7 +1313,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         echo '<td class="left side">&nbsp;</td>';
         echo '<td class="content">';
         echo '<div class="grade">';
-        echo get_string("grade").': '.$grade->str_long_grade;
+        echo get_string("gradenoun", "panoptosubmission").': '.$grade->str_long_grade;
         echo '</div>';
         echo '<div class="clearer"></div>';
 
@@ -1331,7 +1336,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $courseformatname  = $indexsummary->courseformatname;
         $strduedate = get_string('duedate', 'panoptosubmission');
         $strsubmission = get_string('submission', 'panoptosubmission');
-        $strgrade = get_string('grade');
+        $strgrade = get_string('gradenoun', 'panoptosubmission');
 
         $table = new html_table();
         if ($indexsummary->usesections) {
