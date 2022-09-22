@@ -396,7 +396,7 @@ function panoptosubmission_reset_userdata($data) {
 
     // Updating dates - shift may be negative too.
     if ($data->timeshift) {
-        shift_course_mod_dates('panoptosubmission', array('timedue', 'timeavailable'), $data->timeshift, $data->courseid);
+        shift_course_mod_dates('panoptosubmission', array('timedue', 'timeavailable', 'cutofftime'), $data->timeshift, $data->courseid);
         $status[] = array('component' => $componentstr, 'item' => get_string('datechanged'), 'error' => false);
     }
 

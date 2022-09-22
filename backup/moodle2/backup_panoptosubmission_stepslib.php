@@ -47,6 +47,7 @@ class backup_panoptosubmission_activity_structure_step extends backup_activity_s
                 'introformat',
                 'timeavailable',
                 'timedue',
+                'cutofftime',
                 'preventlate',
                 'resubmit',
                 'emailteachers',

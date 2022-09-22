@@ -60,8 +60,10 @@ $PAGE->set_title(format_string($pansubmissionactivity->name));
 $PAGE->set_heading($course->fullname);
 
 
-if (panoptosubmission_submission_past_due($pansubmissionactivity)) {
+if (panoptosubmission_submission_past_cutoff($pansubmissionactivity)) {
     throw new moodle_exception('assignmentexpired', 'panoptosubmission', 'course/view.php?id=' . $course->id);
+} else if (panoptosubmission_submission_past_due($pansubmissionactivity)) {
+    throw new moodle_exception('assignmentpastdue', 'panoptosubmission', 'course/view.php?id=' . $course->id);
 }
 
 echo $OUTPUT->header();
