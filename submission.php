@@ -25,9 +25,7 @@
 require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
 require_once(dirname(__FILE__).'/locallib.php');
 
-if (!confirm_sesskey()) {
-    throw new moodle_exception('confirmsesskeybad', 'error');
-}
+require_sesskey();
 
 $source = required_param('source', PARAM_URL);
 $customdata = required_param('customdata', PARAM_TEXT);
@@ -60,8 +58,10 @@ $PAGE->set_title(format_string($pansubmissionactivity->name));
 $PAGE->set_heading($course->fullname);
 
 
-if (panoptosubmission_submission_past_due($pansubmissionactivity)) {
+if (panoptosubmission_submission_past_cutoff($pansubmissionactivity)) {
     throw new moodle_exception('assignmentexpired', 'panoptosubmission', 'course/view.php?id=' . $course->id);
+} else if (panoptosubmission_submission_past_due($pansubmissionactivity)) {
+    throw new moodle_exception('assignmentpastdue', 'panoptosubmission', 'course/view.php?id=' . $course->id);
 }
 
 echo $OUTPUT->header();

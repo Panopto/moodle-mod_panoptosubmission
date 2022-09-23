@@ -51,6 +51,16 @@ function panoptosubmission_submission_past_due($targetactivity) {
 }
 
 /**
+ * Check if the assignment submission cut off has passed
+ *
+ * @param object $targetactivity - Instance of a Panopto Student Submission activity
+ * @return bool - true if past cut off, otherwise false
+ */
+function panoptosubmission_submission_past_cutoff($targetactivity) {
+    return (0 != $targetactivity->cutofftime) && (time() > $targetactivity->cutofftime);
+}
+
+/**
  * Check if the assignment submission start date is set and if it has arrived yet.
  *
  * @param object $targetactivity - Instance of a Panopto Student Submission activity

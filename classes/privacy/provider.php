@@ -399,6 +399,7 @@ class provider implements \core_privacy\local\metadata\provider,
                        "a.grade, " .
                        "a.timedue, " .
                        "a.timeavailable, " .
+                       "a.cutofftime, " .
                        "a.timemodified " .
                   "FROM {panoptosubmission} a " .
                   "JOIN {course_modules} cm ON a.id = cm.instance " .
@@ -429,6 +430,10 @@ class provider implements \core_privacy\local\metadata\provider,
 
         if ($panoptosubmissiondata->timedue != 0) {
             $panoptosubmission->timedue = transform::datetime($panoptosubmissiondata->timedue);
+        }
+
+        if ($panoptosubmissiondata->cutofftime != 0) {
+            $panoptosubmission->cutofftime = transform::datetime($panoptosubmissiondata->cutofftime);
         }
 
         return $panoptosubmission;

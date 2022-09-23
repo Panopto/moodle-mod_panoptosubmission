@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2022090709;
+$plugin->version = 2022090714;
 
 // Requires this Moodle version - 2.7.
 $plugin->requires  = 2014051202;
@@ -32,5 +32,6 @@ $plugin->cron = 0;
 $plugin->component = 'mod_panoptosubmission';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->dependencies = array(
-    'block_panopto' => ANY_VERSION
+    'block_panopto' => ANY_VERSION,
+    'mod_lti' => ANY_VERSION
 );
