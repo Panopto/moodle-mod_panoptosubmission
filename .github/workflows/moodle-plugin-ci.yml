@@ -1,6 +1,13 @@
 name: Moodle Plugin CI
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - 'node_modules/**'
+  pull_request:
+    paths-ignore:
+      - 'node_modules/**'
+
 
 jobs:
   test:
