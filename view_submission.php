@@ -26,10 +26,7 @@
  * This page creates an lti request and echos the content from the response. Used to view submissions and other Panopto content.
  */
 function init_panoptosubmission_view() {
-    global $CFG;
-    if (empty($CFG)) {
-        require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-    }
+    require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
     require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
     require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
     require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
@@ -45,8 +42,8 @@ function init_panoptosubmission_view() {
 
     if (empty($resourcelinkid)) {
         $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
-        $resourcelinkid = sha1($ltiviewerurl->out(false) . 
-            '&' . $courseid . 
+        $resourcelinkid = sha1($ltiviewerurl->out(false) .
+            '&' . $courseid .
             '&' . $course->timecreated
         );
     }
