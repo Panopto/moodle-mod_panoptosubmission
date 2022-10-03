@@ -90,10 +90,9 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
             }
         };
 
-        if(typeof window.CustomEvent === 'function') {
+        if (typeof window.CustomEvent === 'function') {
             sessionSelectedEvent = new CustomEvent('sessionSelected', detailObject);
-        }
-        else {
+        } else {
             // ie >= 9
             sessionSelectedEvent = document.createEvent('CustomEvent');
             sessionSelectedEvent.initCustomEvent('sessionSelected', false, false, detailObject);
