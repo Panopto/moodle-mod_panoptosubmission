@@ -26,11 +26,9 @@
  * This page creates an lti request and echos the content from the response. Used to view submissions and other Panopto content.
  */
 function init_panoptosubmission_view() {
-    global $CFG;
-    if (empty($CFG)) {
-        require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-    }
+    require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
     require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
+    require_once(dirname(__FILE__). '/locallib.php');
     require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
     require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
 
@@ -45,20 +43,25 @@ function init_panoptosubmission_view() {
 
     if (empty($resourcelinkid)) {
         $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
-        $resourcelinkid = sha1($ltiviewerurl->out(false) . 
-            '&' . $courseid . 
+        $resourcelinkid = sha1($ltiviewerurl->out(false) .
+            '&' . $courseid .
             '&' . $course->timecreated
         );
     }
 
     require_login($course);
 
-    // Get a matching LTI tool for the course.
-    $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
+    // Provision the course if we can.
+    if (panoptosubmission_verify_panopto($courseid)) {
+        // Get a matching LTI tool for the course.
+        $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
 
-    // If no lti tool exists then we can not continue.
-    if (is_null($toolid)) {
-        throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
+        if (is_null($toolid)) {
+            throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
+            return;
+        }
+    } else {
+        // If we were unable to provision the course, we cannot continue.
         return;
     }
 

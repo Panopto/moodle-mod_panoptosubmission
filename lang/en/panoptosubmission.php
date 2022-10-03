@@ -127,6 +127,7 @@ $string['useremail'] = 'Email';
 $string['grade_out_of'] = 'Grade out of {$a}: ';
 $string['quickgrade_help'] = 'If enabled, multiple assignments can be graded at the same time. Update grades and feedback and then click "Save all feedback".';
 $string['no_existing_lti_tools'] = 'A preconfigured Panopto LTI tool with the custom parameter "panopto_student_submission_tool" must exist to be able to use the Panopto Student Submission activity. Please see setup documentation for more information.';
+$string['no_automatic_operation_target_server'] = 'Please set Automatic Operation Target Server in the settings, so course can be provisioned.';
 $string['privacy:metadata:emailteachersexplanation'] = 'Messages are sent to teachers through the messaging system.';
 $string['privacy:metadata:panoptosubmission_submission'] = 'Panopto Student Submission submissions';
 $string['privacy:metadata:panoptosubmission_submission:userid'] = 'Moodle user id';

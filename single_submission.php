@@ -218,7 +218,7 @@ if ($submissionform->is_cancelled()) {
             if (!empty($gradinginfo->outcomes)) {
                 foreach ($gradinginfo->outcomes as $n => $old) {
                     $name = 'outcome_'.$n;
-                    if (isset($submitteddata->{$name}[$userid]) and
+                    if (isset($submitteddata->{$name}[$userid]) &&
                         $old->grades[$userid]->grade != $submitteddata->{$name}[$userid]) {
 
                         $data[$n] = $submitteddata->{$name}[$userid];
@@ -231,11 +231,9 @@ if ($submissionform->is_cancelled()) {
                     $course->id, 'mod', 'panoptosubmission', $pansubmissionactivity->id, $userid, $data);
             }
         }
-
     }
 
     redirect($previousurl);
-
 }
 
 echo $OUTPUT->header();
