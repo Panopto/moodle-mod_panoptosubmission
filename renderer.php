@@ -929,7 +929,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $table = new submissions_table('panopto_submit_table', $cm, $currentgrades, $quickgrade, $tifirst, $tilast, $page);
 
-        // If Moodle version is less than 3.11.0 use user_picture, otherwise use core_user api
+        // If Moodle version is less than 3.11.0 use user_picture, otherwise use core_user api.
         $userfields = $CFG->version < 2021051700
             ? user_picture::fields('u')
             : \core_user\fields::for_userpic()->get_sql('u', false, '', '', false)->selects;
@@ -1109,7 +1109,8 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         if (!is_null($submission) && !empty($submission->source)) {
             $contenturl = new moodle_url($submission->source);
-            $ltiviewerparams['resourcelinkid'] = sha1($submission->source . '&' . $courseid . '&' . $submission->id . '&' . $submission->timemodified);
+            $ltiviewerparams['resourcelinkid'] =
+                sha1($submission->source . '&' . $courseid . '&' . $submission->id . '&' . $submission->timemodified);
             $ltiviewerparams['custom'] = $submission->customdata;
             $ltiviewerparams['contenturl'] = $contenturl->out(false);
         } else {
@@ -1271,12 +1272,12 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $grade = $item->grades[$USER->id];
 
         // Hidden or error.
-        if ($grade->hidden or $grade->grade === false) {
+        if ($grade->hidden || $grade->grade === false) {
             return;
         }
 
         // Nothing to show yet.
-        if ($grade->grade === null and empty($grade->str_feedback)) {
+        if ($grade->grade === null && empty($grade->str_feedback)) {
             return;
         }
 
