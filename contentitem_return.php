@@ -43,23 +43,29 @@ if (!is_object($contentitems) && !is_array($contentitems)) {
     $errors[] = 'invalidjson';
 }
 
+// Get and validate frame and thumbnail sizes.
 $framewidth = 720;
-if (!empty($contentitems->{'@graph'}[0]->placementAdvice->displayWidth)) {
-    $framewidth = $contentitems->{'@graph'}[0]->placementAdvice->displayWidth;
+$fwidth = $contentitems->{'@graph'}[0]->placementAdvice->displayWidth;
+if (!empty($fwidth)) {
+    $framewidth = is_numeric($fwidth) ? $fwidth : $framewidth;
 }
+
 $frameheight = 480;
-if (!empty($contentitems->{'@graph'}[0]->placementAdvice->displayHeight)) {
-    $frameheight = $contentitems->{'@graph'}[0]->placementAdvice->displayHeight;
+$fheight = $contentitems->{'@graph'}[0]->placementAdvice->displayHeight;
+if (!empty($fheight)) {
+    $frameheight = is_numeric($fheight) ? $fheight : $frameheight;
 }
 
 $thumbnailwidth = 128;
-if (!empty($contentitems->{'@graph'}[0]->thumbnail->width)) {
-    $thumbnailwidth = $contentitems->{'@graph'}[0]->thumbnail->width;
+$twidth = $contentitems->{'@graph'}[0]->thumbnail->width;
+if (!empty($twidth)) {
+    $thumbnailwidth = is_numeric($twidth) ? $twidth : $thumbnailwidth;
 }
 
 $thumbnailheight = 72;
-if (!empty($contentitems->{'@graph'}[0]->thumbnail->height)) {
-    $thumbnailheight = $contentitems->{'@graph'}[0]->thumbnail->height;
+$theight = $contentitems->{'@graph'}[0]->thumbnail->height;
+if (!empty($theight)) {
+    $thumbnailheight = is_numeric($theight) ? $theight : $thumbnailheight;
 }
 
 $customdata = $contentitems->{'@graph'}[0]->custom;
@@ -90,10 +96,9 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
             }
         };
 
-        if(typeof window.CustomEvent === 'function') {
+        if (typeof window.CustomEvent === 'function') {
             sessionSelectedEvent = new CustomEvent('sessionSelected', detailObject);
-        }
-        else {
+        } else {
             // ie >= 9
             sessionSelectedEvent = document.createEvent('CustomEvent');
             sessionSelectedEvent.initCustomEvent('sessionSelected', false, false, detailObject);
