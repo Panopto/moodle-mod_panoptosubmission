@@ -68,6 +68,12 @@ if (!empty($theight)) {
     $thumbnailheight = is_numeric($theight) ? $theight : $thumbnailheight;
 }
 
+$itemtitle = $contentitems->{'@graph'}[0]->title;
+$title = is_string($itemtitle) ? $itemtitle : "";
+
+$url = $contentitems->{'@graph'}[0]->url;
+$contenturl = filter_var($url, FILTER_VALIDATE_URL) ? $url : "";
+
 $customdata = $contentitems->{'@graph'}[0]->custom;
 
 // In this version of Moodle LTI contentitem request we do not want the interactive viewer.
@@ -84,9 +90,9 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
         var sessionSelectedEvent;
         var detailObject = {
             'detail': {
-                'title': "<?php echo $contentitems->{'@graph'}[0]->title ?>",
+                'title': "<?php echo $title ?>",
                 'ltiViewerUrl': "<?php echo $ltiviewerurl->out(false) ?>",
-                'contentUrl': "<?php echo $contentitems->{'@graph'}[0]->url ?>",
+                'contentUrl': "<?php echo $contenturl ?>",
                 'customData': "<?php echo urlencode(json_encode($customdata)) ?>",
                 'width': <?php echo $framewidth ?>,
                 'height': <?php echo $frameheight ?>,
