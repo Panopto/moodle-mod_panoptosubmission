@@ -25,7 +25,7 @@
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
-
+require_once($CFG->dirroot . '/blocks/panopto/lib/block_panopto_lib.php');
 
 $courseid = required_param('course', PARAM_INT);
 $contentitemsraw = required_param('content_items', PARAM_RAW_TRIMMED);
@@ -68,11 +68,23 @@ if (!empty($theight)) {
     $thumbnailheight = is_numeric($theight) ? $theight : $thumbnailheight;
 }
 
+$title = "";
 $itemtitle = $contentitems->{'@graph'}[0]->title;
-$title = is_string($itemtitle) ? $itemtitle : "";
+if (!empty($itemtitle)) {
+    $invalid_characters = array("$", "%", "#", "<", ">");
+    $cleantitle = str_replace($invalid_characters, "", $itemtitle);
+    $title = is_string($cleantitle) ? $cleantitle : $title;
+}
 
-$url = $contentitems->{'@graph'}[0]->url;
-$contenturl = filter_var($url, FILTER_VALIDATE_URL) ? $url : "";
+$url = "";
+$contenturl = $contentitems->{'@graph'}[0]->url;
+if (!empty($contenturl)) {
+    $targetserver = panopto_get_target_panopto_server();
+    $baseurl = parse_url($contenturl, PHP_URL_HOST);
+    if (strcmp($targetserver->name, $baseurl) === 0) {
+        $url = $contenturl;
+    }
+}
 
 $customdata = $contentitems->{'@graph'}[0]->custom;
 
@@ -92,7 +104,7 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
             'detail': {
                 'title': "<?php echo $title ?>",
                 'ltiViewerUrl': "<?php echo $ltiviewerurl->out(false) ?>",
-                'contentUrl': "<?php echo $contenturl ?>",
+                'contentUrl': "<?php echo $url ?>",
                 'customData': "<?php echo urlencode(json_encode($customdata)) ?>",
                 'width': <?php echo $framewidth ?>,
                 'height': <?php echo $frameheight ?>,
