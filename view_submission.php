@@ -22,68 +22,61 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/**
- * This page creates an lti request and echos the content from the response. Used to view submissions and other Panopto content.
- */
-function init_panoptosubmission_view() {
-    require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-    require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
-    require_once(dirname(__FILE__). '/locallib.php');
-    require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
-    require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
+require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
+require_once(dirname(__FILE__). '/locallib.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
 
-    $courseid  = required_param('course', PARAM_INT);
-    $contenturl = urldecode(optional_param('contenturl', '', PARAM_URL));
-    $customdata = urldecode(optional_param('custom', '', PARAM_RAW_TRIMMED));
-    $resourcelinkid = optional_param('resourcelinkid', '', PARAM_RAW_TRIMMED);
+$courseid       = required_param('course', PARAM_INT);
+$contenturl     = urldecode(optional_param('contenturl', '', PARAM_URL));
+$customdata     = urldecode(optional_param('custom', '', PARAM_RAW_TRIMMED));
+$resourcelinkid = optional_param('resourcelinkid', '', PARAM_RAW_TRIMMED);
 
-    $course = get_course($courseid);
+$course = get_course($courseid);
 
-    $context = context_course::instance($courseid);
+$context = context_course::instance($courseid);
 
-    if (empty($resourcelinkid)) {
-        $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
-        $resourcelinkid = sha1($ltiviewerurl->out(false) .
-            '&' . $courseid .
-            '&' . $course->timecreated
-        );
-    }
-
-    require_login($course);
-
-    // Provision the course if we can.
-    if (panoptosubmission_verify_panopto($courseid)) {
-        // Get a matching LTI tool for the course.
-        $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
-
-        if (is_null($toolid)) {
-            throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
-            return;
-        }
-    } else {
-        // If we were unable to provision the course, we cannot continue.
-        return;
-    }
-
-    $lti = new stdClass();
-
-    // Give it some random id, this is not used in the code but will create a PHP notice if not provided.
-    $lti->id = $resourcelinkid;
-    $lti->typeid = $toolid;
-    $lti->launchcontainer = LTI_LAUNCH_CONTAINER_WINDOW;
-    $lti->toolurl = $contenturl;
-    $lti->custom = new stdClass();
-    $lti->instructorcustomparameters = [];
-    $lti->debuglaunch = false;
-    if ($customdata) {
-        $decoded = json_decode($customdata, true);
-
-        foreach ($decoded as $key => $value) {
-            $lti->custom->$key = $value;
-        }
-    }
-
-    echo \panoptosubmission_lti_utility::launch_tool($lti);
+if (empty($resourcelinkid)) {
+    $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
+    $resourcelinkid = sha1($ltiviewerurl->out(false) .
+        '&' . $courseid .
+        '&' . $course->timecreated
+    );
 }
 
-init_panoptosubmission_view();
+require_login($course);
+
+// Provision the course if we can.
+if (panoptosubmission_verify_panopto($courseid)) {
+    // Get a matching LTI tool for the course.
+    $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
+
+    if (is_null($toolid)) {
+        throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
+        return;
+    }
+} else {
+    // If we were unable to provision the course, we cannot continue.
+    return;
+}
+
+$lti = new stdClass();
+
+// Give it some random id, this is not used in the code but will create a PHP notice if not provided.
+$lti->id = $resourcelinkid;
+$lti->typeid = $toolid;
+$lti->launchcontainer = LTI_LAUNCH_CONTAINER_WINDOW;
+$lti->toolurl = $contenturl;
+$lti->custom = new stdClass();
+$lti->instructorcustomparameters = [];
+$lti->debuglaunch = false;
+if ($customdata) {
+    $decoded = json_decode($customdata, true);
+
+    foreach ($decoded as $key => $value) {
+        $lti->custom->$key = $value;
+    }
+}
+
+echo \panoptosubmission_lti_utility::launch_tool($lti);

@@ -444,22 +444,22 @@ function panoptosubmission_verify_panopto($courseid) {
     }
 
     try {
-            $targetserver = panopto_get_target_panopto_server();
-            $panopto = new \panopto_data($courseid);
+        $targetserver = panopto_get_target_panopto_server();
+        $panopto = new \panopto_data($courseid);
 
-            if (!$panopto->has_valid_panopto()) {
-                $panopto->servername = $targetserver->name;
-                $panopto->applicationkey = $targetserver->appkey;
-                $provisioninginfo = $panopto->get_provisioning_info();
+        if (!$panopto->has_valid_panopto()) {
+            $panopto->servername = $targetserver->name;
+            $panopto->applicationkey = $targetserver->appkey;
+            $provisioninginfo = $panopto->get_provisioning_info();
 
-                if (   (isset($provisioninginfo->unknownerror) && $provisioninginfo->unknownerror === true)
-                    || (isset($provisioninginfo->accesserror) && $provisioninginfo->accesserror === true)) {
-                    return false;
-                }
-
-                $panopto->provision_course($provisioninginfo, false);
+            if (   (isset($provisioninginfo->unknownerror) && $provisioninginfo->unknownerror === true)
+                || (isset($provisioninginfo->accesserror) && $provisioninginfo->accesserror === true)) {
+                return false;
             }
-            return true;
+
+            $panopto->provision_course($provisioninginfo, false);
+        }
+        return true;
     } catch (Exception $e) {
         \panopto_data::print_log($e->getMessage());
         return false;
