@@ -134,16 +134,45 @@ class panoptosubmission_lti_utility {
             $typeconfig['organizationid'] = $urlparts['host'];
         }
 
+        // Setup LTI 1.3 specific parameters.
+        $lti1p3params = new \stdClass();
+        $ltiversion1p3 = defined('LTI_VERSION_1P3') && ($ltiversion === LTI_VERSION_1P3);
+
         if (isset($tool->toolproxyid)) {
             $toolproxy = lti_get_tool_proxy($tool->toolproxyid);
             $key = $toolproxy->guid;
             $secret = $toolproxy->secret;
+
+            if ($ltiversion1p3) {
+                if (!empty($toolproxy->public_keyset_url)) {
+                    $lti1p3params->lti_publickeyset = $toolproxy->public_keyset_url;
+                }
+                $lti1p3params->lti_keytype = LTI_JWK_KEYSET;
+            
+                if (!empty($toolproxy->launch_url)) {
+                    $lti1p3params->lti_initiatelogin = $toolproxy->launch_url;
+                }
+                if (!empty($toolproxy->redirection_uris)) {
+                    $lti1p3params->lti_redirectionuris = $toolproxy->redirection_uris;
+                }
+            }
         } else {
             $toolproxy = null;
             if (!empty($instance->resourcekey)) {
                 $key = $instance->resourcekey;
-            } else if (defined('LTI_VERSION_1P3') && ($ltiversion === LTI_VERSION_1P3)) {
+            } else if ($ltiversion1p3) {
                 $key = $tool->clientid;
+                if (!empty($instance->public_keyset_url)) {
+                    $lti1p3params->lti_publickeyset = $instance->public_keyset_url;
+                }
+                $lti1p3params->lti_keytype = LTI_JWK_KEYSET;
+            
+                if (!empty($instance->launch_url)) {
+                    $lti1p3params->lti_initiatelogin = $instance->launch_url;
+                }
+                if (!empty($instance->redirection_uris)) {
+                    $lti1p3params->lti_redirectionuris = $instance->redirection_uris;
+                }
             } else if (!empty($typeconfig['resourcekey'])) {
                 $key = $typeconfig['resourcekey'];
             } else {
@@ -213,7 +242,7 @@ class panoptosubmission_lti_utility {
         if (isset($typeconfig['customparameters'])) {
             $customstr = $typeconfig['customparameters'];
         }
-        $requestparams = array_merge($requestparams, lti_build_custom_parameters(
+        $requestparams = array_merge($requestparams, (array)$lti1p3params, lti_build_custom_parameters(
             $toolproxy,
             $tool,
             $instance,
@@ -281,7 +310,7 @@ class panoptosubmission_lti_utility {
             }
         }
 
-        if ((!empty($key) && !empty($secret)) || (defined('LTI_VERSION_1P3') && $ltiversion === LTI_VERSION_1P3)) {
+        if ((!empty($key) && !empty($secret)) || $ltiversion1p3) {
 
             // Lti_sign_jwt was not added until 3.7 so we need to support the original style of processing this.
             if (defined('LTI_VERSION_1P3') && function_exists('lti_sign_jwt')) {
