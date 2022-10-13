@@ -767,9 +767,9 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
     /**
      * This function returns HTML markup to render a the submissions table
      * @param object $cm A course module object.
-     * @param int $groupfilter The group id to filter against.
-     * @param string $filter Filter users who have submitted, submitted and graded or everyone.
      * @param int $perpage The number of submissions to display on a page.
+     * @param int $groupfilter The group id to filter against.
+     * @param string $filter Filter users who have submitted, submitted and graded or everyone.     *
      * @param bool $quickgrade True if quick grading was enabled
      * @param string $tifirst The first initial of the first name.
      * @param string $tilast The first initial of the last name.
@@ -777,7 +777,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
      * @return string Returns HTML markup.
      */
     public function display_submissions_table(
-        $cm, $groupfilter = 0, $filter = 'all', $perpage, $quickgrade = false, $tifirst = '', $tilast = '', $page = 0) {
+        $cm, $perpage, $groupfilter = 0, $filter = 'all', $quickgrade = false, $tifirst = '', $tilast = '', $page = 0) {
 
         global $DB, $COURSE, $USER, $CFG;
 
@@ -929,7 +929,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $table = new panoptosubmission_submissions_table('panopto_submit_table', $cm, $currentgrades, $quickgrade, $tifirst, $tilast, $page);
 
-        // If Moodle version is less than 3.11.0 use user_picture, otherwise use core_user api
+        // If Moodle version is less than 3.11.0 use user_picture, otherwise use core_user api.
         $userfields = $CFG->version < 2021051700
             ? user_picture::fields('u')
             : \core_user\fields::for_userpic()->get_sql('u', false, '', '', false)->selects;
@@ -1109,7 +1109,8 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         if (!is_null($submission) && !empty($submission->source)) {
             $contenturl = new moodle_url($submission->source);
-            $ltiviewerparams['resourcelinkid'] = sha1($submission->source . '&' . $courseid . '&' . $submission->id . '&' . $submission->timemodified);
+            $ltiviewerparams['resourcelinkid'] =
+                sha1($submission->source . '&' . $courseid . '&' . $submission->id . '&' . $submission->timemodified);
             $ltiviewerparams['custom'] = $submission->customdata;
             $ltiviewerparams['contenturl'] = $contenturl->out(false);
         } else {
@@ -1271,12 +1272,12 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $grade = $item->grades[$USER->id];
 
         // Hidden or error.
-        if ($grade->hidden or $grade->grade === false) {
+        if ($grade->hidden || $grade->grade === false) {
             return;
         }
 
         // Nothing to show yet.
-        if ($grade->grade === null and empty($grade->str_feedback)) {
+        if ($grade->grade === null && empty($grade->str_feedback)) {
             return;
         }
 
