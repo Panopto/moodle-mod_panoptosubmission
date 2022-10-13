@@ -25,7 +25,7 @@
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
-require_once($CFG->dirroot . '/blocks/panopto/lib/block_panopto_lib.php');
+require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
 
 $courseid = required_param('course', PARAM_INT);
 $contentitemsraw = required_param('content_items', PARAM_RAW_TRIMMED);
@@ -79,9 +79,9 @@ if (!empty($itemtitle)) {
 $url = "";
 $contenturl = $contentitems->{'@graph'}[0]->url;
 if (!empty($contenturl)) {
-    $targetserver = panopto_get_target_panopto_server();
+    $panoptodata = new \panopto_data($courseid);
     $baseurl = parse_url($contenturl, PHP_URL_HOST);
-    if (strcmp($targetserver->name, $baseurl) === 0) {
+    if (strcmp($panoptodata->servername, $baseurl) === 0) {
         $url = $contenturl;
     }
 }
