@@ -71,8 +71,8 @@ if (!empty($theight)) {
 $title = "";
 $itemtitle = $contentitems->{'@graph'}[0]->title;
 if (!empty($itemtitle)) {
-    $invalid_characters = array("$", "%", "#", "<", ">");
-    $cleantitle = str_replace($invalid_characters, "", $itemtitle);
+    $invalidcharacters = array("$", "%", "#", "<", ">");
+    $cleantitle = str_replace($invalidcharacters, "", $itemtitle);
     $title = is_string($cleantitle) ? $cleantitle : $title;
 }
 
