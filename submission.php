@@ -144,7 +144,6 @@ if ($submission) {
     } else {
         notice(get_string('failedtoinsertsubmission', 'panoptosubmission'), $url, $course);
     }
-
 }
 
 $context = $PAGE->context;
