@@ -249,6 +249,7 @@ class submissions_table extends table_sql {
                     'id' => 'panoptogradeinputbox',
                     'class' => 'panopto-grade-input-box',
                     'type' => 'number',
+                    'step' => 'any',
                     'min' => 0,
                     'max' => $this->cminstance->grade,
                     'name' => 'menu[' . $rowdata->id . ']',
@@ -767,9 +768,9 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
     /**
      * This function returns HTML markup to render a the submissions table
      * @param object $cm A course module object.
-     * @param int $groupfilter The group id to filter against.
-     * @param string $filter Filter users who have submitted, submitted and graded or everyone.
      * @param int $perpage The number of submissions to display on a page.
+     * @param int $groupfilter The group id to filter against.
+     * @param string $filter Filter users who have submitted, submitted and graded or everyone.     *
      * @param bool $quickgrade True if quick grading was enabled
      * @param string $tifirst The first initial of the first name.
      * @param string $tilast The first initial of the last name.
@@ -777,7 +778,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
      * @return string Returns HTML markup.
      */
     public function display_submissions_table(
-        $cm, $groupfilter = 0, $filter = 'all', $perpage, $quickgrade = false, $tifirst = '', $tilast = '', $page = 0) {
+        $cm, $perpage, $groupfilter = 0, $filter = 'all', $quickgrade = false, $tifirst = '', $tilast = '', $page = 0) {
 
         global $DB, $COURSE, $USER, $CFG;
 
