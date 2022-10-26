@@ -44,5 +44,24 @@ function xmldb_panoptosubmission_upgrade($oldversion) {
         // Panopto savepoint reached.
         upgrade_mod_savepoint(true, 2022070704, 'panoptosubmission');
     }
+
+    if ($oldversion < 2022090744) {
+        // Changing type of field grade on table panoptosubmission_submission from int to number.
+        $table = new xmldb_table('panoptosubmission_submission');
+        $field = new xmldb_field('grade', XMLDB_TYPE_NUMBER, '11,2', null, XMLDB_NOTNULL, null, 0, 'thumbnailheight');
+
+        // Launch change of type for field grade.
+        $dbman->change_field_type($table, $field);
+
+        // Changing type of field grade on table panoptosubmission from int to number.
+        $table = new xmldb_table('panoptosubmission');
+        $field = new xmldb_field('grade', XMLDB_TYPE_NUMBER, '10,2', null, XMLDB_NOTNULL, null, 0, 'emailteachers');
+
+        // Launch change of type for field grade.
+        $dbman->change_field_type($table, $field);
+
+        // Panopto savepoint reached.
+        upgrade_mod_savepoint(true, 2022090744, 'panoptosubmission');
+    }
     return true;
 }

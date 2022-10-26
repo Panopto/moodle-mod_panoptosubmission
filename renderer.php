@@ -249,6 +249,7 @@ class submissions_table extends table_sql {
                     'id' => 'panoptogradeinputbox',
                     'class' => 'panopto-grade-input-box',
                     'type' => 'number',
+                    'step' => 'any',
                     'min' => 0,
                     'max' => $this->cminstance->grade,
                     'name' => 'menu[' . $rowdata->id . ']',
