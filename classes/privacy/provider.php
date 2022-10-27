@@ -48,7 +48,9 @@ class provider implements \core_privacy\local\metadata\provider,
         $collection->add_external_location_link(
             'panoptosubmission_submission',
             [
-                'userid' => 'privacy:metadata:panoptosubmission_submission:userid'
+                'userid' => 'privacy:metadata:panoptosubmission_submission:userid',
+                'username' => 'privacy:metadata:panoptosubmission_submission:username',
+                'email' => 'privacy:metadata:panoptosubmission_submission:email'
             ],
             'privacy:metadata:panoptosubmission_submission'
         );
