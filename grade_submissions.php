@@ -98,7 +98,6 @@ if ($data = $prefform->get_data()) {
     if ($data->perpage > 0) {
         set_user_preference('panoptosubmission_perpage', $data->perpage);
     }
-
 }
 
 if (empty($data)) {
@@ -225,7 +224,7 @@ if (!empty($gradedata->mode)) {
 }
 
 $renderer->display_submissions_table(
-    $cm, $data->group_filter, $data->filter, $data->perpage, $data->quickgrade, $tifirst, $tilast, $page
+    $cm, $data->perpage, $data->group_filter, $data->filter, $data->quickgrade, $tifirst, $tilast, $page
 );
 
 $prefform->set_data($data);

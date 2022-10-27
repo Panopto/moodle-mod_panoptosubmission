@@ -66,7 +66,7 @@ class panoptosubmission_singlesubmission_form extends moodleform {
         $mform->addelement('static', 'submittinguser',
             $this->_customdata->submissionuserpic, $this->_customdata->submissionuserinfo);
 
-        $submission     = $this->_customdata->submission;
+        $submission    = $this->_customdata->submission;
         $gradinginfo   = $this->_customdata->grading_info;
 
         if (!empty($submission->source)) {
@@ -109,6 +109,7 @@ class panoptosubmission_singlesubmission_form extends moodleform {
                     'id' => 'panoptogradeinputbox',
                     'class' => 'panopto-grade-input-box',
                     'type' => 'number',
+                    'step' => 'any',
                     'min' => 0,
                     'max' => $this->_customdata->cminstance->grade
                 );
@@ -123,12 +124,12 @@ class panoptosubmission_singlesubmission_form extends moodleform {
                 if (isset($submission->grade)) {
                     $mform->setDefault('xgrade', $this->_customdata->submission->grade);
                 } else {
-                    $mform->setDefault('xgrade', '-1' );
+                    $mform->setDefault('xgrade', '-1');
                 }
             }
         }
 
-        $mform->setType('xgrade', PARAM_INT);
+        $mform->setType('xgrade', PARAM_NUMBER);
 
         if (!empty($this->_customdata->enableoutcomes) && !empty($gradinginfo)) {
 
@@ -182,7 +183,7 @@ class panoptosubmission_singlesubmission_form extends moodleform {
         }
 
         $mform->addElement('static', 'finalgrade', get_string('currentgrade', 'panoptosubmission') . ':', $grade);
-        $mform->setType('finalgrade', PARAM_INT);
+        $mform->setType('finalgrade', PARAM_NUMBER);
         $mform->addElement('static', 'markingteacher',
             $this->_customdata->markingteacherpic, $this->_customdata->markingteacherinfo);
 
