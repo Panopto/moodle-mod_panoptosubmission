@@ -31,7 +31,7 @@ require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosub
 /**
  * Table class for displaying video submissions for grading
  */
-class submissions_table extends table_sql {
+class panoptosubmission_submissions_table extends table_sql {
     /**
      * @var bool $quickgrade Set to true if a quick grade form needs to be rendered.
      */
@@ -249,6 +249,7 @@ class submissions_table extends table_sql {
                     'id' => 'panoptogradeinputbox',
                     'class' => 'panopto-grade-input-box',
                     'type' => 'number',
+                    'step' => 'any',
                     'min' => 0,
                     'max' => $this->cminstance->grade,
                     'name' => 'menu[' . $rowdata->id . ']',
@@ -927,7 +928,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             }
         }
 
-        $table = new submissions_table('panopto_submit_table', $cm, $currentgrades, $quickgrade, $tifirst, $tilast, $page);
+        $table = new panoptosubmission_submissions_table('panopto_submit_table', $cm, $currentgrades, $quickgrade, $tifirst, $tilast, $page);
 
         // If Moodle version is less than 3.11.0 use user_picture, otherwise use core_user api.
         $userfields = $CFG->version < 2021051700

@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 // The current plugin version (Date: YYYYMMDDXX).
-$plugin->version = 2022090722;
+$plugin->version = 2022090746;
 
 // Requires this Moodle version - 2.7.
 $plugin->requires  = 2014051202;
