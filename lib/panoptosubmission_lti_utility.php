@@ -36,7 +36,7 @@ class panoptosubmission_lti_utility {
         $ltitooltypes = $DB->get_records('lti_types', null, 'name');
         $targetservername = $DB->get_field('block_panopto_foldermap', 'panopto_server', array('moodleid' => $courseid));
 
-        $tooltypes = [];
+        $idmatches = [];
         foreach ($ltitooltypes as $type) {
             $type->config = lti_get_config(
                 (object)[
@@ -44,19 +44,30 @@ class panoptosubmission_lti_utility {
                 ]
             );
 
+            $config = lti_get_type_type_config($type->id);
+            $islti1p3 = $config->lti_ltiversion === LTI_VERSION_1P3;
+
             if (!empty($targetservername) && stripos($type->config['toolurl'], $targetservername) !== false &&
                 $type->state == LTI_TOOL_STATE_CONFIGURED) {
                 $currentconfig = lti_get_type_config($type->id);
 
                 if (!empty($currentconfig['customparameters']) &&
                     stripos($currentconfig['customparameters'], 'panopto_student_submission_tool') !== false) {
-                    return $type->id;
+                    // Append matches, so we can filter later.
+                    $idmatches[] = ['id' => $type->id, 'islti1p3' => $islti1p3];
                 }
             }
         }
 
-        return null;
+        foreach ($idmatches as $item) {
+            if ($item['islti1p3'] == 1) {
+                return $item['id'];
+            }
+        }
+
+        return !empty($idmatches[0]['id']) ? $idmatches[0]['id'] : null;
     }
+
     /**
      * Launch an external tool activity.
      *
@@ -135,7 +146,7 @@ class panoptosubmission_lti_utility {
         }
 
         // Setup LTI 1.3 specific parameters.
-        $lti1p3params = new \stdClass();
+        $lti1p3params = new stdClass();
         $ltiversion1p3 = defined('LTI_VERSION_1P3') && ($ltiversion === LTI_VERSION_1P3);
 
         if (isset($tool->toolproxyid)) {
@@ -148,9 +159,9 @@ class panoptosubmission_lti_utility {
                     $lti1p3params->lti_publickeyset = $toolproxy->public_keyset_url;
                 }
                 $lti1p3params->lti_keytype = LTI_JWK_KEYSET;
-            
-                if (!empty($toolproxy->launch_url)) {
-                    $lti1p3params->lti_initiatelogin = $toolproxy->launch_url;
+
+                if (!empty($toolproxy->initiatelogin)) {
+                    $lti1p3params->lti_initiatelogin = $toolproxy->initiatelogin;
                 }
                 if (!empty($toolproxy->redirection_uris)) {
                     $lti1p3params->lti_redirectionuris = $toolproxy->redirection_uris;
@@ -162,16 +173,16 @@ class panoptosubmission_lti_utility {
                 $key = $instance->resourcekey;
             } else if ($ltiversion1p3) {
                 $key = $tool->clientid;
-                if (!empty($instance->public_keyset_url)) {
-                    $lti1p3params->lti_publickeyset = $instance->public_keyset_url;
+                if (!empty($typeconfig['publickeyset'])) {
+                    $lti1p3params->lti_publickeyset = $typeconfig['publickeyset'];
                 }
-                $lti1p3params->lti_keytype = LTI_JWK_KEYSET;
-            
-                if (!empty($instance->launch_url)) {
-                    $lti1p3params->lti_initiatelogin = $instance->launch_url;
+                $lti1p3params->lti_keytype = $typeconfig['keytype'] ?? LTI_JWK_KEYSET;
+
+                if (!empty($typeconfig['initiatelogin'])) {
+                    $lti1p3params->lti_initiatelogin = $typeconfig['initiatelogin'];
                 }
-                if (!empty($instance->redirection_uris)) {
-                    $lti1p3params->lti_redirectionuris = $instance->redirection_uris;
+                if (!empty($typeconfig['redirectionuris'])) {
+                    $lti1p3params->lti_redirectionuris = $typeconfig['redirectionuris'];
                 }
             } else if (!empty($typeconfig['resourcekey'])) {
                 $key = $typeconfig['resourcekey'];

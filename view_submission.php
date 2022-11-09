@@ -79,4 +79,15 @@ if ($customdata) {
     }
 }
 
+// LTI 1.3 login request.
+$config = lti_get_type_type_config($toolid);
+if ($config->lti_ltiversion === LTI_VERSION_1P3) {
+    if (!isset($SESSION->lti_initiatelogin_status)) {
+        echo lti_initiate_login($courseid, "mod_panoptosubmission,'',{$toolid}", $lti, $config);
+        exit;
+    } else {
+        unset($SESSION->lti_initiatelogin_status);
+    }
+}
+
 echo \panoptosubmission_lti_utility::launch_tool($lti);

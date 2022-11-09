@@ -42,6 +42,17 @@ if (is_null($toolid)) {
     return;
 }
 
+// LTI 1.3 login request.
+$config = lti_get_type_type_config($toolid);
+if ($config->lti_ltiversion === LTI_VERSION_1P3) {
+    if (!isset($SESSION->lti_initiatelogin_status)) {
+        echo lti_initiate_login($courseid, "mod_panoptosubmission", null, $config);
+        exit;
+    } else {
+        unset($SESSION->lti_initiatelogin_status);
+    }
+}
+
 // Set the return URL. We send the launch container along to help us avoid
 // frames-within-frames when the user returns.
 $returnurlparams = [
