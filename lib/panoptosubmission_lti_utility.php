@@ -92,7 +92,7 @@ class panoptosubmission_lti_utility {
      * @return array the endpoint URL and parameters (including the signature)
      * @since  Moodle 3.0
      */
-    private static function get_launch_data($instance, $nonce = '') {
+    public static function get_launch_data($instance, $nonce = '') {
         global $PAGE, $CFG, $USER;
 
         if (empty($CFG)) {
