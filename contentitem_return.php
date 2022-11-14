@@ -113,8 +113,8 @@ if (!empty($contenturl)) {
 
 $thumbnailurl = "";
 $thumbnailurlfinal = $islti1p3
-    ? $contentitems->{'@graph'}[0]->thumbnail->id
-    : $contentitems->{'@graph'}[0]->thumbnail->{'@id'};
+    ? $contentitems->{'@graph'}[0]->thumbnail->{'@id'}
+    : $contentitems->{'@graph'}[0]->thumbnail->id;
 if (!empty($thumbnailurlfinal)) {
     $thumbnailurl = is_string($thumbnailurlfinal) ? $thumbnailurlfinal : $thumbnailurl;
 }
