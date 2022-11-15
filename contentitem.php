@@ -26,7 +26,7 @@ require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
 require_once(dirname(__FILE__) . '/locallib.php');
-require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
+require_once($CFG->dirroot . '/blocks/panopto/lib/lti/panoptoblock_lti_utility.php');
 
 $courseid = required_param('courseid', PARAM_INT);
 
@@ -34,7 +34,7 @@ $courseid = required_param('courseid', PARAM_INT);
 $course = get_course($courseid);
 require_login($course);
 
-$toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
+$toolid = \panoptoblock_lti_utility::get_course_tool_id($courseid, 'panopto_student_submission_tool');
 
 // If no lti tool exists then we can not continue.
 if (is_null($toolid)) {

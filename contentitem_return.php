@@ -24,7 +24,7 @@
  */
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
+require_once($CFG->dirroot . '/blocks/panopto/lib/lti/panoptoblock_lti_utility.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
@@ -112,7 +112,7 @@ if (!empty($contenturl)) {
 }
 
 $thumbnailurl = "";
-$thumbnailurlfinal = $islti1p3
+$thumbnailurlfinal = !empty($contentitems->{'@graph'}[0]->thumbnail->id)
     ? $contentitems->{'@graph'}[0]->thumbnail->id
     : $contentitems->{'@graph'}[0]->thumbnail->{'@id'};
 if (!empty($thumbnailurlfinal)) {
