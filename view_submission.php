@@ -23,7 +23,7 @@
  */
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
+require_once($CFG->dirroot . '/blocks/panopto/lib/lti/panoptoblock_lti_utility.php');
 require_once(dirname(__FILE__). '/locallib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
@@ -50,7 +50,7 @@ require_login($course);
 // Provision the course if we can.
 if (panoptosubmission_verify_panopto($courseid)) {
     // Get a matching LTI tool for the course.
-    $toolid = \panoptosubmission_lti_utility::get_course_tool_id($courseid);
+    $toolid = \panoptoblock_lti_utility::get_course_tool_id($courseid, 'panopto_student_submission_tool');
 
     if (is_null($toolid)) {
         throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
@@ -90,4 +90,4 @@ if ($config->lti_ltiversion === LTI_VERSION_1P3) {
     }
 }
 
-echo \panoptosubmission_lti_utility::launch_tool($lti);
+echo \panoptoblock_lti_utility::launch_tool($lti);
