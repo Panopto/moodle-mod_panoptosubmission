@@ -56,7 +56,6 @@ if (!empty($jwt)) {
     $items = optional_param('content_items', '', PARAM_RAW_TRIMMED);
     $errormsg = optional_param('lti_errormsg', '', PARAM_TEXT);
     $msg = optional_param('lti_msg', '', PARAM_TEXT);
-    lti_verify_oauth_signature($id, $consumerkey);
 }
 
 $contentitems = json_decode($items);
