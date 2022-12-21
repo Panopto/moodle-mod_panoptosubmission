@@ -38,10 +38,7 @@ $page    = optional_param('page', 0, PARAM_INT);
 list($cm, $course, $pansubmissionactivity) = panoptosubmission_validate_cmid($id);
 
 require_login($course->id, false, $cm);
-
-if (!confirm_sesskey()) {
-    throw new moodle_exception('confirmsesskeybad', 'error');
-}
+require_sesskey();
 
 global $CFG, $PAGE, $OUTPUT, $USER;
 
@@ -221,7 +218,7 @@ if ($submissionform->is_cancelled()) {
             if (!empty($gradinginfo->outcomes)) {
                 foreach ($gradinginfo->outcomes as $n => $old) {
                     $name = 'outcome_'.$n;
-                    if (isset($submitteddata->{$name}[$userid]) and
+                    if (isset($submitteddata->{$name}[$userid]) &&
                         $old->grades[$userid]->grade != $submitteddata->{$name}[$userid]) {
 
                         $data[$n] = $submitteddata->{$name}[$userid];
@@ -234,11 +231,9 @@ if ($submissionform->is_cancelled()) {
                     $course->id, 'mod', 'panoptosubmission', $pansubmissionactivity->id, $userid, $data);
             }
         }
-
     }
 
     redirect($previousurl);
-
 }
 
 echo $OUTPUT->header();

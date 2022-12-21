@@ -247,7 +247,7 @@ function panoptosubmission_scale_used_anywhere($scaleid) {
     global $DB;
 
     $param = array('grade' => -$scaleid);
-    if ($scaleid and $DB->record_exists('panoptosubmission', $param)) {
+    if ($scaleid && $DB->record_exists('panoptosubmission', $param)) {
         return true;
     } else {
         return false;
@@ -284,8 +284,6 @@ function panoptosubmission_supports($feature) {
             return null;
     }
 }
-
-
 
 /**
  * Lists all gradable areas for the advanced grading methods gramework
@@ -396,7 +394,10 @@ function panoptosubmission_reset_userdata($data) {
 
     // Updating dates - shift may be negative too.
     if ($data->timeshift) {
-        shift_course_mod_dates('panoptosubmission', array('timedue', 'timeavailable'), $data->timeshift, $data->courseid);
+        shift_course_mod_dates('panoptosubmission',
+            array('timedue', 'timeavailable', 'cutofftime'),
+            $data->timeshift, $data->courseid
+        );
         $status[] = array('component' => $componentstr, 'item' => get_string('datechanged'), 'error' => false);
     }
 

@@ -38,9 +38,7 @@ $url = new moodle_url('/mod/panoptosubmission/grade_submissions.php');
 $url->param('cmid', $id);
 
 if (!empty($mode)) {
-    if (!confirm_sesskey()) {
-        throw new moodle_exception('confirmsesskeybad', 'error');
-    }
+    require_sesskey();
 }
 
 list($cm, $course, $pansubmissionactivity) = panoptosubmission_validate_cmid($id);
@@ -100,7 +98,6 @@ if ($data = $prefform->get_data()) {
     if ($data->perpage > 0) {
         set_user_preference('panoptosubmission_perpage', $data->perpage);
     }
-
 }
 
 if (empty($data)) {
@@ -227,7 +224,7 @@ if (!empty($gradedata->mode)) {
 }
 
 $renderer->display_submissions_table(
-    $cm, $data->group_filter, $data->filter, $data->perpage, $data->quickgrade, $tifirst, $tilast, $page
+    $cm, $data->perpage, $data->group_filter, $data->filter, $data->quickgrade, $tifirst, $tilast, $page
 );
 
 $prefform->set_data($data);

@@ -1,24 +1,22 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/panoptosubmission/db" VERSION="20210401" COMMENT="XMLDB file for Moodle Panopto Student Submission module"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
->
+<XMLDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PATH="mod/panoptosubmission/db" VERSION="20220921" COMMENT="XMLDB file for Moodle Panopto Student Submission module"
+xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
   <TABLES>
-    <TABLE NAME="panoptosubmission" COMMENT="Panopto Student Submission instance storage" NEXT="panoptosubmission_submission">
+    <TABLE NAME="panoptosubmission" COMMENT="Panopto Student Submission instance storage">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="course"/>
-        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Course id" PREVIOUS="id" NEXT="name"/>
-        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="course" NEXT="intro"/>
-        <FIELD NAME="intro" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" PREVIOUS="name" NEXT="introformat"/>
-        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="intro" COMMENT="text format of intro field" NEXT="timeavailable"/>
-        <FIELD NAME="timeavailable" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the assignment is available for student submission" PREVIOUS="introformat" NEXT="timedue"/>
-        <FIELD NAME="timedue" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time the assignment submissions are due by" PREVIOUS="timeavailable" NEXT="preventlate"/>
-        <FIELD NAME="preventlate" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Prevent late submissions" PREVIOUS="timedue" NEXT="resubmit"/>
-        <FIELD NAME="resubmit" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Allow for resubmissions" PREVIOUS="preventlate" NEXT="emailteachers"/>
-        <FIELD NAME="emailteachers" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Email submissions to the teacher" PREVIOUS="resubmit" NEXT="grade"/>
-        <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" COMMENT="Maximum grade the assignment is worth" PREVIOUS="emailteachers" NEXT="timecreated"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the assignment was created" PREVIOUS="emailteachers" NEXT="timemodified"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time the assignment settings were modified" PREVIOUS="timecreated"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Course id"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Course name"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Course intro"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Text format of intro field"/>
+        <FIELD NAME="timeavailable" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the assignment is available for student submission"/>
+        <FIELD NAME="timedue" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time the assignment submissions are due by"/>
+        <FIELD NAME="preventlate" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Prevent late submissions"/>
+        <FIELD NAME="resubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Allow for resubmissions"/>
+        <FIELD NAME="emailteachers" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Email submissions to the teacher"/>
+        <FIELD NAME="grade" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" DECIMALS="2" COMMENT="Maximum grade the assignment is worth"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the assignment was created"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time the assignment settings were modified"/>
+        <FIELD NAME="cutofftime" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time the assignment submissions are cut off"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -27,40 +25,36 @@
         <INDEX NAME="panopto_course_idx" UNIQUE="false" FIELDS="course" COMMENT="index on course"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="panoptosubmission_submission" COMMENT="Panopto Student Submission submissions" PREVIOUS="panoptosubmission">
+    <TABLE NAME="panoptosubmission_submission" COMMENT="Panopto Student Submission submissions">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="panactivityid"/>
-        <FIELD NAME="panactivityid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Foreign key to the panoptosubmission table" PREVIOUS="id" NEXT="userid"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Moodle user id" PREVIOUS="panactivityid" NEXT="source"/>
-
-        <FIELD NAME="title" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The title of the session" PREVIOUS="userid" NEXT="source"/>
-
-        <FIELD NAME="source" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The LTI link that opens the submitted content" PREVIOUS="title" NEXT="customdata"/>
-        <FIELD NAME="customdata" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The custom data the LTI link uses to open the session correctly" PREVIOUS="source" NEXT="width"/>
-        <FIELD NAME="width" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Iframe width." PREVIOUS="customdata" NEXT="height"/>
-        <FIELD NAME="height" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Iframe height." PREVIOUS="width" NEXT="thumbnailsource"/>
-
-        <FIELD NAME="thumbnailsource" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The source of the thumbnail preview image" PREVIOUS="height" NEXT="thumbnailwidth"/>
-        <FIELD NAME="thumbnailwidth" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="thumbnail width." PREVIOUS="thumbnailsource" NEXT="thumbnailheight"/>
-        <FIELD NAME="thumbnailheight" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="thumbnail height." PREVIOUS="thumbnailwidth" NEXT="grade"/>
-
-        <FIELD NAME="grade" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" COMMENT="Grade score for the submission" PREVIOUS="height" NEXT="submissioncomment"/>
-        <FIELD NAME="submissioncomment" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="Submission teacher comment" PREVIOUS="grade" NEXT="format"/>
-        <FIELD NAME="format" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="submissioncomment" NEXT="teacher"/>
-        <FIELD NAME="teacher" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Moodle userId of the teacher who marked the submission" PREVIOUS="format" NEXT="mailed"/>
-        <FIELD NAME="mailed" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether the assignment submission notification has been emailed to the teacher." PREVIOUS="teacher" NEXT="timemarked"/>
-        <FIELD NAME="timemarked" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the assignment submission was marked" PREVIOUS="mailed" NEXT="timecreated"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the submission record was created" PREVIOUS="timemarked" NEXT="timemodified"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the assignment submission was modified" PREVIOUS="timecreated"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="panactivityid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Foreign key to the panoptosubmission table"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Moodle user id"/>
+        <FIELD NAME="title" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The title of the session"/>
+        <FIELD NAME="source" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The LTI link that opens the submitted content"/>
+        <FIELD NAME="customdata" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The custom data the LTI link uses to open the session correctly"/>
+        <FIELD NAME="width" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Iframe width."/>
+        <FIELD NAME="height" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Iframe height."/>
+        <FIELD NAME="thumbnailsource" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The source of the thumbnail preview image"/>
+        <FIELD NAME="thumbnailwidth" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Thumbnail width."/>
+        <FIELD NAME="thumbnailheight" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Thumbnail height."/>
+        <FIELD NAME="grade" TYPE="number" LENGTH="11" NOTNULL="true" DEFAULT="0" SEQUENCE="false" DECIMALS="2" COMMENT="Grade score for the submission"/>
+        <FIELD NAME="submissioncomment" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Submission teacher comment"/>
+        <FIELD NAME="format" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="teacher" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Moodle userId of the teacher who marked the submission"/>
+        <FIELD NAME="mailed" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether the assignment submission notification has been emailed to the teacher."/>
+        <FIELD NAME="timemarked" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the assignment submission was marked"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the submission record was created"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the assignment submission was modified"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="panopto_activity_idx" UNIQUE="false" FIELDS="panactivityid" COMMENT="Index on the Panopto Student Submission activity id" NEXT="panopto_userid_idx"/>
-        <INDEX NAME="panopto_userid_idx" UNIQUE="false" FIELDS="userid" COMMENT="Index on the Moodle userid" PREVIOUS="panopto_activity_idx" NEXT="panopto_marked_idx"/>
-        <INDEX NAME="panopto_marked_idx" UNIQUE="false" FIELDS="timemarked" COMMENT="Index on the submission marked field" PREVIOUS="panopto_userid_idx" NEXT="panopto_mailed_idx"/>
-        <INDEX NAME="panopto_mailed_idx" UNIQUE="false" FIELDS="mailed" COMMENT="Index on the mailed field" PREVIOUS="panopto_marked_idx"/>
+        <INDEX NAME="panopto_activity_idx" UNIQUE="false" FIELDS="panactivityid" COMMENT="Index on the Panopto Student Submission activity id"/>
+        <INDEX NAME="panopto_userid_idx" UNIQUE="false" FIELDS="userid" COMMENT="Index on the Moodle userid"/>
+        <INDEX NAME="panopto_marked_idx" UNIQUE="false" FIELDS="timemarked" COMMENT="Index on the submission marked field"/>
+        <INDEX NAME="panopto_mailed_idx" UNIQUE="false" FIELDS="mailed" COMMENT="Index on the mailed field"/>
       </INDEXES>
     </TABLE>
   </TABLES>

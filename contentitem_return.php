@@ -24,17 +24,41 @@
  */
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-require_once(dirname(__FILE__) . '/lib/panoptosubmission_lti_utility.php');
-
+require_once($CFG->dirroot . '/blocks/panopto/lib/lti/panoptoblock_lti_utility.php');
+require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
 
 $courseid = required_param('course', PARAM_INT);
-$contentitemsraw = required_param('content_items', PARAM_RAW_TRIMMED);
+$id       = required_param('id', PARAM_INT);
+$jwt      = optional_param('JWT', '', PARAM_RAW);
 
 require_login($courseid);
 
 $context = context_course::instance($courseid);
 
-$contentitems = json_decode($contentitemsraw);
+$config = lti_get_type_type_config($id);
+$islti1p3 = $config->lti_ltiversion === LTI_VERSION_1P3;
+$items = '';
+
+if (!empty($jwt)) {
+    $params = lti_convert_from_jwt($id, $jwt);
+    $consumerkey = $params['oauth_consumer_key'] ?? '';
+    $messagetype = $params['lti_message_type'] ?? '';
+    $version = $params['lti_version'] ?? '';
+    $items = $params['content_items'] ?? '';
+    $errormsg = $params['lti_errormsg'] ?? '';
+    $msg = $params['lti_msg'] ?? '';
+} else {
+    $consumerkey = required_param('oauth_consumer_key', PARAM_RAW);
+    $messagetype = required_param('lti_message_type', PARAM_TEXT);
+    $version = required_param('lti_version', PARAM_TEXT);
+    $items = optional_param('content_items', '', PARAM_RAW_TRIMMED);
+    $errormsg = optional_param('lti_errormsg', '', PARAM_TEXT);
+    $msg = optional_param('lti_msg', '', PARAM_TEXT);
+}
+
+$contentitems = json_decode($items);
 
 $errors = [];
 
@@ -43,23 +67,55 @@ if (!is_object($contentitems) && !is_array($contentitems)) {
     $errors[] = 'invalidjson';
 }
 
+// Get and validate frame and thumbnail sizes.
 $framewidth = 720;
-if (!empty($contentitems->{'@graph'}[0]->placementAdvice->displayWidth)) {
-    $framewidth = $contentitems->{'@graph'}[0]->placementAdvice->displayWidth;
+$fwidth = $contentitems->{'@graph'}[0]->placementAdvice->displayWidth;
+if (!empty($fwidth)) {
+    $framewidth = is_numeric($fwidth) ? $fwidth : $framewidth;
 }
+
 $frameheight = 480;
-if (!empty($contentitems->{'@graph'}[0]->placementAdvice->displayHeight)) {
-    $frameheight = $contentitems->{'@graph'}[0]->placementAdvice->displayHeight;
+$fheight = $contentitems->{'@graph'}[0]->placementAdvice->displayHeight;
+if (!empty($fheight)) {
+    $frameheight = is_numeric($fheight) ? $fheight : $frameheight;
 }
 
 $thumbnailwidth = 128;
-if (!empty($contentitems->{'@graph'}[0]->thumbnail->width)) {
-    $thumbnailwidth = $contentitems->{'@graph'}[0]->thumbnail->width;
+$twidth = $contentitems->{'@graph'}[0]->thumbnail->width;
+if (!empty($twidth)) {
+    $thumbnailwidth = is_numeric($twidth) ? $twidth : $thumbnailwidth;
 }
 
 $thumbnailheight = 72;
-if (!empty($contentitems->{'@graph'}[0]->thumbnail->height)) {
-    $thumbnailheight = $contentitems->{'@graph'}[0]->thumbnail->height;
+$theight = $contentitems->{'@graph'}[0]->thumbnail->height;
+if (!empty($theight)) {
+    $thumbnailheight = is_numeric($theight) ? $theight : $thumbnailheight;
+}
+
+$title = "";
+$itemtitle = $contentitems->{'@graph'}[0]->title;
+if (!empty($itemtitle)) {
+    $invalidcharacters = array("$", "%", "#", "<", ">");
+    $cleantitle = str_replace($invalidcharacters, "", $itemtitle);
+    $title = is_string($cleantitle) ? $cleantitle : $title;
+}
+
+$url = "";
+$contenturl = $contentitems->{'@graph'}[0]->url;
+if (!empty($contenturl)) {
+    $panoptodata = new \panopto_data($courseid);
+    $baseurl = parse_url($contenturl, PHP_URL_HOST);
+    if (strcmp($panoptodata->servername, $baseurl) === 0) {
+        $url = $contenturl;
+    }
+}
+
+$thumbnailurl = "";
+$thumbnailurlfinal = !empty($contentitems->{'@graph'}[0]->thumbnail->id)
+    ? $contentitems->{'@graph'}[0]->thumbnail->id
+    : $contentitems->{'@graph'}[0]->thumbnail->{'@id'};
+if (!empty($thumbnailurlfinal)) {
+    $thumbnailurl = is_string($thumbnailurlfinal) ? $thumbnailurlfinal : $thumbnailurl;
 }
 
 $customdata = $contentitems->{'@graph'}[0]->custom;
@@ -78,22 +134,21 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
         var sessionSelectedEvent;
         var detailObject = {
             'detail': {
-                'title': "<?php echo $contentitems->{'@graph'}[0]->title ?>",
+                'title': "<?php echo $title ?>",
                 'ltiViewerUrl': "<?php echo $ltiviewerurl->out(false) ?>",
-                'contentUrl': "<?php echo $contentitems->{'@graph'}[0]->url ?>",
+                'contentUrl': "<?php echo $url ?>",
                 'customData': "<?php echo urlencode(json_encode($customdata)) ?>",
                 'width': <?php echo $framewidth ?>,
                 'height': <?php echo $frameheight ?>,
-                'thumbnailUrl': "<?php echo $contentitems->{'@graph'}[0]->thumbnail->id ?>",
+                'thumbnailUrl': "<?php echo $thumbnailurlfinal ?>",
                 'thumbnailWidth': <?php echo $thumbnailwidth ?>,
                 'thumbnailHeight': <?php echo $thumbnailheight ?>,
             }
         };
 
-        if(typeof window.CustomEvent === 'function') {
+        if (typeof window.CustomEvent === 'function') {
             sessionSelectedEvent = new CustomEvent('sessionSelected', detailObject);
-        }
-        else {
+        } else {
             // ie >= 9
             sessionSelectedEvent = document.createEvent('CustomEvent');
             sessionSelectedEvent.initCustomEvent('sessionSelected', false, false, detailObject);

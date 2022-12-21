@@ -45,6 +45,16 @@ class provider implements \core_privacy\local\metadata\provider,
      */
     public static function get_metadata(collection $collection) : collection {
 
+        $collection->add_external_location_link(
+            'panoptosubmission_submission',
+            [
+                'userid' => 'privacy:metadata:panoptosubmission_submission:userid',
+                'username' => 'privacy:metadata:panoptosubmission_submission:username',
+                'email' => 'privacy:metadata:panoptosubmission_submission:email'
+            ],
+            'privacy:metadata:panoptosubmission_submission'
+        );
+
         $collection->add_subsystem_link('core_message', [], 'privacy:metadata:emailteachersexplanation');
 
         $collection->add_database_table(
@@ -64,7 +74,8 @@ class provider implements \core_privacy\local\metadata\provider,
         );
 
         $collection->add_user_preference('panoptosubmission_filter',
-            'privacy:metadata:panoptosubmissionfilter');
+            'privacy:metadata:panoptosubmissionfilter'
+        );
         $collection->add_user_preference('panoptosubmission_group_filter',
             'privacy:metadata:panoptosubmissiongroupfilter'
         );
@@ -399,6 +410,7 @@ class provider implements \core_privacy\local\metadata\provider,
                        "a.grade, " .
                        "a.timedue, " .
                        "a.timeavailable, " .
+                       "a.cutofftime, " .
                        "a.timemodified " .
                   "FROM {panoptosubmission} a " .
                   "JOIN {course_modules} cm ON a.id = cm.instance " .
@@ -429,6 +441,10 @@ class provider implements \core_privacy\local\metadata\provider,
 
         if ($panoptosubmissiondata->timedue != 0) {
             $panoptosubmission->timedue = transform::datetime($panoptosubmissiondata->timedue);
+        }
+
+        if ($panoptosubmissiondata->cutofftime != 0) {
+            $panoptosubmission->cutofftime = transform::datetime($panoptosubmissiondata->cutofftime);
         }
 
         return $panoptosubmission;

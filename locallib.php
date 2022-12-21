@@ -31,6 +31,7 @@ define('PANOPTOSUBMISSION_SUBMITTED', 2);
 require_once($CFG->libdir . '/gradelib.php');
 require_once($CFG->dirroot . '/grade/grading/lib.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
+require_once($CFG->dirroot . '/blocks/panopto/lib/block_panopto_lib.php');
 
 /**
  * Check if the assignment submission end date has passed or if late submissions
@@ -47,6 +48,16 @@ function panoptosubmission_submission_past_due($targetactivity) {
     }
 
     return $pastdue;
+}
+
+/**
+ * Check if the assignment submission cut off has passed
+ *
+ * @param object $targetactivity - Instance of a Panopto Student Submission activity
+ * @return bool - true if past cut off, otherwise false
+ */
+function panoptosubmission_submission_past_cutoff($targetactivity) {
+    return (0 != $targetactivity->cutofftime) && (time() > $targetactivity->cutofftime);
 }
 
 /**
@@ -417,4 +428,40 @@ function panoptosubmission_get_grading_instance($cminstance, $context, $submissi
         $gradinginstance->get_controller()->set_grade_range($grademenu, $allowgradedecimals);
     }
     return $gradinginstance;
+}
+
+/**
+ * Provision the course if not provisioned already.
+ *
+ * @param int $courseid - the id of the course we are targetting in moodle.
+ * @return bool if success or failure
+ */
+function panoptosubmission_verify_panopto($courseid) {
+    $targetautoservername = get_config('block_panopto', 'automatic_operation_target_server');
+    if (empty($targetautoservername)) {
+        throw new moodle_exception('no_automatic_operation_target_server', 'panoptosubmission');
+        return false;
+    }
+
+    try {
+        $targetserver = panopto_get_target_panopto_server();
+        $panopto = new \panopto_data($courseid);
+
+        if (!$panopto->has_valid_panopto()) {
+            $panopto->servername = $targetserver->name;
+            $panopto->applicationkey = $targetserver->appkey;
+            $provisioninginfo = $panopto->get_provisioning_info();
+
+            if (   (isset($provisioninginfo->unknownerror) && $provisioninginfo->unknownerror === true)
+                || (isset($provisioninginfo->accesserror) && $provisioninginfo->accesserror === true)) {
+                return false;
+            }
+
+            $panopto->provision_course($provisioninginfo, false);
+        }
+        return true;
+    } catch (Exception $e) {
+        \panopto_data::print_log($e->getMessage());
+        return false;
+    }
 }

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * contains the version information for the Panopto Student Submission mod
+ * Contains the version information for the Panopto Student Submission mod
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
@@ -24,13 +24,23 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2022090700;
+// The current plugin version (Date: YYYYMMDDXX).
+$plugin->version = 2022122000;
 
 // Requires this Moodle version - 2.7.
 $plugin->requires  = 2014051202;
+
+// Never run cron for this plugin.
 $plugin->cron = 0;
+
+// Full name of the plugin (used for diagnostics).
 $plugin->component = 'mod_panoptosubmission';
+
+// This is considered as ready for production sites.
 $plugin->maturity = MATURITY_STABLE;
+
+// Dependencies.
 $plugin->dependencies = array(
-    'block_panopto' => ANY_VERSION
+    'block_panopto' => 2022122000,
+    'mod_lti' => ANY_VERSION
 );
