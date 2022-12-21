@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 // The current plugin version (Date: YYYYMMDDXX).
-$plugin->version = 2022090766;
+$plugin->version = 2022122000;
 
 // Requires this Moodle version - 2.7.
 $plugin->requires  = 2014051202;
@@ -41,6 +41,6 @@ $plugin->maturity = MATURITY_STABLE;
 
 // Dependencies.
 $plugin->dependencies = array(
-    'block_panopto' => 2022090748,
+    'block_panopto' => 2022122000,
     'mod_lti' => ANY_VERSION
 );
