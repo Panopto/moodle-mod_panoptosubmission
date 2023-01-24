@@ -50,7 +50,7 @@ function xmldb_panoptosubmission_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2022090744, 'panoptosubmission');
     }
 
-    if ($oldversion < 2022122001) {
+    if ($oldversion < 2023012400) {
         // Define field cutofftime in the panoptosubmission table.
         $table = new xmldb_table('panoptosubmission');
         $field = new xmldb_field('cutofftime', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0, 'timemodified');
@@ -61,7 +61,7 @@ function xmldb_panoptosubmission_upgrade($oldversion) {
         }
 
         // Panopto savepoint reached.
-        upgrade_mod_savepoint(true, 2022122001, 'panoptosubmission');
+        upgrade_mod_savepoint(true, 2023012400, 'panoptosubmission');
     }
     return true;
 }
