@@ -30,6 +30,9 @@ require_once($CFG->dirroot . '/blocks/panopto/lib/lti/panoptoblock_lti_utility.p
 
 $courseid = required_param('courseid', PARAM_INT);
 
+/**
+ * Student Submission path.
+ */
 const STUDENT_SUBMISSION_PATH = '/mod/panoptosubmission/contentitem_return.php';
 
 // Check access and capabilities.
