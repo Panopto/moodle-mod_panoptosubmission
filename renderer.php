@@ -91,9 +91,9 @@ class panoptosubmission_submissions_table extends table_sql {
         $this->currentgrades = $currentgrades;
         $this->quickgrade = $quickgrade;
         $this->grademax = $this->currentgrades->items[0]->grademax;
-        $this->tifirst  = $tifirst;
-        $this->tilast   = $tilast;
-        $this->page     = $page;
+        $this->tifirst = $tifirst;
+        $this->tilast = $tilast;
+        $this->page = $page;
         $this->courseId = $cm->course;
 
         $instance = $DB->get_record('panoptosubmission', array('id' => $cm->instance), 'id,grade,timedue');
@@ -206,7 +206,7 @@ class panoptosubmission_submissions_table extends table_sql {
     public function col_selectgrade($rowdata) {
         global $CFG;
 
-        $output      = '';
+        $output = '';
         $finalgrade = false;
 
         if (array_key_exists($rowdata->id, $this->currentgrades->items[0]->grades)) {
@@ -293,7 +293,7 @@ class panoptosubmission_submissions_table extends table_sql {
     public function col_submissioncomment($rowdata) {
         global $OUTPUT;
 
-        $output     = '';
+        $output = '';
         $finalgrade = false;
 
         if (array_key_exists($rowdata->id, $this->currentgrades->items[0]->grades)) {
@@ -469,7 +469,7 @@ class panoptosubmission_submissions_table extends table_sql {
             $class = 'btn btn-secondary';
             $buttontext = get_string('update');
         } else {
-            $buttontext  = get_string('gradenoun', 'panoptosubmission');
+            $buttontext = get_string('gradenoun', 'panoptosubmission');
         }
 
         $attr = array('id' => 'up'.$rowdata->id,
@@ -653,7 +653,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $attr = array(
             'type' => 'hidden',
-            'name'  => 'cmid',
+            'name' => 'cmid',
             'value' => $cm->id
         );
 
@@ -661,7 +661,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $attr = array(
             'type' => 'hidden',
-            'name'  => 'sesskey',
+            'name' => 'sesskey',
             'value' => sesskey()
         );
 
@@ -704,7 +704,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $attr = array(
             'class' => 'btn btn-secondary',
             'type' => 'submit',
-            'id'   => 'submit_video',
+            'id' => 'submit_video',
             'name' => 'submit_video',
             'disabled' => 'disabled',
             'value' => get_string('submitvideo', 'panoptosubmission')
@@ -824,14 +824,14 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         }
 
         // Determine logic needed for groups mode.
-        $param        = array();
-        $groupswhere  = '';
+        $param = array();
+        $groupswhere = '';
         $groupscolumn = '';
-        $groupsjoin   = '';
-        $groups       = array();
+        $groupsjoin = '';
+        $groups = array();
         $mergedgroups = array();
-        $groupids     = '';
-        $context      = context_course::instance($COURSE->id);
+        $groupids = '';
+        $context = context_course::instance($COURSE->id);
 
         // Get all groups that the user belongs to, check if the user has capability to access all groups.
         if (!has_capability('moodle/site:accessallgroups', $context, $USER->id)) {
@@ -879,7 +879,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                         $groupsjoin = ' RIGHT JOIN {groups_members} gm ON gm.userid = u.id' .
                             ' RIGHT JOIN {groups} g ON g.id = gm.groupid ';
                         $param['courseid'] = $cm->course;
-                        $groupswhere  .= ' AND g.courseid = :courseid ';
+                        $groupswhere .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
                         $groupswhere .= ' AND gm.groupid = :groupid ';
                     }
@@ -890,18 +890,18 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                     // Of the selected group.
                     if (0 == $groupfilter) {
                         $groupscolumn = ', gm.groupid ';
-                        $groupsjoin   = ' INNER JOIN {groups_members} gm ON gm.userid = u.id' .
+                        $groupsjoin = ' INNER JOIN {groups_members} gm ON gm.userid = u.id' .
                             ' INNER JOIN {groups} g ON g.id = gm.groupid ';
                         $param['courseid'] = $cm->course;
-                        $groupswhere  .= ' AND g.courseid = :courseid ';
+                        $groupswhere .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
                         $groupswhere .= ' AND g.id IN ('.$groupids.') ';
                     } else {
                         $groupscolumn = ', gm.groupid ';
-                        $groupsjoin   = ' INNER JOIN {groups_members} gm ON gm.userid = u.id' .
+                        $groupsjoin = ' INNER JOIN {groups_members} gm ON gm.userid = u.id' .
                             ' INNER JOIN {groups} g ON g.id = gm.groupid ';
                         $param['courseid'] = $cm->course;
-                        $groupswhere  .= ' AND g.courseid = :courseid ';
+                        $groupswhere .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
                         $groupswhere .= ' AND g.id IN ('.$groupids.') AND g.id = :groupid ';
 
@@ -914,11 +914,11 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                     if (0 != $groupfilter) {
 
                         $groupscolumn = ', gm.groupid ';
-                        $groupsjoin   = ' RIGHT JOIN {groups_members} gm ON gm.userid = u.id' .
+                        $groupsjoin = ' RIGHT JOIN {groups_members} gm ON gm.userid = u.id' .
                             ' RIGHT JOIN {groups} g ON g.id = gm.groupid ';
 
                         $param['courseid'] = $cm->course;
-                        $groupswhere  .= ' AND g.courseid = :courseid ';
+                        $groupswhere .= ' AND g.courseid = :courseid ';
 
                         $param['groupid'] = $groupfilter;
                         $groupswhere .= ' AND gm.groupid = :groupid ';
@@ -928,7 +928,15 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             }
         }
 
-        $table = new panoptosubmission_submissions_table('panopto_submit_table', $cm, $currentgrades, $quickgrade, $tifirst, $tilast, $page);
+        $table = new panoptosubmission_submissions_table(
+            'panopto_submit_table',
+            $cm,
+            $currentgrades,
+            $quickgrade,
+            $tifirst,
+            $tilast,
+            $page
+        );
 
         // If Moodle version is less than 3.11.0 use user_picture, otherwise use core_user api.
         $userfields = $CFG->version < 2021051700
@@ -1018,7 +1026,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             $sections = $modinfo->get_section_info_all();
         }
 
-        $courseformatname  = get_string('sectionname', 'format_' . $course->format);
+        $courseformatname = get_string('sectionname', 'format_' . $course->format);
         $courseindexsummary = new panoptosubmission_course_index_summary($usesections, $courseformatname);
         $activitycount = 0;
         if (array_key_exists('panoptosubmission', $modinfo->instances)) {
@@ -1283,7 +1291,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         }
 
         $gradedate = $grade->dategraded;
-        $gradeby   = $grade->usermodified;
+        $gradeby = $grade->usermodified;
 
         // We need the teacher info.
         if (!$teacher = $DB->get_record('user', array('id' => $gradeby))) {
@@ -1335,17 +1343,17 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
      */
     public function render_panoptosubmission_course_index_summary(panoptosubmission_course_index_summary $indexsummary) {
         $modulename = get_string('modulenameplural', 'panoptosubmission');
-        $courseformatname  = $indexsummary->courseformatname;
+        $courseformatname = $indexsummary->courseformatname;
         $strduedate = get_string('duedate', 'panoptosubmission');
         $strsubmission = get_string('submission', 'panoptosubmission');
         $strgrade = get_string('gradenoun', 'panoptosubmission');
 
         $table = new html_table();
         if ($indexsummary->usesections) {
-            $table->head  = array ($courseformatname, $modulename, $strduedate, $strsubmission, $strgrade);
+            $table->head = array ($courseformatname, $modulename, $strduedate, $strsubmission, $strgrade);
             $table->align = array ('left', 'left', 'center', 'right', 'right');
         } else {
-            $table->head  = array ($modulename, $strduedate, $strsubmission, $strgrade);
+            $table->head = array ($modulename, $strduedate, $strsubmission, $strgrade);
             $table->align = array ('left', 'left', 'center', 'right');
         }
         $table->data = array();

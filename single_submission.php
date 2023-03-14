@@ -28,11 +28,11 @@ require_once(dirname(__FILE__).'/renderer.php');
 require_once(dirname(__FILE__).'/locallib.php');
 require_once(dirname(__FILE__).'/single_submission_form.php');
 
-$id     = required_param('cmid', PARAM_INT);
+$id = required_param('cmid', PARAM_INT);
 $userid = required_param('userid', PARAM_INT);
 $tifirst = optional_param('tifirst', '', PARAM_TEXT);
-$tilast  = optional_param('tilast', '', PARAM_TEXT);
-$page    = optional_param('page', 0, PARAM_INT);
+$tilast = optional_param('tilast', '', PARAM_TEXT);
+$page = optional_param('page', 0, PARAM_INT);
 
 
 list($cm, $course, $pansubmissionactivity) = panoptosubmission_validate_cmid($id);
@@ -62,7 +62,7 @@ $PAGE->requires->css('/mod/panoptosubmission/styles.css');
 require_capability('mod/panoptosubmission:gradesubmission', $context);
 
 $event = \mod_panoptosubmission\event\single_submission_page_viewed::create(array(
-    'objectid'  => $pansubmissionactivity->id,
+    'objectid' => $pansubmissionactivity->id,
     'context' => context_module::instance($cm->id)
 ));
 $event->trigger();
@@ -72,7 +72,7 @@ $submission = panoptosubmission_get_submission($cm->instance, $userid);
 
 // Get the submission user and the time they submitted the video.
 $param = array('id' => $userid);
-$user  = $DB->get_record('user', $param);
+$user = $DB->get_record('user', $param);
 
 $submissionuserpic = $OUTPUT->user_picture($user);
 $submissionmodified = ' - ';
@@ -82,51 +82,51 @@ $datestring = ' - ';
 $submissionuserinfo = fullname($user);
 
 // Get grading information.
-$gradinginfo    = grade_get_grades($cm->course, 'mod', 'panoptosubmission', $cm->instance, array($userid));
+$gradinginfo = grade_get_grades($cm->course, 'mod', 'panoptosubmission', $cm->instance, array($userid));
 $gradingdisabled = $gradinginfo->items[0]->grades[$userid]->locked || $gradinginfo->items[0]->grades[$userid]->overridden;
 
 // Get marking teacher information and the time the submission was marked.
 $teacher = '';
 $submissioncomment = '';
 if (!empty($submission)) {
-    $datestringlate     = panoptosubmission_display_lateness($submission->timemodified, $pansubmissionactivity->timedue);
+    $datestringlate = panoptosubmission_display_lateness($submission->timemodified, $pansubmissionactivity->timedue);
     $submissionmodified = userdate($submission->timemodified);
-    $datestring         = userdate($submission->timemarked) . "&nbsp; (" . format_time(time() - $submission->timemarked) . ")";
+    $datestring = userdate($submission->timemarked) . "&nbsp; (" . format_time(time() - $submission->timemarked) . ")";
 
     $submissionuserinfo .= '<br />' . $submissionmodified . $datestringlate;
 
     $submissioncomment = $submission->submissioncomment;
 
-    $param   = array('id' => $submission->teacher);
+    $param = array('id' => $submission->teacher);
     $teacher = $DB->get_record('user', $param);
 }
 
-$markingteacherpic   = '';
+$markingteacherpic = '';
 $markingtreacherinfo = '';
 
 if (!empty($teacher)) {
-    $markingteacherpic   = $OUTPUT->user_picture($teacher);
+    $markingteacherpic = $OUTPUT->user_picture($teacher);
     $markingtreacherinfo = fullname($teacher).'<br />'.$datestring;
 }
 
 // Setup form data.
-$formdata                           = new stdClass();
-$formdata->submissionuserpic        = $submissionuserpic;
-$formdata->submissionuserinfo       = $submissionuserinfo;
-$formdata->markingteacherpic        = $markingteacherpic;
-$formdata->markingteacherinfo       = $markingtreacherinfo;
-$formdata->grading_info             = $gradinginfo;
-$formdata->gradingdisabled          = $gradingdisabled;
-$formdata->cm                       = $cm;
-$formdata->context                  = $context;
-$formdata->cminstance               = $pansubmissionactivity;
-$formdata->submission               = $submission;
-$formdata->userid                   = $userid;
-$formdata->enableoutcomes           = $CFG->enableoutcomes;
+$formdata = new stdClass();
+$formdata->submissionuserpic = $submissionuserpic;
+$formdata->submissionuserinfo = $submissionuserinfo;
+$formdata->markingteacherpic = $markingteacherpic;
+$formdata->markingteacherinfo = $markingtreacherinfo;
+$formdata->grading_info = $gradinginfo;
+$formdata->gradingdisabled = $gradingdisabled;
+$formdata->cm = $cm;
+$formdata->context = $context;
+$formdata->cminstance = $pansubmissionactivity;
+$formdata->submission = $submission;
+$formdata->userid = $userid;
+$formdata->enableoutcomes = $CFG->enableoutcomes;
 $formdata->submissioncomment_editor = array('text' => $submissioncomment, 'format' => FORMAT_HTML);
-$formdata->tifirst                  = $tifirst;
-$formdata->tilast                   = $tilast;
-$formdata->page                     = $page;
+$formdata->tifirst = $tifirst;
+$formdata->tilast = $tilast;
+$formdata->page = $page;
 
 $submissionform = new panoptosubmission_singlesubmission_form(null, $formdata);
 
@@ -144,13 +144,13 @@ if ($submissionform->is_cancelled()) {
         if (!isset($submission)) {
             $blanksubmission = true;
             $submission = new stdClass();
-            $submission->panactivityid      = $cm->instance;
-            $submission->userid             = $userid;
-            $submission->grade              = -1;
-            $submission->submissioncomment  = $submitteddata->submissioncomment_editor['text'];
-            $submission->format             = $submitteddata->submissioncomment_editor['format'];
-            $submission->timemarked         = time();
-            $submission->teacher            = $USER->id;
+            $submission->panactivityid = $cm->instance;
+            $submission->userid = $userid;
+            $submission->grade = -1;
+            $submission->submissioncomment = $submitteddata->submissioncomment_editor['text'];
+            $submission->format = $submitteddata->submissioncomment_editor['format'];
+            $submission->timemarked = time();
+            $submission->teacher = $USER->id;
 
             $submission->id = $DB->insert_record('panoptosubmission_submission', $submission);
         }
@@ -203,7 +203,7 @@ if ($submissionform->is_cancelled()) {
 
             // Add to log.
             $event = \mod_panoptosubmission\event\grades_updated::create(array(
-                'context'   => $context,
+                'context' => $context,
             ));
             $event->trigger();
         }
