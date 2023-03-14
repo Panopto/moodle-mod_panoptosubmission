@@ -45,16 +45,16 @@ function panoptosubmission_add_instance($newactivity) {
     if ($newactivity->timedue) {
         $event = new stdClass();
 
-        $event->name        = $newactivity->name;
+        $event->name = $newactivity->name;
         $event->description = format_module_intro('panoptosubmission', $newactivity, $newactivity->coursemodule, false);
-        $event->format      = FORMAT_HTML;
-        $event->courseid    = $newactivity->course;
-        $event->groupid     = 0;
-        $event->userid      = 0;
-        $event->modulename  = 'panoptosubmission';
-        $event->instance    = $newactivity->id;
-        $event->eventtype   = 'due';
-        $event->timestart   = $newactivity->timedue;
+        $event->format = FORMAT_HTML;
+        $event->courseid = $newactivity->course;
+        $event->groupid = 0;
+        $event->userid = 0;
+        $event->modulename = 'panoptosubmission';
+        $event->instance = $newactivity->id;
+        $event->eventtype = 'due';
+        $event->timestart = $newactivity->timedue;
         $event->timeduration = 0;
 
         calendar_event::create($event);
@@ -87,25 +87,25 @@ function panoptosubmission_update_instance($targetinstance) {
         if ($event->id = $DB->get_field(
             'event', 'id', array('modulename' => 'panoptosubmission', 'instance' => $targetinstance->id))) {
 
-            $event->name        = $targetinstance->name;
+            $event->name = $targetinstance->name;
             $event->description = format_module_intro('panoptosubmission', $targetinstance, $targetinstance->coursemodule, false);
-            $event->format      = FORMAT_HTML;
-            $event->timestart   = $targetinstance->timedue;
+            $event->format = FORMAT_HTML;
+            $event->timestart = $targetinstance->timedue;
 
             $calendarevent = calendar_event::load($event->id);
             $calendarevent->update($event);
         } else {
             $event = new stdClass();
-            $event->name        = $targetinstance->name;
+            $event->name = $targetinstance->name;
             $event->description = format_module_intro('panoptosubmission', $targetinstance, $targetinstance->coursemodule, false);
-            $event->format      = FORMAT_HTML;
-            $event->courseid    = $targetinstance->course;
-            $event->groupid     = 0;
-            $event->userid      = 0;
-            $event->modulename  = 'panoptosubmission';
-            $event->instance    = $targetinstance->id;
-            $event->eventtype   = 'due';
-            $event->timestart   = $targetinstance->timedue;
+            $event->format = FORMAT_HTML;
+            $event->courseid = $targetinstance->course;
+            $event->groupid = 0;
+            $event->userid = 0;
+            $event->modulename = 'panoptosubmission';
+            $event->instance = $targetinstance->id;
+            $event->eventtype = 'due';
+            $event->timestart = $targetinstance->timedue;
             $event->timeduration = 0;
 
             calendar_event::create($event);
@@ -308,12 +308,12 @@ function panoptosubmission_grade_item_update($targetinstance, $grades = null) {
 
     if ($targetinstance->grade > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
-        $params['grademax']  = $targetinstance->grade;
-        $params['grademin']  = 0;
+        $params['grademax'] = $targetinstance->grade;
+        $params['grademin'] = 0;
 
     } else if ($targetinstance->grade < 0) {
         $params['gradetype'] = GRADE_TYPE_SCALE;
-        $params['scaleid']   = -$targetinstance->grade;
+        $params['scaleid'] = -$targetinstance->grade;
 
     } else {
         $params['gradetype'] = GRADE_TYPE_TEXT;

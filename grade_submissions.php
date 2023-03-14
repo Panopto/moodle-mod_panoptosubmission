@@ -28,11 +28,11 @@ require_once(dirname(__FILE__).'/renderer.php');
 require_once(dirname(__FILE__).'/locallib.php');
 require_once(dirname(__FILE__).'/grade_preferences_form.php');
 
-$id      = required_param('cmid', PARAM_INT);           // Course Module ID.
-$mode    = optional_param('mode', 0, PARAM_TEXT);
+$id = required_param('cmid', PARAM_INT);           // Course Module ID.
+$mode = optional_param('mode', 0, PARAM_TEXT);
 $tifirst = optional_param('tifirst', '', PARAM_TEXT);
-$tilast  = optional_param('tilast', '', PARAM_TEXT);
-$page    = optional_param('page', 0, PARAM_INT);
+$tilast = optional_param('tilast', '', PARAM_TEXT);
+$page = optional_param('page', 0, PARAM_INT);
 
 $url = new moodle_url('/mod/panoptosubmission/grade_submissions.php');
 $url->param('cmid', $id);
@@ -62,8 +62,8 @@ echo $OUTPUT->header();
 require_capability('mod/panoptosubmission:gradesubmission', $context);
 
 $event = \mod_panoptosubmission\event\grade_submissions_page_viewed::create(array(
-    'objectid'  => $pansubmissionactivity->id,
-    'context'   => $context
+    'objectid' => $pansubmissionactivity->id,
+    'context' => $context
 ));
 $event->trigger();
 
@@ -104,9 +104,9 @@ if (empty($data)) {
     $data = new stdClass();
 }
 
-$data->filter       = get_user_preferences('panoptosubmission_filter', 0);
-$data->quickgrade   = get_user_preferences('panoptosubmission_quickgrade', 0);
-$data->perpage      = get_user_preferences('panoptosubmission_perpage', 10);
+$data->filter = get_user_preferences('panoptosubmission_filter', 0);
+$data->quickgrade = get_user_preferences('panoptosubmission_quickgrade', 0);
+$data->perpage = get_user_preferences('panoptosubmission_perpage', 10);
 $data->group_filter = get_user_preferences('panoptosubmission_group_filter', 0);
 
 $gradedata = data_submitted();
@@ -160,9 +160,9 @@ if (!empty($gradedata->mode)) {
 
                 // Add to log only if updating.
                 $event = \mod_panoptosubmission\event\grades_updated::create(array(
-                    'context'   => $context,
-                    'other'     => array(
-                        'crud'    => 'u'
+                    'context' => $context,
+                    'other' => array(
+                        'crud' => 'u'
                     )
                 ));
                 $event->trigger();
@@ -170,11 +170,11 @@ if (!empty($gradedata->mode)) {
 
         } else {
             // No user submission however the instructor has submitted grade data.
-            $usersubmissions                = new stdClass();
-            $usersubmissions->panactivityid   = $cm->instance;
-            $usersubmissions->userid        = $userid;
-            $usersubmissions->teacher       = $USER->id;
-            $usersubmissions->timemarked    = $time;
+            $usersubmissions = new stdClass();
+            $usersubmissions->panactivityid = $cm->instance;
+            $usersubmissions->userid = $userid;
+            $usersubmissions->teacher = $USER->id;
+            $usersubmissions->timemarked = $time;
 
             // Need to prevent completely empty submissions from getting entered.
             // Into the video submissions' table.
@@ -209,9 +209,9 @@ if (!empty($gradedata->mode)) {
 
                 // Add to log only if updating.
                 $event = \mod_panoptosubmission\event\grades_updated::create(array(
-                    'context'   => $context,
-                    'other'     => array(
-                        'crud'      => 'c'
+                    'context' => $context,
+                    'other' => array(
+                        'crud' => 'c'
                     )
                 ));
                 $event->trigger();

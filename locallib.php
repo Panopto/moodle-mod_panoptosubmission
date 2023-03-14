@@ -230,8 +230,8 @@ function panoptosubmission_email_teachers($cm, $name, $submission, $context) {
     if ($teachers = panoptosubmission_get_graders($cm, $user, $context)) {
 
         $strassignments = get_string('modulenameplural', 'panoptosubmission');
-        $strassignment  = get_string('modulename', 'panoptosubmission');
-        $strsubmitted   = get_string('submitted', 'panoptosubmission');
+        $strassignment = get_string('modulename', 'panoptosubmission');
+        $strsubmitted = get_string('submitted', 'panoptosubmission');
 
         foreach ($teachers as $teacher) {
             $info = new stdClass();
@@ -240,28 +240,28 @@ function panoptosubmission_email_teachers($cm, $name, $submission, $context) {
             $info->url = $CFG->wwwroot . '/mod/panoptosubmission/grade_submissions.php?cmid=' . $cm->id;
             $info->timeupdated = strftime('%c', $submission->timemodified);
             $info->courseid = $cm->course;
-            $info->cmid     = $cm->id;
+            $info->cmid = $cm->id;
 
             $postsubject = $strsubmitted . ': ' . $user->username . ' -> ' . $name;
             $posttext = panoptosubmission_email_teachers_text($info);
             $posthtml = ($teacher->mailformat == 1) ? panoptosubmission_email_teachers_html($info) : '';
 
             $eventdata = new \core\message\message();
-            $eventdata->courseid         = $COURSE->id;
-            $eventdata->modulename       = 'panoptosubmission';
-            $eventdata->userfrom         = $user;
-            $eventdata->userto           = $teacher;
-            $eventdata->subject          = $postsubject;
-            $eventdata->fullmessage      = $posttext;
+            $eventdata->courseid = $COURSE->id;
+            $eventdata->modulename = 'panoptosubmission';
+            $eventdata->userfrom = $user;
+            $eventdata->userto = $teacher;
+            $eventdata->subject = $postsubject;
+            $eventdata->fullmessage = $posttext;
             $eventdata->fullmessageformat = FORMAT_PLAIN;
-            $eventdata->fullmessagehtml  = $posthtml;
-            $eventdata->smallmessage     = $postsubject;
+            $eventdata->fullmessagehtml = $posthtml;
+            $eventdata->smallmessage = $postsubject;
 
-            $eventdata->name            = 'panoptosubmission_updates';
-            $eventdata->component       = 'mod_panoptosubmission';
-            $eventdata->notification    = 1;
-            $eventdata->contexturl      = $info->url;
-            $eventdata->contexturlname  = $info->assignment;
+            $eventdata->name = 'panoptosubmission_updates';
+            $eventdata->component = 'mod_panoptosubmission';
+            $eventdata->notification = 1;
+            $eventdata->contexturl = $info->url;
+            $eventdata->contexturlname = $info->assignment;
 
             message_send($eventdata);
         }
@@ -330,12 +330,12 @@ function panoptosubmission_get_graders($cm, $user, $context) {
 function panoptosubmission_email_teachers_text($info) {
     global $DB;
 
-    $param    = array('id' => $info->courseid);
-    $course   = $DB->get_record('course', $param);
+    $param = array('id' => $info->courseid);
+    $course = $DB->get_record('course', $param);
     $posttext = '';
 
     if (!empty($course)) {
-        $posttext  = format_string($course->shortname, true, $course->id) . ' -> ' .
+        $posttext = format_string($course->shortname, true, $course->id) . ' -> ' .
             get_string('modulenameplural', 'panoptosubmission') . '  -> ';
         $posttext .= format_string($info->assignment, true, $course->id) . "\n";
         $posttext .= '---------------------------------------------------------------------' . "\n";
@@ -355,8 +355,8 @@ function panoptosubmission_email_teachers_text($info) {
 function panoptosubmission_email_teachers_html($info) {
     global $CFG, $DB;
 
-    $param    = array('id' => $info->courseid);
-    $course   = $DB->get_record('course', $param);
+    $param = array('id' => $info->courseid);
+    $course = $DB->get_record('course', $param);
     $posthtml = '';
 
     if (!empty($course)) {

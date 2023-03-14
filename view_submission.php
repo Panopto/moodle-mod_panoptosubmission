@@ -28,9 +28,9 @@ require_once(dirname(__FILE__). '/locallib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
 
-$courseid       = required_param('course', PARAM_INT);
-$contenturl     = urldecode(optional_param('contenturl', '', PARAM_URL));
-$customdata     = urldecode(optional_param('custom', '', PARAM_RAW_TRIMMED));
+$courseid = required_param('course', PARAM_INT);
+$contenturl = urldecode(optional_param('contenturl', '', PARAM_URL));
+$customdata = urldecode(optional_param('custom', '', PARAM_RAW_TRIMMED));
 $resourcelinkid = optional_param('resourcelinkid', '', PARAM_RAW_TRIMMED);
 
 $course = get_course($courseid);
@@ -83,7 +83,12 @@ if ($customdata) {
 $config = lti_get_type_type_config($toolid);
 if ($config->lti_ltiversion === LTI_VERSION_1P3) {
     if (!isset($SESSION->lti_initiatelogin_status)) {
-        echo lti_initiate_login($courseid, "mod_panoptosubmission,'',{$toolid},{$resourcelinkid},{$contenturl},{$customdata}", $lti, $config);
+        echo lti_initiate_login(
+            $courseid,
+            "mod_panoptosubmission,'',{$toolid},{$resourcelinkid},{$contenturl},{$customdata}",
+            $lti,
+            $config
+        );
         exit;
     } else {
         unset($SESSION->lti_initiatelogin_status);

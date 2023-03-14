@@ -66,8 +66,8 @@ class panoptosubmission_singlesubmission_form extends moodleform {
         $mform->addelement('static', 'submittinguser',
             $this->_customdata->submissionuserpic, $this->_customdata->submissionuserinfo);
 
-        $submission    = $this->_customdata->submission;
-        $gradinginfo   = $this->_customdata->grading_info;
+        $submission = $this->_customdata->submission;
+        $gradinginfo = $this->_customdata->grading_info;
 
         if (!empty($submission->source)) {
             $mform->addElement('html', $renderer->get_video_container($submission, $cm->course, $cm->id));

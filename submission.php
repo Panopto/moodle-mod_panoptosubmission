@@ -29,13 +29,13 @@ require_sesskey();
 
 $source = required_param('source', PARAM_URL);
 $customdata = required_param('customdata', PARAM_TEXT);
-$cmid  = required_param('cmid', PARAM_INT);
-$width  = required_param('width', PARAM_TEXT);
-$height  = required_param('height', PARAM_TEXT);
+$cmid = required_param('cmid', PARAM_INT);
+$width = required_param('width', PARAM_TEXT);
+$height = required_param('height', PARAM_TEXT);
 $title = required_param('sessiontitle', PARAM_TEXT);
 $thumbnailsource = required_param('thumbnailsource', PARAM_URL);
-$thumbnailwidth  = required_param('thumbnailwidth', PARAM_TEXT);
-$thumbnailheight  = required_param('thumbnailheight', PARAM_TEXT);
+$thumbnailwidth = required_param('thumbnailwidth', PARAM_TEXT);
+$thumbnailheight = required_param('thumbnailheight', PARAM_TEXT);
 
 global $USER, $OUTPUT, $DB, $PAGE;
 
@@ -100,8 +100,8 @@ if ($submission) {
         echo html_writer::end_tag('center');
 
         $event = \mod_panoptosubmission\event\assignment_submitted::create(array(
-            'objectid'  => $pansubmissionactivity->id,
-            'context'   => context_module::instance($cm->id)
+            'objectid' => $pansubmissionactivity->id,
+            'context' => context_module::instance($cm->id)
         ));
         $event->trigger();
     } else {
@@ -137,8 +137,8 @@ if ($submission) {
         echo html_writer::end_tag('center');
 
         $event = \mod_panoptosubmission\event\assignment_submitted::create(array(
-            'objectid'  => $pansubmissionactivity->id,
-            'context'   => context_module::instance($cm->id)
+            'objectid' => $pansubmissionactivity->id,
+            'context' => context_module::instance($cm->id)
         ));
         $event->trigger();
     } else {
