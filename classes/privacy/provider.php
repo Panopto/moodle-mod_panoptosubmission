@@ -463,7 +463,7 @@ class provider implements \core_privacy\local\metadata\provider,
 
         $params = [
             'panactivityid' => $panoptosubmissionid,
-            'teacher'    => $userid
+            'teacher' => $userid
         ];
 
         $sql = "SELECT count(s.id) as nomarked " .

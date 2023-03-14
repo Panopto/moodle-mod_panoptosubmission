@@ -53,7 +53,7 @@ class panoptosubmission_gradepreferences_form extends moodleform {
         $context = context_module::instance($this->_customdata['cmid']);
 
         $groupopt = array();
-        $groups    = array();
+        $groups = array();
 
         // If the user doesn't have access to all group print the groups they have access to.
         if (!has_capability('moodle/site:accessallgroups', $context)) {
