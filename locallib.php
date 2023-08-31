@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * main locallib.php file for the Panopto Student Submission mod
+ * Main locallib.php file for the Panopto Student Submission mod
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 define('PANOPTOSUBMISSION_ALL', 0);
 define('PANOPTOSUBMISSION_REQ_GRADING', 1);
 define('PANOPTOSUBMISSION_SUBMITTED', 2);
+define('PANOPTOSUBMISSION_NOT_SUBMITTED', 3);
 
 require_once($CFG->libdir . '/gradelib.php');
 require_once($CFG->dirroot . '/grade/grading/lib.php');
@@ -136,7 +137,6 @@ function panoptosubmission_get_submission($targetinstanceid, $userid) {
     }
 
     return $record;
-
 }
 
 /**
@@ -173,7 +173,7 @@ function panoptosubmission_get_submission_grade_object($targetinstanceid, $useri
  * @return array an array with the following values array(course module object, $course object, activity instance object).
  * @throws moodle_exception
  */
-function panoptosubmission_validate_cmid ($cmid) {
+function panoptosubmission_validate_cmid($cmid) {
     global $DB;
 
     if (!$cm = get_coursemodule_from_id('panoptosubmission', $cmid)) {
@@ -428,6 +428,124 @@ function panoptosubmission_get_grading_instance($cminstance, $context, $submissi
         $gradinginstance->get_controller()->set_grade_range($grademenu, $allowgradedecimals);
     }
     return $gradinginstance;
+}
+
+/**
+ * Creates an panoptosubmission_submissions_feedback_status renderable.
+ *
+ * @param object $cm Panopto video assignment course module object.
+ * @param object $pansubmissionactivity The submission object or NULL in which case it will be loaded
+ * @param object $submission current submission with grade information
+ * @param object $context A context object.
+ * @param string $userid of the user to get the report for
+ * @param object $grade user grade
+ * @param object $teacher user that graded the submission
+ * @return panoptosubmission_submissions_feedback_status renderable object
+ */
+function panoptosubmission_get_feedback_status_renderable($cm,
+    $pansubmissionactivity, $submission, $context, $userid, $grade, $teacher) {
+    global $DB, $PAGE;
+
+    $gradinginfo = grade_get_grades($pansubmissionactivity->course,
+                                'mod',
+                                'panoptosubmission',
+                                $cm->instance,
+                                $userid);
+
+    $gradingitem = null;
+    $gradebookgrade = null;
+    if (isset($gradinginfo->items[0])) {
+        $gradingitem = $gradinginfo->items[0];
+        $gradebookgrade = $gradingitem->grades[$userid];
+    }
+
+    $cangrade = has_capability('mod/panoptosubmission:gradesubmission', $context);
+    $hasgrade = !is_null($gradebookgrade) && !is_null($gradebookgrade->grade);
+    $gradevisible = $cangrade || (!is_null($gradebookgrade) && !$gradebookgrade->hidden);
+
+    // If there is a visible grade, show the summary.
+    if ($hasgrade && $gradevisible) {
+
+        $gradefordisplay = null;
+        $gradeddate = null;
+        $grader = null;
+        $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
+
+        // Criteria feedback.
+        if ($controller = $gradingmanager->get_active_controller()) {
+            $menu = make_grades_menu($submission->grade);
+            $controller->set_grade_range($menu, $submission->grade > 0);
+            $gradefordisplay = $controller->render_grade($PAGE,
+                                                            $submission->id,
+                                                            $gradingitem,
+                                                            $gradebookgrade->str_long_grade,
+                                                            $cangrade);
+        } else {
+            // Normal feedback, which is just a grade.
+            $gradefordisplay = $grade->str_long_grade;
+        }
+        $gradeddate = $gradebookgrade->dategraded;
+
+        if (isset($teacher)) {
+            $grader = $DB->get_record('user', array('id' => $teacher->id));
+        } else if (isset($gradebookgrade->usermodified)
+            && $gradebookgrade->usermodified > 0
+            && has_capability('mod/panoptosubmission:gradesubmission', $context, $gradebookgrade->usermodified)) {
+            // Grader not provided. Check that usermodified is a user who can grade.
+            // Case 1: When an assignment is reopened an empty grade is created so the feedback
+            // plugin can know which attempt it's referring to. In this case, usermodifed is a student.
+            // Case 2: When an assignment's grade is overrided via the gradebook, usermodified is a grader.
+            $grader = $DB->get_record('user', array('id' => $gradebookgrade->usermodified));
+        }
+
+        $viewfullnames = has_capability('moodle/site:viewfullnames', $context);
+        $feedbackstatus = new panoptosubmission_submissions_feedback_status($gradefordisplay,
+                                                $gradeddate,
+                                                $grader,
+                                                $grade,
+                                                $cm->id,
+                                                $viewfullnames);
+
+        return $feedbackstatus;
+    }
+    return;
+}
+
+/**
+ * Creates an panoptosubmission_grading_summary renderable.
+ *
+ * @param object $cm Panopto video assignment course module object.
+ * @param object $course Course object.
+ * @return panoptosubmission_grading_summary renderable object
+ */
+function panoptosubmission_get_grading_summary_renderable($cm, $course) {
+    global $DB;
+    $instance = $DB->get_record('panoptosubmission', array('id' => $cm->instance), '*', MUST_EXIST);
+
+    $isvisible = $cm->visible;
+    $countparticipants = count(array_keys(panoptosubmission_get_assignment_students($cm)));
+
+    $submissionssubmitted = panoptosubmission_get_submissions($cm->instance, PANOPTOSUBMISSION_SUBMITTED);
+    $submissionssubmittedcount = $submissionssubmitted ? count($submissionssubmitted) : 0;
+
+    $submissionrequiregrading = panoptosubmission_get_submissions($cm->instance, PANOPTOSUBMISSION_REQ_GRADING);
+    $submissionrequiregradingcount = $submissionrequiregrading ? count($submissionrequiregrading) : 0;
+
+    $summary = new panoptosubmission_grading_summary(
+        $countparticipants,
+        true,
+        $submissionssubmittedcount,
+        $instance->cutofftime,
+        $instance->timedue,
+        $instance->timeavailable,
+        $course->id,
+        $submissionrequiregradingcount,
+        $course->relativedatesmode,
+        $course->startdate,
+        $isvisible
+    );
+
+    return $summary;
 }
 
 /**

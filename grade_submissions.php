@@ -186,7 +186,7 @@ if (!empty($gradedata->mode)) {
                 $userid, $gradedata->submissioncomment) && empty($gradedata->submissioncomment[$userid]
             );
 
-            if ($emptygrade && $emptycomment ) {
+            if ($emptygrade && $emptycomment) {
                 continue;
             }
 

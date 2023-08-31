@@ -170,7 +170,10 @@ if ($submissionform->is_cancelled()) {
 
         if (!$blanksubmission) {
 
-            $submissionchanged = strcmp($submission->submissioncomment, $submitteddata->submissioncomment_editor['text']);
+            $submissionchanged = strcmp(
+                $submission->submissioncomment ?? '',
+                $submitteddata->submissioncomment_editor['text'] ?? ''
+            );
             if ($submission->grade == $currentgrade && !$submissionchanged) {
                 $updategrade = false;
             }

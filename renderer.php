@@ -18,7 +18,7 @@
  * This file contains the renderers for the Panopto Student Submission activity within Moodle
  *
  * @package mod_panoptosubmission
- * @copyright  Panopto 2021
+ * @copyright Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -27,6 +27,8 @@ defined('MOODLE_INTERNAL') || die();
 require_once(dirname(dirname(dirname(__FILE__))).'/lib/tablelib.php');
 require_once(dirname(dirname(dirname(__FILE__))).'/lib/moodlelib.php');
 require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosubmission_course_index_summary.php');
+require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosubmission_submissions_feedback_status.php');
+require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosubmission_grading_summary.php');
 
 /**
  * Table class for displaying video submissions for grading
@@ -99,7 +101,6 @@ class panoptosubmission_submissions_table extends table_sql {
         $instance = $DB->get_record('panoptosubmission', array('id' => $cm->instance), 'id,grade,timedue');
         $instance->cmid = $cm->id;
         $this->cminstance = $instance;
-
     }
 
     /**
@@ -217,7 +218,7 @@ class panoptosubmission_submissions_table extends table_sql {
                 $finalgrade->formatted_grade = $this->currentgrades->items[0]->grades[$rowdata->id]->str_grade;
             } else {
                 // Taken from mod/assignment/lib.php display_submissions().
-                $finalgrade->formatted_grade = round($finalgrade->grade, 2) . ' / ' . round($this->grademax, 2);
+                $finalgrade->formatted_grade = round($finalgrade->grade ?? 0, 2) . ' / ' . round($this->grademax, 2);
             }
         }
 
@@ -315,7 +316,7 @@ class panoptosubmission_submissions_table extends table_sql {
             $output .= html_writer::tag('textarea', strip_tags($rowdata->submissioncomment), $param);
 
         } else {
-            $output = shorten_text(strip_tags($rowdata->submissioncomment), 15);
+            $output = shorten_text(strip_tags($rowdata->submissioncomment ?? ''), 15);
         }
 
         return $output;
@@ -819,7 +820,10 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                 $where = ' ps.timemodified > 0 AND ';
                 break;
             case PANOPTOSUBMISSION_REQ_GRADING:
-                $where = ' ps.timemarked < ps.timemodified AND ';
+                $where = ' (ps.timemarked = 0 or ps.timemarked is null) AND ';
+                break;
+            case PANOPTOSUBMISSION_NOT_SUBMITTED:
+                $where = ' (ps.timecreated = 0 or ps.timecreated is null) AND ';
                 break;
         }
 
@@ -1182,7 +1186,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                         'var sessionIframe = document.getElementById("contentframe");' .
                         'var titleElem = document.getElementById("panoptosessiontitle");' .
 
-                        'if(sessionContainerDiv.classList.contains("session-hidden")) {' .
+                        'if (sessionContainerDiv.classList.contains("session-hidden")) {' .
                             'sessionContainerDiv.classList.remove("session-hidden");' .
                             'sessionIframe.setAttribute("src", titleElem.getAttribute("href"));' .
                             'showSessionPreviewToggle.textContent = "' . get_string('sessionpreview_hide', 'panoptosubmission') .
@@ -1238,7 +1242,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             'class' => 'panopto-session-title',
             'href' => $ltiviewerurl,
             'target' => '_blank'
-
         );
 
         $output .= html_writer::tag('a', $sessiontitle, $titleparams);
@@ -1259,11 +1262,14 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
      * This default method prints the teacher picture and name, date when marked,
      * grade and teacher submission comment.
      *
+     * @param object $cm A course module object.
      * @param object $pansubmissionactivity The submission object or NULL in which case it will be loaded
+     * @param object $submission current submission with grade information
      * @param object $context the context for the current submission
      */
-    public function display_grade_feedback($pansubmissionactivity, $context) {
+    public function display_grade_feedback($cm, $pansubmissionactivity, $submission, $context) {
         global $USER, $CFG, $DB;
+        $renderer = $this->page->get_renderer('mod_panoptosubmission');
 
         require_once($CFG->libdir.'/gradelib.php');
 
@@ -1290,7 +1296,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             return;
         }
 
-        $gradedate = $grade->dategraded;
         $gradeby = $grade->usermodified;
 
         // We need the teacher info.
@@ -1298,41 +1303,128 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             throw new moodle_exception('cannotfindteacher');
         }
 
-        // Print the feedback.
-        echo $this->output->heading(get_string('feedbackfromteacher', 'panoptosubmission', fullname($teacher)));
+        $feedbackstatus = panoptosubmission_get_feedback_status_renderable($cm,
+            $pansubmissionactivity, $submission, $context, $USER->id, $grade, $teacher);
 
-        echo '<table cellspacing="0" class="feedback">';
-
-        echo '<tr>';
-        echo '<td class="left picture">';
-        if ($teacher) {
-            echo $this->output->user_picture($teacher);
+        if ($feedbackstatus) {
+            return $renderer->render($feedbackstatus);
         }
-        echo '</td>';
-        echo '<td class="topic">';
-        echo '<div class="from">';
-        if ($teacher) {
-            echo '<div class="fullname">'.fullname($teacher).'</div>';
+    }
+
+    /**
+     * Display grading summary.
+     *
+     * @param object $cm A course module object.
+     * @param object $course Course object.
+     */
+    public function display_grading_summary($cm, $course) {
+        $renderer = $this->page->get_renderer('mod_panoptosubmission');
+        $gradingsummary = panoptosubmission_get_grading_summary_renderable($cm, $course);
+
+        if ($gradingsummary) {
+            return $renderer->render($gradingsummary);
         }
-        echo '<div class="time">'.userdate($gradedate).'</div>';
-        echo '</div>';
-        echo '</td>';
-        echo '</tr>';
+    }
 
-        echo '<tr>';
-        echo '<td class="left side">&nbsp;</td>';
-        echo '<td class="content">';
-        echo '<div class="grade">';
-        echo get_string("gradenoun", "panoptosubmission").': '.$grade->str_long_grade;
-        echo '</div>';
-        echo '<div class="clearer"></div>';
+    /**
+     * Render a table containing the current status of the grading process.
+     *
+     * @param \panoptosubmission_grading_summary $summary
+     * @return string
+     */
+    public function render_panoptosubmission_grading_summary(\panoptosubmission_grading_summary $summary) {
+        // Create a table for the data.
+        $o = '';
+        $o .= $this->output->container_start('gradingsummary');
+        $o .= $this->output->heading(get_string('gradingsummary', 'panoptosubmission'), 3);
 
-        echo '<div class="comment">';
-        echo $grade->str_feedback;
-        echo '</div>';
-        echo '</tr>';
+        $o .= $this->output->box_start('boxaligncenter gradingsummarytable');
+        $t = new \html_table();
+        $t->attributes['class'] = 'generaltable table-bordered';
 
-        echo '</table>';
+        // Visibility Status.
+        $cell1content = get_string('hiddenfromstudents', 'panoptosubmission');
+        $cell2content = (!$summary->isvisible) ? get_string('yes', 'panoptosubmission') : get_string('no', 'panoptosubmission');
+        $this->add_table_row_tuple($t, $cell1content, $cell2content);
+
+        // Status.
+        $cell1content = get_string('numberofparticipants', 'panoptosubmission');
+        $cell2content = $summary->participantcount;
+        $this->add_table_row_tuple($t, $cell1content, $cell2content);
+
+        // Submitted for grading.
+        if ($summary->submissionsenabled) {
+            $cell1content = get_string('numberofsubmittedassignments', 'panoptosubmission');
+            $cell2content = $summary->submissionssubmittedcount;
+            $this->add_table_row_tuple($t, $cell1content, $cell2content);
+        }
+
+        $time = time();
+        if ($summary->duedate) {
+            // Time remaining.
+            $duedate = $summary->duedate;
+            $cell1content = get_string('timeremaining', 'panoptosubmission');
+            if ($summary->courserelativedatesmode) {
+                $cell2content = get_string('relativedatessubmissiontimeleft', 'panoptosubmission');
+            } else {
+                if ($duedate - $time <= 0) {
+                    $cell2content = get_string('submissionisdue', 'panoptosubmission');
+                } else {
+                    $cell2content = format_time($duedate - $time);
+                }
+            }
+
+            $this->add_table_row_tuple($t, $cell1content, $cell2content);
+
+            if ($duedate < $time) {
+                $cutoffdate = $summary->cutoffdate;
+                if ($cutoffdate) {
+                    if ($cutoffdate > $time) {
+                        $cell1content = get_string('latesubmissions', 'panoptosubmission');
+                        $cell2content = get_string('latesubmissionsaccepted', 'panoptosubmission', userdate($summary->cutoffdate));
+                        $this->add_table_row_tuple($t, $cell1content, $cell2content);
+                    }
+                }
+            }
+        }
+
+        // All done - write the table.
+        $o .= \html_writer::table($t);
+        $o .= $this->output->box_end();
+
+        // Close the container and insert a spacer.
+        $o .= $this->output->container_end();
+        $o .= \html_writer::end_tag('center');
+
+        return $o;
+    }
+
+    /**
+     * Utility function to add a row of data to a table with 2 columns where the first column is the table's header.
+     * Modified the table param and does not return a value.
+     *
+     * @param \html_table $table The table to append the row of data to
+     * @param string $first The first column text
+     * @param string $second The second column text
+     * @param array $firstattributes The first column attributes (optional)
+     * @param array $secondattributes The second column attributes (optional)
+     * @return void
+     */
+    private function add_table_row_tuple(html_table $table, $first, $second, $firstattributes = [],
+        $secondattributes = []) {
+        $row = new html_table_row();
+        $cell1 = new html_table_cell($first);
+        $cell1->header = true;
+        if (!empty($firstattributes)) {
+            $cell1->attributes = $firstattributes;
+        }
+
+        $cell2 = new html_table_cell($second);
+        if (!empty($secondattributes)) {
+            $cell2->attributes = $secondattributes;
+        }
+        $row->cells = array($cell1, $cell2);
+        $table->data[] = $row;
     }
 
     /**
@@ -1386,5 +1478,55 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         }
 
         return html_writer::table($table);
+    }
+
+    /**
+     * Render a table containing all the current grades and feedback.
+     *
+     * @param panoptosubmission_submissions_feedback_status $status
+     * @return string
+     */
+    public function render_panoptosubmission_submissions_feedback_status(panoptosubmission_submissions_feedback_status $status) {
+        $o = '';
+
+        $o .= $this->output->container_start('feedback');
+        $o .= $this->output->heading(get_string('feedbackfromteacher', 'panoptosubmission'), 3);
+        $o .= $this->output->box_start('boxaligncenter feedbacktable');
+        $t = new html_table();
+
+        if (isset($status->gradefordisplay)) {
+            // Grade.
+            $cell1content = get_string('gradenoun', 'panoptosubmission');
+            $cell2content = $status->gradefordisplay;
+            $this->add_table_row_tuple($t, $cell1content, $cell2content);
+
+            // Grade date.
+            $cell1content = get_string('gradedon', 'panoptosubmission');
+            $cell2content = userdate($status->gradeddate);
+            $this->add_table_row_tuple($t, $cell1content, $cell2content);
+        }
+
+        if ($status->grader) {
+            // Grader.
+            $cell1content = get_string('gradedby', 'panoptosubmission');
+            $cell2content = $this->output->user_picture($status->grader) .
+                            $this->output->spacer(array('width' => 30)) .
+                            fullname($status->grader, $status->canviewfullnames);
+            $this->add_table_row_tuple($t, $cell1content, $cell2content);
+        }
+
+        if ($status->grade->str_feedback) {
+            // Feedback.
+            $feedback = $this->output->box_start('boxaligncenter plugincontentsummary summary_submission_feedback');
+            $feedback .= $status->grade->str_feedback;
+            $feedback .= $this->output->box_end();
+            $this->add_table_row_tuple($t, get_string('submissioncommentfeedback', 'panoptosubmission'), $feedback);
+        }
+
+        $o .= html_writer::table($t);
+        $o .= $this->output->box_end();
+
+        $o .= $this->output->container_end();
+        return $o;
     }
 }
