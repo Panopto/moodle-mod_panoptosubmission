@@ -103,7 +103,8 @@ class panoptosubmission_gradepreferences_form extends moodleform {
         $filters = array(
             PANOPTOSUBMISSION_ALL => get_string('all', 'panoptosubmission'),
             PANOPTOSUBMISSION_REQ_GRADING => get_string('reqgrading', 'panoptosubmission'),
-            PANOPTOSUBMISSION_SUBMITTED => get_string('submitted', 'panoptosubmission')
+            PANOPTOSUBMISSION_SUBMITTED => get_string('submitted', 'panoptosubmission'),
+            PANOPTOSUBMISSION_NOT_SUBMITTED => get_string('not_submitted', 'panoptosubmission')
         );
 
         $mform->addElement('select', 'filter', get_string('show'), $filters);

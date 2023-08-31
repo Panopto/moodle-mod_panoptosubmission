@@ -1,7 +1,7 @@
 .panopto-player-container {
-    transition: opacity .5s ease-in-out;
-    -moz-transition: opacity .5s ease-in-out;
     -webkit-transition: opacity .5s ease-in-out;
+    -moz-transition: opacity .5s ease-in-out;
+    transition: opacity .5s ease-in-out;
 }
 
 .panopto-player-container.no-session {
@@ -19,16 +19,16 @@
     top: 0px;
     left: 0px;
     opacity: 0;
-    transition: opacity .5s ease-in-out;
-    -moz-transition: opacity .5s ease-in-out;
     -webkit-transition: opacity .5s ease-in-out;
+    -moz-transition: opacity .5s ease-in-out;
+    transition: opacity .5s ease-in-out;
 }
 
 .panopto-session-container .panopto-player-iframe {
     opacity: 1;
-    transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
-    -moz-transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
     -webkit-transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
+    -moz-transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
+    transition: visibility .5s ease-in-out, opacity .5s ease-in-out, height .5s ease-in-out;
 }
 
 .panopto-session-container.session-hidden .panopto-thumbnail-container {

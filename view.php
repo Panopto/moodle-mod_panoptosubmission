@@ -36,13 +36,21 @@ if (!empty($id)) {
 
 require_course_login($course->id, true, $cm);
 
-global $PAGE, $OUTPUT, $DB;
+global $CFG, $PAGE, $OUTPUT, $DB;
 
 $PAGE->set_url('/mod/panoptosubmission/view.php', array('id' => $id));
 $PAGE->set_title(format_string($panactivityinstance->name));
 $PAGE->set_heading($course->fullname);
 $pageclass = 'panoptosubmission-body';
 $PAGE->add_body_class($pageclass);
+
+$ismoodle40minimum = empty($CFG->version) ? false : $CFG->version >= 2022041908.00;
+if ($ismoodle40minimum) {
+        $PAGE->activityheader->set_attrs([
+            "title" => '',
+            "hidecompletion" => false,
+            "description" => '']);
+}
 
 $context = context_module::instance($cm->id);
 
@@ -85,6 +93,7 @@ $contentitemparams = array(
 // Limit the instructor buttons to ONLY those users with the role appropriate for them.
 if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
     echo $renderer->display_instructor_buttons($cm, $USER->id);
+    echo $renderer->display_grading_summary($cm, $course);
 } else {
     echo $renderer->get_view_video_container($submission, $course->id, $cm->id);
 
@@ -98,7 +107,7 @@ if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
         echo $renderer->display_student_submit_buttons($cm, $USER->id, $submitdisabled);
     }
 
-    echo $renderer->display_grade_feedback($panactivityinstance, $context);
+    echo $renderer->display_grade_feedback($cm, $panactivityinstance, $submission, $context);
 
     $url = new moodle_url('/mod/panoptosubmission/contentitem.php', $contentitemparams);
 

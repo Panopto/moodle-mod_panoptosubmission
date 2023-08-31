@@ -43,8 +43,8 @@ function panoptosubmission_add_instance($newactivity) {
     $newactivity->id = $DB->insert_record('panoptosubmission', $newactivity);
 
     if ($newactivity->timedue) {
-        $event = new stdClass();
 
+        $event = new stdClass();
         $event->name = $newactivity->name;
         $event->description = format_module_intro('panoptosubmission', $newactivity, $newactivity->coursemodule, false);
         $event->format = FORMAT_HTML;
@@ -262,12 +262,6 @@ function panoptosubmission_scale_used_anywhere($scaleid) {
  */
 function panoptosubmission_supports($feature) {
     switch($feature) {
-        case FEATURE_GROUPS:
-            return true;
-        case FEATURE_GROUPINGS:
-            return true;
-        case FEATURE_GROUPMEMBERSONLY:
-            return true;
         case FEATURE_MOD_INTRO:
             return true;
         case FEATURE_COMPLETION_TRACKS_VIEWS:
@@ -279,6 +273,8 @@ function panoptosubmission_supports($feature) {
         case FEATURE_ADVANCED_GRADING:
             return true;
         case FEATURE_BACKUP_MOODLE2:
+            return true;
+        case FEATURE_SHOW_DESCRIPTION;
             return true;
         default:
             return null;
