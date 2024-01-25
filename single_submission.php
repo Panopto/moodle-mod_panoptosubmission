@@ -168,13 +168,16 @@ if ($submissionform->is_cancelled()) {
             $currentgrade = $submitteddata->xgrade;
         }
 
+        $notifystudentchanged = $pansubmissionactivity->sendstudentnotifications != $submitteddata->sendstudentnotifications;
         if (!$blanksubmission) {
 
             $submissionchanged = strcmp(
                 $submission->submissioncomment ?? '',
                 $submitteddata->submissioncomment_editor['text'] ?? ''
             );
-            if ($submission->grade == $currentgrade && !$submissionchanged) {
+            if (   $submission->grade == $currentgrade
+                && !$notifystudentchanged
+                && !$submissionchanged) {
                 $updategrade = false;
             }
             if ($submissionchanged || $updategrade) {
@@ -199,10 +202,31 @@ if ($submissionform->is_cancelled()) {
 
         if ($updategrade) {
             $pansubmissionactivity->cmidnumber = $cm->idnumber;
-
             $gradeobj = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
 
             panoptosubmission_grade_item_update($pansubmissionactivity, $gradeobj);
+
+            if (empty($teacher)) {
+                $teacher = $USER;
+            }
+
+            // Update notify student flag if there was a change.
+            if ($notifystudentchanged) {
+                $pansubmissionactivity->sendstudentnotifications = $submitteddata->sendstudentnotifications;
+                $DB->update_record('panoptosubmission', $pansubmissionactivity);
+            }
+
+            // Send notification to student.
+            if ($pansubmissionactivity->sendstudentnotifications) {
+                panoptosubmission_send_notification($cm,
+                    $course,
+                    $pansubmissionactivity->name,
+                    $submission,
+                    $teacher,
+                    $user,
+                    'feedbackavailable'
+                );
+            }
 
             // Add to log.
             $event = \mod_panoptosubmission\event\grades_updated::create(array(
