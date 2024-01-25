@@ -204,6 +204,11 @@ class panoptosubmission_singlesubmission_form extends moodleform {
 
         }
 
+        // Notify student checkbox.
+        $mform->addElement('selectyesno', 'sendstudentnotifications', get_string('sendstudentnotifications', 'panoptosubmission'));
+        $mform->setDefault('sendstudentnotifications', $this->_customdata->cminstance->sendstudentnotifications ?? 0);
+        $mform->setType('sendstudentnotifications', PARAM_BOOL);
+
         $this->add_action_buttons();
     }
 

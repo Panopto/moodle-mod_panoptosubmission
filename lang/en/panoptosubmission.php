@@ -39,7 +39,6 @@ $string['preventlate'] = 'Prevent late submissions';
 $string['preventlate_help'] = 'If enabled, this will prevent students from submitting the assignment after the due date.';
 $string['allowdeleting'] = 'Allow resubmitting';
 $string['allowdeleting_help'] = 'If enabled, students may replace submitted videos. Whether it is possible to submit after the due date is controlled by the \'Prevent late submissions\' setting';
-$string['emailteachers'] = 'Email alerts to teachers';
 $string['emailteachers_help'] = 'If enabled, teachers receive email notification whenever students add or update an assignment submission. Only teachers who are able to grade the particular assignment are notified. So, for example, if the course uses separate groups, teachers restricted to particular groups won\'t receive notification about students in other groups.';
 $string['invalidid'] = 'Invalid ID';
 $string['invalid_launch_parameters'] = 'Invalid launch parameters';
@@ -93,6 +92,16 @@ $string['submission'] = 'Submission';
 $string['submissions'] = 'Submissions';
 $string['gradeitem:submissions'] = 'Submissions';
 $string['feedback'] = 'Feedback';
+$string['feedbackavailabletext'] = '{$a->username} has posted some feedback on your
+assignment submission for \'{$a->assignment}\'
+
+You can see it appended to your assignment submission:
+
+    {$a->url}';
+$string['feedbackavailablehtml'] = '{$a->username} has posted some feedback on your
+assignment submission for \'<i>{$a->assignment}</i>\'<br /><br />
+You can see it appended to your <a href="{$a->url}">assignment submission</a>.';
+$string['feedbackavailablesmall'] = '{$a->username} has given feedback for assignment {$a->assignment}';
 $string['singlesubmissionheader'] = 'Grade submission';
 $string['singlegrade'] = 'Add help text';
 $string['singlegrade_help'] = 'Add help text';
@@ -102,20 +111,27 @@ $string['savedchanges'] = 'Changed Saved';
 $string['save'] = 'Save Changes';
 $string['cancel'] = 'Close';
 $string['pluginname'] = 'Panopto Student Submission';
-$string['emailteachermail'] = '{$a->username} has updated their assignment submission
+$string['gradersubmissionupdatedtext'] = '{$a->username} has updated their assignment submission
 for \'{$a->assignment}\' at {$a->timeupdated}
 
 View the submission here:
 
     {$a->url}';
-$string['emailteachermailhtml'] = '{$a->username} has updated their assignment submission
+$string['gradersubmissionupdatedhtml'] = '{$a->username} has updated their assignment submission
 for <i>\'{$a->assignment}\'  at {$a->timeupdated}</i><br /><br />
 It is <a href="{$a->url}">available on the web site</a>.';
+$string['gradersubmissionupdatedsmall'] = '{$a->username} has updated their submission for assignment {$a->assignment}.';
+$string['submissionreceipttext'] = 'You have submitted an
+assignment submission for \'{$a->assignment}\'
+
+You can see the status of your assignment submission:
+
+    {$a->url}';
+$string['submissionreceipthtml'] = '<p>You have submitted an assignment submission for \'<i>{$a->assignment}</i>\'.</p>
+<p>You can see the status of your <a href="{$a->url}">assignment submission</a>.</p>';
+$string['submissionreceiptsmall'] = 'You have submitted your assignment submission for {$a->assignment}';
 $string['messageprovider:panoptosubmission_updates'] = 'Panopto Student Submission notifications';
 $string['video_preview_header'] = 'Submission preview';
-$string['panoptosubmission:gradesubmission'] = 'Grade video submissions';
-$string['panoptosubmission:addinstance'] = 'Add a Panopto Student Submission activity';
-$string['panoptosubmission:submit'] = 'Submit';
 $string['noenrolledstudents'] = 'No students are enrolled in the course';
 $string['group_filter'] = 'Group Filter';
 $string['noassignments'] = 'No Panopto Student Submission activities found in the course';
@@ -144,6 +160,15 @@ $string['grade_out_of'] = 'Grade out of {$a}: ';
 $string['quickgrade_help'] = 'If enabled, multiple assignments can be graded at the same time. Update grades and feedback and then click "Save all feedback".';
 $string['no_existing_lti_tools'] = 'A preconfigured Panopto LTI tool with the custom parameter "panopto_student_submission_tool" must exist to be able to use the Panopto Student Submission activity. Please see setup documentation for more information.';
 $string['no_automatic_operation_target_server'] = 'Please set Automatic Operation Target Server in the settings, so course can be provisioned.';
+$string['notifications'] = 'Notifications';
+$string['sendstudentnotificationsdefault'] = 'Default for \'Notify student\'';
+$string['sendstudentnotificationsdefault_help'] = 'When grading each student, should \'Notify student\' be ticked by default?';
+$string['sendstudentnotifications'] = 'Notify student';
+$string['sendstudentnotifications_help'] = 'Tick this box to send a notification about the updated grade or feedback. If the assignment uses a marking workflow, or the grades are hidden in the grader report, then the notification will not be sent until the grade is released.';
+$string['sendnotifications'] = 'Notify graders about submissions';
+$string['sendnotifications_help'] = 'If enabled, graders (usually teachers) receive a message whenever a student submits an assignment, early, on time and late.';
+$string['sendlatenotifications'] = 'Notify graders about late submissions';
+$string['sendlatenotifications_help'] = 'If enabled, graders (usually teachers) receive a message whenever a student submits an assignment late.';
 $string['privacy:metadata:emailteachersexplanation'] = 'Messages are sent to teachers through the messaging system.';
 $string['privacy:metadata:panoptosubmission_submission'] = 'Panopto Student Submission submissions';
 $string['privacy:metadata:panoptosubmission_submission:email'] = 'Your email is sent to Panopto to allow use of Panopto\'s email features.';
@@ -163,3 +188,7 @@ $string['privacy:metadata:panoptosubmissionperpage'] = 'Number of assignment sub
 $string['privacy:metadata:panoptosubmissionquickgrade'] = 'Quick grading preference for Panopto Submission.';
 $string['privacy:markedsubmissionspath'] = 'markedsubmissions';
 $string['privacy:submissionpath'] = 'submission';
+$string['panoptosubmission:gradesubmission'] = 'Grade video submissions';
+$string['panoptosubmission:addinstance'] = 'Add a Panopto Student Submission activity';
+$string['panoptosubmission:submit'] = 'Submit';
+$string['panoptosubmission:receivegradernotifications'] = 'Receive grader submission notifications';

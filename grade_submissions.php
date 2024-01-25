@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * main grading page for the Panopto Student Submission module
+ * Main grading page for the Panopto Student Submission module.
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
@@ -28,7 +28,8 @@ require_once(dirname(__FILE__).'/renderer.php');
 require_once(dirname(__FILE__).'/locallib.php');
 require_once(dirname(__FILE__).'/grade_preferences_form.php');
 
-$id = required_param('cmid', PARAM_INT);           // Course Module ID.
+// Course Module ID.
+$id = required_param('cmid', PARAM_INT);
 $mode = optional_param('mode', 0, PARAM_TEXT);
 $tifirst = optional_param('tifirst', '', PARAM_TEXT);
 $tilast = optional_param('tilast', '', PARAM_TEXT);
@@ -78,9 +79,7 @@ $data = null;
 
 if ($data = $prefform->get_data()) {
     set_user_preference('panoptosubmission_group_filter', $data->group_filter);
-
     set_user_preference('panoptosubmission_filter', $data->filter);
-
 
     // Make sure advanced grading is disabled before we enable quick grading.
     $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
@@ -120,6 +119,7 @@ if (!empty($gradedata->mode)) {
 
     foreach ($gradedata->users as $userid => $val) {
 
+        $userto = $DB->get_record('user', ['id' => $userid]);
         $param = array('panactivityid' => $pansubmissionactivity->id, 'userid' => $userid);
 
         $usersubmissions = $DB->get_record('panoptosubmission_submission', $param);
@@ -127,7 +127,6 @@ if (!empty($gradedata->mode)) {
         if ($usersubmissions) {
 
             if (array_key_exists($userid, $gradedata->menu)) {
-
                 // Update grade.
                 if (($gradedata->menu[$userid] != $usersubmissions->grade)) {
 
@@ -139,14 +138,10 @@ if (!empty($gradedata->mode)) {
                 }
             }
 
-            if (array_key_exists($userid, $gradedata->submissioncomment)) {
-
-                if (0 != strcmp($usersubmissions->submissioncomment, $gradedata->submissioncomment[$userid])) {
-                    $usersubmissions->submissioncomment = $gradedata->submissioncomment[$userid];
-
-                    $updated = true;
-
-                }
+            if (   array_key_exists($userid, $gradedata->submissioncomment)
+                && 0 != strcmp($usersubmissions->submissioncomment, $gradedata->submissioncomment[$userid])) {
+                $usersubmissions->submissioncomment = $gradedata->submissioncomment[$userid];
+                $updated = true;
             }
 
             // Trigger grade event.
@@ -157,6 +152,18 @@ if (!empty($gradedata->mode)) {
                 $pansubmissionactivity->cmidnumber = $cm->idnumber;
 
                 panoptosubmission_grade_item_update($pansubmissionactivity, $grade);
+
+                // Send notification to student.
+                if ($pansubmissionactivity->sendstudentnotifications) {
+                        panoptosubmission_send_notification($cm,
+                            $course,
+                            $pansubmissionactivity->name,
+                            $submission,
+                            $USER,
+                            $userto,
+                            'feedbackavailable'
+                        );
+                }
 
                 // Add to log only if updating.
                 $event = \mod_panoptosubmission\event\grades_updated::create(array(
@@ -207,6 +214,18 @@ if (!empty($gradedata->mode)) {
 
                 panoptosubmission_grade_item_update($pansubmissionactivity, $grade);
 
+                // Send notification to student.
+                if ($pansubmissionactivity->sendstudentnotifications) {
+                    panoptosubmission_send_notification($cm,
+                        $course,
+                        $pansubmissionactivity->name,
+                        $submission,
+                        $USER,
+                        $userto,
+                        'feedbackavailable'
+                    );
+                }
+
                 // Add to log only if updating.
                 $event = \mod_panoptosubmission\event\grades_updated::create(array(
                     'context' => $context,
@@ -216,7 +235,6 @@ if (!empty($gradedata->mode)) {
                 ));
                 $event->trigger();
             }
-
         }
 
         $updated = false;

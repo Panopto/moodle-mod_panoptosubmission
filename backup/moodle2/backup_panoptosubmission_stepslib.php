@@ -50,7 +50,9 @@ class backup_panoptosubmission_activity_structure_step extends backup_activity_s
                 'cutofftime',
                 'preventlate',
                 'resubmit',
-                'emailteachers',
+                'sendnotifications',
+                'sendlatenotifications',
+                'sendstudentnotifications',
                 'grade',
                 'timecreated',
                 'timemodified'

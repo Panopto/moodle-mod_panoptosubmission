@@ -12,7 +12,9 @@ xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
         <FIELD NAME="timedue" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time the assignment submissions are due by"/>
         <FIELD NAME="preventlate" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Prevent late submissions"/>
         <FIELD NAME="resubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Allow for resubmissions"/>
-        <FIELD NAME="emailteachers" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Email submissions to the teacher"/>
+        <FIELD NAME="sendnotifications" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Allows the disabling of email notifications."/>
+        <FIELD NAME="sendlatenotifications" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Allows separate enabling of notifications for late student submissions."/>
+        <FIELD NAME="sendstudentnotifications" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Default for send student notifications checkbox when grading."/>
         <FIELD NAME="grade" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" DECIMALS="2" COMMENT="Maximum grade the assignment is worth"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time the assignment was created"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time the assignment settings were modified"/>

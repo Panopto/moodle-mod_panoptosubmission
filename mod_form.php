@@ -82,9 +82,22 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
         $mform->addHelpButton('resubmit', 'allowdeleting', 'panoptosubmission');
         $mform->setDefault('resubmit', 0);
 
-        $mform->addElement('select', 'emailteachers', get_string('emailteachers', 'panoptosubmission'), $ynoptions);
-        $mform->addHelpButton('emailteachers', 'emailteachers', 'panoptosubmission');
-        $mform->setDefault('emailteachers', 0);
+        // Notifications.
+        $mform->addElement('header', 'notifications', get_string('notifications', 'panoptosubmission'));
+
+        $name = get_string('sendnotifications', 'panoptosubmission');
+        $mform->addElement('selectyesno', 'sendnotifications', $name);
+        $mform->addHelpButton('sendnotifications', 'sendnotifications', 'panoptosubmission');
+
+        $name = get_string('sendlatenotifications', 'panoptosubmission');
+        $mform->addElement('selectyesno', 'sendlatenotifications', $name);
+        $mform->addHelpButton('sendlatenotifications', 'sendlatenotifications', 'panoptosubmission');
+        $mform->disabledIf('sendlatenotifications', 'sendnotifications', 'eq', 1);
+
+        $name = get_string('sendstudentnotificationsdefault', 'panoptosubmission');
+        $mform->addElement('selectyesno', 'sendstudentnotifications', $name);
+        $mform->addHelpButton('sendstudentnotifications', 'sendstudentnotificationsdefault', 'panoptosubmission');
+        $mform->setDefault('sendstudentnotificationsdefault', 0);
 
         $this->standard_grading_coursemodule_elements();
 
@@ -92,8 +105,6 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
 
         $this->add_action_buttons();
     }
-
-
 
     /**
      * Perform minimal validation on the settings form

@@ -149,8 +149,11 @@ if ($submission) {
 $context = $PAGE->context;
 
 // Email an alert to the teacher.
-if ($pansubmissionactivity->emailteachers) {
-    panoptosubmission_email_teachers($cm, $pansubmissionactivity->name, $submission, $context);
-}
+panoptosubmission_notify_graders($pansubmissionactivity,
+    $submission,
+    $cm,
+    $context,
+    $course);
+
 
 echo $OUTPUT->footer();

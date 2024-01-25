@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * main lib.php file for the Panopto Student Submission mod
+ * Main lib.php file for the Panopto Student Submission mod.
  *
  * @package mod_panoptosubmission
  * @copyright  Panopto 2021
@@ -178,7 +178,6 @@ function panoptosubmission_user_outline($course, $user, $mod, $data) {
     return $return;
 }
 
-
 /**
  * Print a detailed representation of what a user has done with
  * a given particular instance of this module, for user activity reports.
@@ -208,7 +207,6 @@ function panoptosubmission_print_recent_activity($course, $viewfullnames, $times
     return false;
 }
 
-
 /**
  * Must return an array of users who are participants an instance of the
  * Panopto Student Submission activity
@@ -219,7 +217,6 @@ function panoptosubmission_print_recent_activity($course, $viewfullnames, $times
 function panoptosubmission_get_participants($targetactivity) {
     return false;
 }
-
 
 /**
  * This function returns if a scale is being used by one panoptosubmission

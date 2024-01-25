@@ -213,59 +213,62 @@ function panoptosubmission_display_lateness($timesubmitted, $timedue) {
 }
 
 /**
- * Alerts teachers by email of new or changed assignments that need grading
+ * Alerts users by email of new or changed assignments.
  *
- * Sends an email to ALL teachers in the course (or in the group if using separate groups).
  *
  * @param object $cm Panopto Student Submission activity course module object.
+ * @param object $course The course object.
  * @param string $name Name of the Panopto activity instance.
  * @param object $submission The submission that has changed.
- * @param object $context The context object.
+ * @param stdClass $userfrom User that is sending notification.
+ * @param stdClass $userto User that is receiving notification.
+ * @param string $messagetype Message type.
  */
-function panoptosubmission_email_teachers($cm, $name, $submission, $context) {
-    global $CFG, $DB, $COURSE;
+function panoptosubmission_send_notification($cm,
+                                            $course,
+                                            $name,
+                                            $submission,
+                                            $userfrom,
+                                            $userto,
+                                            $messagetype) {
+    global $CFG;
 
-    $user = $DB->get_record('user', array('id' => $submission->userid));
+    $modulename = get_string('modulename', 'panoptosubmission');
+    $strsubmitted = get_string('submitted', 'panoptosubmission');
+    $courseid = $cm->course ?? $course->id;
 
-    if ($teachers = panoptosubmission_get_graders($cm, $user, $context)) {
+    $info = new stdClass();
+    $info->username = fullname($userfrom, true);
+    $info->assignment = format_string($name, true);
+    $info->url = $CFG->wwwroot . '/mod/panoptosubmission/grade_submissions.php?cmid=' . $cm->id;
+    $info->timeupdated = strftime('%c', $submission->timemodified);
+    $info->courseid = $courseid;
+    $info->cmid = $cm->id;
 
-        $strassignments = get_string('modulenameplural', 'panoptosubmission');
-        $strassignment = get_string('modulename', 'panoptosubmission');
-        $strsubmitted = get_string('submitted', 'panoptosubmission');
+    $postsubject = $strsubmitted . ': ' . $userfrom->username . ' -> ' . $name;
+    $posttext = panoptosubmission_format_notification_message_text($messagetype, $course, $info, $modulename);
+    $posthtml = ($userto->mailformat == 1)
+        ? panoptosubmission_format_notification_message_html($messagetype, $course, $info)
+        : '';
 
-        foreach ($teachers as $teacher) {
-            $info = new stdClass();
-            $info->username = fullname($user, true);
-            $info->assignment = format_string($name, true);
-            $info->url = $CFG->wwwroot . '/mod/panoptosubmission/grade_submissions.php?cmid=' . $cm->id;
-            $info->timeupdated = strftime('%c', $submission->timemodified);
-            $info->courseid = $cm->course;
-            $info->cmid = $cm->id;
+    $eventdata = new \core\message\message();
+    $eventdata->courseid = $courseid;
+    $eventdata->modulename = 'panoptosubmission';
+    $eventdata->userfrom = $userfrom;
+    $eventdata->userto = $userto;
+    $eventdata->subject = $postsubject;
+    $eventdata->fullmessage = $posttext;
+    $eventdata->fullmessageformat = FORMAT_PLAIN;
+    $eventdata->fullmessagehtml = $posthtml;
+    $eventdata->smallmessage = $postsubject;
 
-            $postsubject = $strsubmitted . ': ' . $user->username . ' -> ' . $name;
-            $posttext = panoptosubmission_email_teachers_text($info);
-            $posthtml = ($teacher->mailformat == 1) ? panoptosubmission_email_teachers_html($info) : '';
+    $eventdata->name = 'panoptosubmission_updates';
+    $eventdata->component = 'mod_panoptosubmission';
+    $eventdata->notification = 1;
+    $eventdata->contexturl = $info->url;
+    $eventdata->contexturlname = $info->assignment;
 
-            $eventdata = new \core\message\message();
-            $eventdata->courseid = $COURSE->id;
-            $eventdata->modulename = 'panoptosubmission';
-            $eventdata->userfrom = $user;
-            $eventdata->userto = $teacher;
-            $eventdata->subject = $postsubject;
-            $eventdata->fullmessage = $posttext;
-            $eventdata->fullmessageformat = FORMAT_PLAIN;
-            $eventdata->fullmessagehtml = $posthtml;
-            $eventdata->smallmessage = $postsubject;
-
-            $eventdata->name = 'panoptosubmission_updates';
-            $eventdata->component = 'mod_panoptosubmission';
-            $eventdata->notification = 1;
-            $eventdata->contexturl = $info->url;
-            $eventdata->contexturlname = $info->assignment;
-
-            message_send($eventdata);
-        }
-    }
+    message_send($eventdata);
 }
 
 /**
@@ -278,7 +281,8 @@ function panoptosubmission_email_teachers($cm, $name, $submission, $context) {
  */
 function panoptosubmission_get_graders($cm, $user, $context) {
     // Potential graders.
-    $potgraders = get_enrolled_users($context, 'mod/panoptosubmission:gradesubmission', 0, 'u.*', null, 0, 0, true);
+    $potgraders = get_enrolled_users($context, 'mod/panoptosubmission:gradesubmission',
+                                                0, 'u.*', null, 0, 0, true);
 
     $graders = array();
     // Separate groups are being used.
@@ -322,24 +326,76 @@ function panoptosubmission_get_graders($cm, $user, $context) {
 }
 
 /**
- * Creates the text content for emails to teachers
+ * Send notifications to graders upon student submissions.
  *
- * @param object $info The info used by the 'emailteachermail' language string
+ * @param object $pansubmissionactivity The submission object or NULL in which case it will be loaded
+ * @param object $submission The submission that has changed.
+ * @param object $cm Panopto Student Submission activity course module object.
+ * @param object $context The context object.
+ * @param object $course The course object.
+ * @return void
+ */
+function panoptosubmission_notify_graders($pansubmissionactivity,
+                                        $submission,
+                                        $cm,
+                                        $context,
+                                        $course) {
+    global $DB, $USER;
+
+    $late = $pansubmissionactivity->timedue && ($pansubmissionactivity->timedue < time());
+
+    if (!$pansubmissionactivity->sendnotifications && !($late && $pansubmissionactivity->sendlatenotifications)) {
+        // No need to do anything.
+        return;
+    }
+
+    if ($submission->userid) {
+        $user = $DB->get_record('user', ['id' => $submission->userid]);
+    } else {
+        $user = $USER;
+    }
+
+    if ($teachers = panoptosubmission_get_graders($cm, $user, $context)) {
+        foreach ($teachers as $teacher) {
+            panoptosubmission_send_notification($cm,
+                $course,
+                $pansubmissionactivity->name,
+                $submission,
+                $user,
+                $teacher,
+                'gradersubmissionupdated'
+            );
+        }
+    }
+}
+
+/**
+ * Creates the text content for emails.
+ *
+ * @param string $messagetype Message type.
+ * @param object $course Course object.
+ * @param object $info The info used by the messagetype language strings.
+ * @param string $modulename Module name.
  * @return string
  */
-function panoptosubmission_email_teachers_text($info) {
+function panoptosubmission_format_notification_message_text($messagetype, $course, $info, $modulename) {
     global $DB;
 
-    $param = array('id' => $info->courseid);
-    $course = $DB->get_record('course', $param);
+    if (empty($course)) {
+        $param = array('id' => $info->courseid);
+        $course = $DB->get_record('course', $param);
+    }
+
     $posttext = '';
 
     if (!empty($course)) {
-        $posttext = format_string($course->shortname, true, $course->id) . ' -> ' .
-            get_string('modulenameplural', 'panoptosubmission') . '  -> ';
-        $posttext .= format_string($info->assignment, true, $course->id) . "\n";
+        $posttext = format_string($course->shortname, true, $course->id) .
+                    ' -> ' .
+                    $modulename .
+                    '  -> ' .
+                    format_string($info->assignment, true, $course->id) . "\n";
         $posttext .= '---------------------------------------------------------------------' . "\n";
-        $posttext .= get_string('emailteachermail', 'panoptosubmission', $info) . "\n";
+        $posttext .= get_string($messagetype . 'text', 'panoptosubmission', $info) . "\n";
         $posttext .= "\n---------------------------------------------------------------------\n";
     }
 
@@ -347,16 +403,21 @@ function panoptosubmission_email_teachers_text($info) {
 }
 
 /**
- * Creates the html content for emails to teachers
+ * Creates the html content for emails.
  *
- * @param object $info The info used by the 'emailteachermailhtml' language string
+ * @param string $messagetype Message type.
+ * @param object $course Course object.
+ * @param object $info The info used by the messagetype language strings.
  * @return string
  */
-function panoptosubmission_email_teachers_html($info) {
-    global $CFG, $DB;
+function panoptosubmission_format_notification_message_html($messagetype, $course, $info) {
+    global $DB;
 
-    $param = array('id' => $info->courseid);
-    $course = $DB->get_record('course', $param);
+    if (empty($course)) {
+        $param = array('id' => $info->courseid);
+        $course = $DB->get_record('course', $param);
+    }
+
     $posthtml = '';
 
     if (!empty($course)) {
@@ -368,7 +429,7 @@ function panoptosubmission_email_teachers_html($info) {
         $posthtml .= html_writer::tag('a', format_string($info->assignment, true, $course->id), $attr);
         $posthtml .= html_writer::end_tag('p');
         $posthtml .= html_writer::start_tag('hr');
-        $posthtml .= html_writer::tag('p', get_string('emailteachermailhtml', 'panoptosubmission', $info));
+        $posthtml .= html_writer::tag('p', get_string($messagetype . 'html', 'panoptosubmission', $info));
         $posthtml .= html_writer::end_tag('hr');
     }
     return $posthtml;
@@ -397,7 +458,7 @@ function panoptosubmission_get_assignment_students($cm) {
  * @return array An array of grading userids
  */
 function panoptosubmission_get_grading_instance($cminstance, $context, $submission, $gradingdisabled) {
-    global $CFG, $USER;
+    global $USER;
 
     $grademenu = make_grades_menu($cminstance->grade);
     $allowgradedecimals = $cminstance->grade > 0;
@@ -443,7 +504,12 @@ function panoptosubmission_get_grading_instance($cminstance, $context, $submissi
  * @return panoptosubmission_submissions_feedback_status renderable object
  */
 function panoptosubmission_get_feedback_status_renderable($cm,
-    $pansubmissionactivity, $submission, $context, $userid, $grade, $teacher) {
+    $pansubmissionactivity,
+    $submission,
+    $context,
+    $userid,
+    $grade,
+    $teacher) {
     global $DB, $PAGE;
 
     $gradinginfo = grade_get_grades($pansubmissionactivity->course,
