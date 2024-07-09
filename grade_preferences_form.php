@@ -52,8 +52,8 @@ class panoptosubmission_gradepreferences_form extends moodleform {
 
         $context = context_module::instance($this->_customdata['cmid']);
 
-        $groupopt = array();
-        $groups = array();
+        $groupopt = [];
+        $groups = [];
 
         // If the user doesn't have access to all group print the groups they have access to.
         if (!has_capability('moodle/site:accessallgroups', $context)) {
@@ -85,7 +85,6 @@ class panoptosubmission_gradepreferences_form extends moodleform {
             foreach ($groups as $groupobj) {
                 $groupopt[$groupobj->id] = $groupobj->name;
             }
-
         }
 
         $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
@@ -100,17 +99,17 @@ class panoptosubmission_gradepreferences_form extends moodleform {
 
         $mform->addElement('select', 'group_filter', get_string('group_filter', 'mod_panoptosubmission'), $groupopt);
 
-        $filters = array(
+        $filters = [
             PANOPTOSUBMISSION_ALL => get_string('all', 'panoptosubmission'),
             PANOPTOSUBMISSION_REQ_GRADING => get_string('reqgrading', 'panoptosubmission'),
             PANOPTOSUBMISSION_SUBMITTED => get_string('submitted', 'panoptosubmission'),
-            PANOPTOSUBMISSION_NOT_SUBMITTED => get_string('not_submitted', 'panoptosubmission')
-        );
+            PANOPTOSUBMISSION_NOT_SUBMITTED => get_string('not_submitted', 'panoptosubmission'),
+        ];
 
         $mform->addElement('select', 'filter', get_string('show'), $filters);
         $mform->addHelpButton('filter', 'show', 'panoptosubmission');
 
-        $mform->addElement('text', 'perpage', get_string('pagesize', 'panoptosubmission'), array('size' => 3, 'maxlength' => 3));
+        $mform->addElement('text', 'perpage', get_string('pagesize', 'panoptosubmission'), ['size' => 3, 'maxlength' => 3]);
         $mform->setType('perpage', PARAM_INT);
         $mform->addHelpButton('perpage', 'pagesize', 'panoptosubmission');
 

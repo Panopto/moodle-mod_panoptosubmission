@@ -64,15 +64,6 @@ class grades_updated extends \core\event\base {
      * @return string a url to the grade submission page
      */
     public function get_url() {
-        return new \moodle_url('/mod/panoptosubmission/grade_submissions.php', array('cmid' => $this->contextinstanceid));
-    }
-
-    /**
-     * returns an array of legacy log data
-     * @return array a array used to store the legacy log data
-     */
-    public function get_legacy_logdata() {
-        return array($this->courseid, 'panoptosubmission', 'update grades',
-            $this->get_url(), $this->contextinstanceid);
+        return new \moodle_url('/mod/panoptosubmission/grade_submissions.php', ['id' => $this->contextinstanceid]);
     }
 }

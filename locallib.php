@@ -29,7 +29,13 @@ define('PANOPTOSUBMISSION_REQ_GRADING', 1);
 define('PANOPTOSUBMISSION_SUBMITTED', 2);
 define('PANOPTOSUBMISSION_NOT_SUBMITTED', 3);
 
+// File areas for file submission assignment.
+define('STUDENTSUBMISSION_FILE_COMPONENT', 'mod_panoptosubmission');
+define('STUDENTSUBMISSION_FILE_FILEAREA', 'studentsubmission_files');
+
 require_once($CFG->libdir . '/gradelib.php');
+require_once($CFG->libdir . '/moodlelib.php');
+require_once($CFG->libdir . '/filelib.php');
 require_once($CFG->dirroot . '/grade/grading/lib.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/block_panopto_lib.php');
@@ -98,7 +104,7 @@ function panoptosubmission_get_submissions($targetinstance, $filter = '') {
             break;
     }
 
-    $param = array('instanceid' => $targetinstance);
+    $param = ['instanceid' => $targetinstance];
     $where .= ' panactivityid = :instanceid';
 
     // Reordering the fields returned to make it easier to use in the grade_get_grades function.
@@ -123,7 +129,7 @@ function panoptosubmission_get_submissions($targetinstance, $filter = '') {
 function panoptosubmission_get_submission($targetinstanceid, $userid) {
     global $DB;
 
-    $param = array('instanceid' => $targetinstanceid, 'userid' => $userid);
+    $param = ['instanceid' => $targetinstanceid, 'userid' => $userid];
     $where = '';
     $where .= ' panactivityid = :instanceid AND userid = :userid';
 
@@ -149,7 +155,7 @@ function panoptosubmission_get_submission($targetinstanceid, $userid) {
 function panoptosubmission_get_submission_grade_object($targetinstanceid, $userid) {
     global $DB;
 
-    $param = array('panactivityid' => $targetinstanceid, 'userid' => $userid);
+    $param = ['panactivityid' => $targetinstanceid, 'userid' => $userid];
 
     $sql = "SELECT u.id, u.id AS userid, s.grade AS rawgrade, s.submissioncomment AS feedback, s.format AS feedbackformat, " .
                    "s.teacher AS usermodified, s.timemarked AS dategraded, s.timemodified AS datesubmitted " .
@@ -170,7 +176,7 @@ function panoptosubmission_get_submission_grade_object($targetinstanceid, $useri
  * This function validates the course module id and returns the course module object, course object and activity instance object.
  *
  * @param int $cmid the id of the context for the module instance
- * @return array an array with the following values array(course module object, $course object, activity instance object).
+ * @return array an array with the following values [course module object, $course object, activity instance object].
  * @throws moodle_exception
  */
 function panoptosubmission_validate_cmid($cmid) {
@@ -180,15 +186,15 @@ function panoptosubmission_validate_cmid($cmid) {
         throw new moodle_exception('invalidcoursemodule');
     }
 
-    if (!$course = $DB->get_record('course', array('id' => $cm->course))) {
+    if (!$course = $DB->get_record('course', ['id' => $cm->course])) {
         throw new moodle_exception('coursemisconf');
     }
 
-    if (!$targetpanoptosubmission = $DB->get_record('panoptosubmission', array('id' => $cm->instance))) {
+    if (!$targetpanoptosubmission = $DB->get_record('panoptosubmission', ['id' => $cm->instance])) {
         throw new moodle_exception('invalidid', 'panoptosubmission');
     }
 
-    return array($cm, $course, $targetpanoptosubmission);
+    return [$cm, $course, $targetpanoptosubmission];
 }
 
 /**
@@ -241,7 +247,7 @@ function panoptosubmission_send_notification($cm,
     $info->username = fullname($userfrom, true);
     $info->assignment = format_string($name, true);
     $info->url = $CFG->wwwroot . '/mod/panoptosubmission/grade_submissions.php?cmid=' . $cm->id;
-    $info->timeupdated = strftime('%c', $submission->timemodified);
+    $info->timeupdated = date('c', $submission->timemodified);
     $info->courseid = $courseid;
     $info->cmid = $cm->id;
 
@@ -284,7 +290,7 @@ function panoptosubmission_get_graders($cm, $user, $context) {
     $potgraders = get_enrolled_users($context, 'mod/panoptosubmission:gradesubmission',
                                                 0, 'u.*', null, 0, 0, true);
 
-    $graders = array();
+    $graders = [];
     // Separate groups are being used.
     if (groups_get_activity_groupmode($cm) == SEPARATEGROUPS) {
         // Try to find all groups.
@@ -382,7 +388,7 @@ function panoptosubmission_format_notification_message_text($messagetype, $cours
     global $DB;
 
     if (empty($course)) {
-        $param = array('id' => $info->courseid);
+        $param = ['id' => $info->courseid];
         $course = $DB->get_record('course', $param);
     }
 
@@ -414,7 +420,7 @@ function panoptosubmission_format_notification_message_html($messagetype, $cours
     global $DB;
 
     if (empty($course)) {
-        $param = array('id' => $info->courseid);
+        $param = ['id' => $info->courseid];
         $course = $DB->get_record('course', $param);
     }
 
@@ -422,10 +428,10 @@ function panoptosubmission_format_notification_message_html($messagetype, $cours
 
     if (!empty($course)) {
         $posthtml .= html_writer::start_tag('p');
-        $attr = array('href' => new moodle_url('/course/view.php', array('id' => $course->id)));
+        $attr = ['href' => new moodle_url('/course/view.php', ['id' => $course->id])];
         $posthtml .= html_writer::tag('a', format_string($course->shortname, true, $course->id), $attr);
         $posthtml .= '->';
-        $attr = array('href' => new moodle_url('/mod/panoptosubmission/view.php', array('id' => $info->cmid)));
+        $attr = ['href' => new moodle_url('/mod/panoptosubmission/view.php', ['id' => $info->cmid])];
         $posthtml .= html_writer::tag('a', format_string($info->assignment, true, $course->id), $attr);
         $posthtml .= html_writer::end_tag('p');
         $posthtml .= html_writer::start_tag('hr');
@@ -553,7 +559,7 @@ function panoptosubmission_get_feedback_status_renderable($cm,
         $gradeddate = $gradebookgrade->dategraded;
 
         if (isset($teacher)) {
-            $grader = $DB->get_record('user', array('id' => $teacher->id));
+            $grader = $DB->get_record('user', ['id' => $teacher->id]);
         } else if (isset($gradebookgrade->usermodified)
             && $gradebookgrade->usermodified > 0
             && has_capability('mod/panoptosubmission:gradesubmission', $context, $gradebookgrade->usermodified)) {
@@ -561,7 +567,7 @@ function panoptosubmission_get_feedback_status_renderable($cm,
             // Case 1: When an assignment is reopened an empty grade is created so the feedback
             // plugin can know which attempt it's referring to. In this case, usermodifed is a student.
             // Case 2: When an assignment's grade is overrided via the gradebook, usermodified is a grader.
-            $grader = $DB->get_record('user', array('id' => $gradebookgrade->usermodified));
+            $grader = $DB->get_record('user', ['id' => $gradebookgrade->usermodified]);
         }
 
         $viewfullnames = has_capability('moodle/site:viewfullnames', $context);
@@ -586,7 +592,7 @@ function panoptosubmission_get_feedback_status_renderable($cm,
  */
 function panoptosubmission_get_grading_summary_renderable($cm, $course) {
     global $DB;
-    $instance = $DB->get_record('panoptosubmission', array('id' => $cm->instance), '*', MUST_EXIST);
+    $instance = $DB->get_record('panoptosubmission', ['id' => $cm->instance], '*', MUST_EXIST);
 
     $isvisible = $cm->visible;
     $countparticipants = count(array_keys(panoptosubmission_get_assignment_students($cm)));

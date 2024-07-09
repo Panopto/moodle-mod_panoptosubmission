@@ -54,9 +54,9 @@ class restore_panoptosubmission_activity_task extends restore_activity_task {
      * Decode contents for restore
      */
     public static function define_decode_contents() {
-        $contents = array();
+        $contents = [];
 
-        $contents[] = new restore_decode_content('panoptosubmission', array('intro'), 'panoptosubmission');
+        $contents[] = new restore_decode_content('panoptosubmission', ['intro'], 'panoptosubmission');
 
         return $contents;
     }
@@ -65,7 +65,7 @@ class restore_panoptosubmission_activity_task extends restore_activity_task {
      * Decode rules for restore
      */
     public static function define_decode_rules() {
-        $rules = array();
+        $rules = [];
 
         $rules[] = new restore_decode_rule('PANOPTOSUBMISSIONVIEWBYID', '/mod/panoptosubmission/view.php?id=$1', 'course_module');
         $rules[] = new restore_decode_rule('PANOPTOSUBMISSIONINDEX', '/mod/panoptosubmission/index.php?id=$1', 'course');
@@ -78,7 +78,7 @@ class restore_panoptosubmission_activity_task extends restore_activity_task {
      * log rules for restore
      */
     public static function define_restore_log_rules() {
-        $rules = array();
+        $rules = [];
 
         $rules[] = new restore_log_rule('panoptosubmission', 'add', 'view.php?id={course_module}', '{panoptosubmission}');
         $rules[] = new restore_log_rule('panoptosubmission', 'update', 'view.php?id={course_module}', '{panoptosubmission}');
@@ -91,7 +91,7 @@ class restore_panoptosubmission_activity_task extends restore_activity_task {
      * Log rules for course during restore
      */
     public static function define_restore_log_rules_for_course() {
-        $rules = array();
+        $rules = [];
         $rules[] = new restore_log_rule('panoptosubmission', 'view all', 'index.php?id={course}', null);
 
         return $rules;

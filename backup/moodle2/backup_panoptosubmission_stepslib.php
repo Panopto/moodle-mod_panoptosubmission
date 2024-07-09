@@ -40,7 +40,7 @@ class backup_panoptosubmission_activity_structure_step extends backup_activity_s
         $userinfo = $this->get_setting_value('userinfo');
 
         // Define each element separated.
-        $columns = array(
+        $columns = [
                 'course',
                 'name',
                 'intro',
@@ -55,13 +55,13 @@ class backup_panoptosubmission_activity_structure_step extends backup_activity_s
                 'sendstudentnotifications',
                 'grade',
                 'timecreated',
-                'timemodified'
-        );
-        $panoptosubmission = new backup_nested_element('panoptosubmission', array('id'), $columns);
+                'timemodified',
+        ];
+        $panoptosubmission = new backup_nested_element('panoptosubmission', ['id'], $columns);
 
         $issues = new backup_nested_element('submissions');
 
-        $columns = array(
+        $columns = [
                 'userid',
                 'entry_id',
                 'source',
@@ -77,16 +77,16 @@ class backup_panoptosubmission_activity_structure_step extends backup_activity_s
                 'mailed',
                 'timemarked',
                 'timecreated',
-                'timemodified'
-        );
-        $issue = new backup_nested_element('submission', array('id'), $columns);
+                'timemodified',
+        ];
+        $issue = new backup_nested_element('submission', ['id'], $columns);
 
         $panoptosubmission->add_child($issues);
         $issues->add_child($issue);
-        $panoptosubmission->set_source_table('panoptosubmission', array('id' => backup::VAR_ACTIVITYID));
+        $panoptosubmission->set_source_table('panoptosubmission', ['id' => backup::VAR_ACTIVITYID]);
 
         if ($userinfo) {
-            $issue->set_source_table('panoptosubmission_submission', array('panactivityid' => backup::VAR_PARENTID));
+            $issue->set_source_table('panoptosubmission_submission', ['panactivityid' => backup::VAR_PARENTID]);
         }
 
         $issue->annotate_ids('user', 'userid');

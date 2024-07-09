@@ -23,6 +23,7 @@
  */
 
 require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
+require_once(dirname(dirname(dirname(__FILE__))).'/lib/filelib.php');
 require_once(dirname(__FILE__).'/lib.php');
 require_once(dirname(__FILE__).'/renderer.php');
 require_once(dirname(__FILE__).'/locallib.php');
@@ -43,7 +44,7 @@ require_sesskey();
 global $CFG, $PAGE, $OUTPUT, $USER;
 
 $url = new moodle_url('/mod/panoptosubmission/single_submission.php');
-$url->params(array('cmid' => $id, 'userid' => $userid));
+$url->params(['cmid' => $id, 'userid' => $userid]);
 
 $context = context_module::instance($cm->id);
 
@@ -53,7 +54,7 @@ $PAGE->set_heading($course->fullname);
 $PAGE->set_context($context);
 
 $previousurl = new moodle_url('/mod/panoptosubmission/grade_submissions.php',
-    array('cmid' => $cm->id, 'tifirst' => $tifirst, 'tilast' => $tilast, 'page' => $page));
+    ['cmid' => $cm->id, 'tifirst' => $tifirst, 'tilast' => $tilast, 'page' => $page]);
 
 $prevousurlstring = get_string('singlesubmissionheader', 'panoptosubmission');
 $PAGE->navbar->add($prevousurlstring, $previousurl);
@@ -61,17 +62,17 @@ $PAGE->requires->css('/mod/panoptosubmission/styles.css');
 
 require_capability('mod/panoptosubmission:gradesubmission', $context);
 
-$event = \mod_panoptosubmission\event\single_submission_page_viewed::create(array(
+$event = \mod_panoptosubmission\event\single_submission_page_viewed::create([
     'objectid' => $pansubmissionactivity->id,
-    'context' => context_module::instance($cm->id)
-));
+    'context' => context_module::instance($cm->id),
+]);
 $event->trigger();
 
 // Get a single submission record.
 $submission = panoptosubmission_get_submission($cm->instance, $userid);
 
 // Get the submission user and the time they submitted the video.
-$param = array('id' => $userid);
+$param = ['id' => $userid];
 $user = $DB->get_record('user', $param);
 
 $submissionuserpic = $OUTPUT->user_picture($user);
@@ -82,7 +83,7 @@ $datestring = ' - ';
 $submissionuserinfo = fullname($user);
 
 // Get grading information.
-$gradinginfo = grade_get_grades($cm->course, 'mod', 'panoptosubmission', $cm->instance, array($userid));
+$gradinginfo = grade_get_grades($cm->course, 'mod', 'panoptosubmission', $cm->instance, [$userid]);
 $gradingdisabled = $gradinginfo->items[0]->grades[$userid]->locked || $gradinginfo->items[0]->grades[$userid]->overridden;
 
 // Get marking teacher information and the time the submission was marked.
@@ -97,7 +98,7 @@ if (!empty($submission)) {
 
     $submissioncomment = $submission->submissioncomment;
 
-    $param = array('id' => $submission->teacher);
+    $param = ['id' => $submission->teacher];
     $teacher = $DB->get_record('user', $param);
 }
 
@@ -123,7 +124,7 @@ $formdata->cminstance = $pansubmissionactivity;
 $formdata->submission = $submission;
 $formdata->userid = $userid;
 $formdata->enableoutcomes = $CFG->enableoutcomes;
-$formdata->submissioncomment_editor = array('text' => $submissioncomment, 'format' => FORMAT_HTML);
+$formdata->submissioncomment_editor = ['text' => $submissioncomment, 'format' => FORMAT_HTML];
 $formdata->tifirst = $tifirst;
 $formdata->tilast = $tilast;
 $formdata->page = $page;
@@ -155,7 +156,7 @@ if ($submissionform->is_cancelled()) {
             $submission->id = $DB->insert_record('panoptosubmission_submission', $submission);
         }
 
-        $cmgrade = $DB->get_record('panoptosubmission', array('id' => $cm->instance), 'grade');
+        $cmgrade = $DB->get_record('panoptosubmission', ['id' => $cm->instance], 'grade');
 
         $gradinginstance = panoptosubmission_get_grading_instance($cmgrade, $context, $submission, $gradingdisabled);
 
@@ -200,6 +201,18 @@ if ($submissionform->is_cancelled()) {
             }
         }
 
+        // Save files if any were uploaded.
+        $submission->submissioncomment = file_save_draft_area_files(
+                $submitteddata->submissioncomment_editor['itemid'],
+                $context->id,
+                STUDENTSUBMISSION_FILE_COMPONENT,
+                STUDENTSUBMISSION_FILE_FILEAREA,
+                $submission->id,
+                ['subdirs' => true],
+                $submitteddata->submissioncomment_editor['text']
+        );
+        $DB->update_record('panoptosubmission_submission', $submission);
+
         if ($updategrade) {
             $pansubmissionactivity->cmidnumber = $cm->idnumber;
             $gradeobj = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
@@ -229,9 +242,9 @@ if ($submissionform->is_cancelled()) {
             }
 
             // Add to log.
-            $event = \mod_panoptosubmission\event\grades_updated::create(array(
+            $event = \mod_panoptosubmission\event\grades_updated::create([
                 'context' => $context,
-            ));
+            ]);
             $event->trigger();
         }
 
@@ -239,7 +252,7 @@ if ($submissionform->is_cancelled()) {
         if (!empty($CFG->enableoutcomes)) {
             require_once($CFG->libdir.'/gradelib.php');
 
-            $data = array();
+            $data = [];
             $gradinginfo = grade_get_grades($course->id, 'mod', 'panoptosubmission', $pansubmissionactivity->id, $userid);
 
             if (!empty($gradinginfo->outcomes)) {

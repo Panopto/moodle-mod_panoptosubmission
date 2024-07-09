@@ -43,14 +43,14 @@ class provider implements \core_privacy\local\metadata\provider,
      * @param collection $collection the object used to store and return the privacy definitions
      * @return returns the collection that includes the new privacy definitions
      */
-    public static function get_metadata(collection $collection) : collection {
+    public static function get_metadata(collection $collection): collection {
 
         $collection->add_external_location_link(
             'panoptosubmission_submission',
             [
                 'userid' => 'privacy:metadata:panoptosubmission_submission:userid',
                 'username' => 'privacy:metadata:panoptosubmission_submission:username',
-                'email' => 'privacy:metadata:panoptosubmission_submission:email'
+                'email' => 'privacy:metadata:panoptosubmission_submission:email',
             ],
             'privacy:metadata:panoptosubmission_submission'
         );
@@ -68,7 +68,7 @@ class provider implements \core_privacy\local\metadata\provider,
                 'mailed' => 'privacy:metadata:panoptosubmission_submission:mailed',
                 'timemarked' => 'privacy:metadata:panoptosubmission_submission:timemarked',
                 'timecreated' => 'privacy:metadata:panoptosubmission_submission:timecreated',
-                'timemodified' => 'privacy:metadata:panoptosubmission_submission:timemodified'
+                'timemodified' => 'privacy:metadata:panoptosubmission_submission:timemodified',
             ],
             'privacy:metadata:panoptosubmission_submission'
         );
@@ -101,7 +101,7 @@ class provider implements \core_privacy\local\metadata\provider,
             'panoptosubmission_group_filter' => get_string(
                 'privacy:metadata:panoptosubmissiongroupfilter', 'mod_panoptosubmission'),
             'panoptosubmission_perpage' => get_string('privacy:metadata:panoptosubmissionperpage', 'mod_panoptosubmission'),
-            'panoptosubmission_quickgrade' => get_string('privacy:metadata:panoptosubmissionquickgrade', 'mod_panoptosubmission')
+            'panoptosubmission_quickgrade' => get_string('privacy:metadata:panoptosubmissionquickgrade', 'mod_panoptosubmission'),
         ];
 
         foreach ($assignmentpreferences as $key => $preferencestring) {
@@ -120,7 +120,7 @@ class provider implements \core_privacy\local\metadata\provider,
      * @param   int           $userid       The user to search.
      * @return  contextlist   $contextlist  The list of contexts used in this plugin.
      */
-    public static function get_contexts_for_userid(int $userid) : contextlist {
+    public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new \core_privacy\local\request\contextlist();
 
         $sql = "SELECT DISTINCT ctx.id FROM {context} ctx " .
@@ -135,7 +135,7 @@ class provider implements \core_privacy\local\metadata\provider,
             'modulename' => 'panoptosubmission',
             'contextlevel' => CONTEXT_MODULE,
             'userid' => $userid,
-            'teacher' => $userid
+            'teacher' => $userid,
         ];
 
         $contextlist->add_from_sql($sql, $params);
@@ -158,7 +158,7 @@ class provider implements \core_privacy\local\metadata\provider,
         $params = [
             'modulename' => 'panoptosubmission',
             'contextlevel' => CONTEXT_MODULE,
-            'contextid' => $context->id
+            'contextid' => $context->id,
         ];
 
         $sql = "SELECT s.userid FROM {panoptosubmission_submission} s " .
@@ -218,16 +218,14 @@ class provider implements \core_privacy\local\metadata\provider,
             $controller = $gradingmanager->get_active_controller();
             foreach ($submissionsdata as $submissiondata) {
                 // Default subcontext path to export assignment submissions submitted by the user.
-                $subcontexts = [
-                    get_string('privacy:submissionpath', 'mod_panoptosubmission')
-                ];
+                $subcontexts = [get_string('privacy:submissionpath', 'mod_panoptosubmission')];
 
                 if ($teacher == true) {
                     if ($submissiondata->teacher == $user->id) {
                         // Export panoptosubmission submissions that have been marked by the user.
                         $subcontexts = [
                             get_string('privacy:markedsubmissionspath', 'mod_panoptosubmission'),
-                            transform::user($submissiondata->userid)
+                            transform::user($submissiondata->userid),
                         ];
                     }
                 }
@@ -271,6 +269,10 @@ class provider implements \core_privacy\local\metadata\provider,
         if (isset($controller)) {
             \core_grading\privacy\provider::delete_instance_data($context);
         }
+
+        // Delete all panoptosubmission files.
+        $fs = get_file_storage();
+        $fs->delete_area_files($context->id, STUDENTSUBMISSION_FILE_COMPONENT, STUDENTSUBMISSION_FILE_FILEAREA);
     }
 
     /**
@@ -363,7 +365,7 @@ class provider implements \core_privacy\local\metadata\provider,
         $params = [
             'contextlevel' => CONTEXT_MODULE,
             'modulename' => 'panoptosubmission',
-            'userid' => $userid
+            'userid' => $userid,
         ];
 
         $sql = "SELECT s.id as id, " .
@@ -401,7 +403,7 @@ class provider implements \core_privacy\local\metadata\provider,
         $params = [
             'modulename' => 'panoptosubmission',
             'contextmodule' => CONTEXT_MODULE,
-            'contextid' => $context->id
+            'contextid' => $context->id,
         ];
 
         $sql = "SELECT a.id, " .
@@ -432,7 +434,7 @@ class provider implements \core_privacy\local\metadata\provider,
             'name' => $panoptosubmissiondata->name,
             'intro' => $panoptosubmissiondata->intro,
             'grade' => $panoptosubmissiondata->grade,
-            'timemodified' => transform::datetime($panoptosubmissiondata->timemodified)
+            'timemodified' => transform::datetime($panoptosubmissiondata->timemodified),
         ];
 
         if ($panoptosubmissiondata->timeavailable != 0) {
@@ -463,7 +465,7 @@ class provider implements \core_privacy\local\metadata\provider,
 
         $params = [
             'panactivityid' => $panoptosubmissionid,
-            'teacher' => $userid
+            'teacher' => $userid,
         ];
 
         $sql = "SELECT count(s.id) as nomarked " .
@@ -491,7 +493,7 @@ class provider implements \core_privacy\local\metadata\provider,
 
         $params = [
             'panactivityid' => $panoptosubmissionid,
-            'userid' => $userid
+            'userid' => $userid,
         ];
 
         $sql = "SELECT s.id as id, " .
@@ -530,7 +532,7 @@ class provider implements \core_privacy\local\metadata\provider,
             'source' => $submissiondata->source,
             'grade' => $submissiondata->grade,
             'submissioncomment' => $submissiondata->submissioncomment,
-            'teacher' => transform::user($submissiondata->teacher)
+            'teacher' => transform::user($submissiondata->teacher),
         ];
 
         if ($submissiondata->timecreated != 0) {

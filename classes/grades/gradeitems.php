@@ -26,8 +26,8 @@ declare(strict_types = 1);
 
 namespace mod_panoptosubmission\grades;
 
-use \core_grades\local\gradeitem\itemnumber_mapping;
-use \core_grades\local\gradeitem\advancedgrading_mapping;
+use core_grades\local\gradeitem\itemnumber_mapping;
+use core_grades\local\gradeitem\advancedgrading_mapping;
 
 /**
  * Grade item mappings for the activity.

@@ -46,11 +46,11 @@ class panoptosubmission_grading_summary implements renderable {
     public $timelimit = 0;
     /** @var int coursemoduleid - The submission course module id */
     public $coursemoduleid = 0;
-    /** @var boolean relativedatesmode - Is the course a relative dates mode course or not */
+    /** @var bool relativedatesmode - Is the course a relative dates mode course or not */
     public $courserelativedatesmode = false;
     /** @var int coursestartdate - start date of the course as a unix timestamp*/
     public $coursestartdate;
-    /** @var boolean isvisible - Is the submission's context module visible to students? */
+    /** @var bool isvisible - Is the submission's context module visible to students? */
     public $isvisible = true;
 
     /**
