@@ -24,6 +24,4 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$messageproviders = array(
-    'panoptosubmission_updates' => array()
-);
+$messageproviders = ['panoptosubmission_updates' => []];

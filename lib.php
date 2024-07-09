@@ -85,7 +85,7 @@ function panoptosubmission_update_instance($targetinstance) {
         $event = new stdClass();
 
         if ($event->id = $DB->get_field(
-            'event', 'id', array('modulename' => 'panoptosubmission', 'instance' => $targetinstance->id))) {
+            'event', 'id', ['modulename' => 'panoptosubmission', 'instance' => $targetinstance->id])) {
 
             $event->name = $targetinstance->name;
             $event->description = format_module_intro('panoptosubmission', $targetinstance, $targetinstance->coursemodule, false);
@@ -111,7 +111,7 @@ function panoptosubmission_update_instance($targetinstance) {
             calendar_event::create($event);
         }
     } else {
-        $DB->delete_records('event', array('modulename' => 'panoptosubmission', 'instance' => $targetinstance->id));
+        $DB->delete_records('event', ['modulename' => 'panoptosubmission', 'instance' => $targetinstance->id]);
     }
 
     if ($updated) {
@@ -134,23 +134,28 @@ function panoptosubmission_delete_instance($id) {
 
     $result = true;
 
-    if (! $targetinstance = $DB->get_record('panoptosubmission', array('id' => $id))) {
+    if (! $targetinstance = $DB->get_record('panoptosubmission', ['id' => $id])) {
         return false;
     }
 
-    if (! $DB->delete_records('panoptosubmission_submission', array('panactivityid' => $targetinstance->id))) {
+    if (! $DB->delete_records('panoptosubmission_submission', ['panactivityid' => $targetinstance->id])) {
         $result = false;
     }
 
-    if (! $DB->delete_records('event', array('modulename' => 'panoptosubmission', 'instance' => $targetinstance->id))) {
+    if (! $DB->delete_records('event', ['modulename' => 'panoptosubmission', 'instance' => $targetinstance->id])) {
         $result = false;
     }
 
-    if (! $DB->delete_records('panoptosubmission', array('id' => $targetinstance->id))) {
+    if (! $DB->delete_records('panoptosubmission', ['id' => $targetinstance->id])) {
         $result = false;
     }
 
     panoptosubmission_grade_item_delete($targetinstance);
+
+    // Delete files associated with this module.
+    $context = context_module::instance($id);
+    $fs = get_file_storage();
+    $fs->delete_area_files($context->id);
 
     return $result;
 }
@@ -243,7 +248,7 @@ function panoptosubmission_scale_used($targetactivity, $scaleid) {
 function panoptosubmission_scale_used_anywhere($scaleid) {
     global $DB;
 
-    $param = array('grade' => -$scaleid);
+    $param = ['grade' => -$scaleid];
     if ($scaleid && $DB->record_exists('panoptosubmission', $param)) {
         return true;
     } else {
@@ -281,10 +286,10 @@ function panoptosubmission_supports($feature) {
 /**
  * Lists all gradable areas for the advanced grading methods gramework
  *
- * @return array('string'=>'string') An array with area names as keys and descriptions as values
+ * @return ['string'=>'string'] An array with area names as keys and descriptions as values
  */
 function panoptosubmission_grading_areas_list() {
-    return array('submissions' => get_string('submissions', 'panoptosubmission'));
+    return ['submissions' => get_string('submissions', 'panoptosubmission')];
 }
 
 /**
@@ -297,7 +302,7 @@ function panoptosubmission_grading_areas_list() {
 function panoptosubmission_grade_item_update($targetinstance, $grades = null) {
     require_once(dirname(dirname(dirname(__FILE__))).'/lib/gradelib.php');
 
-    $params = array('itemname' => $targetinstance->name, 'idnumber' => $targetinstance->cmidnumber);
+    $params = ['itemname' => $targetinstance->name, 'idnumber' => $targetinstance->cmidnumber];
 
     if ($targetinstance->grade > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
@@ -345,7 +350,7 @@ function panoptosubmission_reset_gradebook($courseid, $type = '') {
               "FROM {panoptosubmission} l, {course_modules} cm, {modules} m " .
              "WHERE m.name = 'panoptosubmission' AND m.id = cm.module AND cm.instance = l.id AND l.course = :course";
 
-    $params = array ('course' => $courseid);
+    $params = ['course' => $courseid];
 
     if ($existinggrades = $DB->get_records_sql($sql, $params)) {
 
@@ -366,14 +371,14 @@ function panoptosubmission_reset_userdata($data) {
     global $DB;
 
     $componentstr = get_string('modulenameplural', 'panoptosubmission');
-    $status = array();
+    $status = [];
 
     if (!empty($data->reset_panoptosubmission)) {
         $panoptosubmissionsql = "SELECT l.id " .
                               "FROM {panoptosubmission} l " .
                              "WHERE l.course=:course";
 
-        $params = array ("course" => $data->courseid);
+        $params = ["course" => $data->courseid];
         $DB->delete_records_select('panoptosubmission_submission', "panactivityid IN ($panoptosubmissionsql)", $params);
 
         // Remove all grades from gradebook.
@@ -381,17 +386,20 @@ function panoptosubmission_reset_userdata($data) {
             panoptosubmission_reset_gradebook($data->courseid);
         }
 
-        $status[] = array('component' => $componentstr,
-            'item' => get_string('deleteallsubmissions', 'panoptosubmission'), 'error' => false);
+        $status[] = [
+            'component' => $componentstr,
+            'item' => get_string('deleteallsubmissions', 'panoptosubmission'),
+            'error' => false,
+        ];
     }
 
     // Updating dates - shift may be negative too.
     if ($data->timeshift) {
         shift_course_mod_dates('panoptosubmission',
-            array('timedue', 'timeavailable', 'cutofftime'),
+            ['timedue', 'timeavailable', 'cutofftime'],
             $data->timeshift, $data->courseid
         );
-        $status[] = array('component' => $componentstr, 'item' => get_string('datechanged'), 'error' => false);
+        $status[] = ['component' => $componentstr, 'item' => get_string('datechanged'), 'error' => false];
     }
 
     return $status;
@@ -413,8 +421,49 @@ function panoptosubmission_grade_item_delete($targetrecord) {
         $targetrecord->id,
         0,
         null,
-        array('deleted' => 1)
+        ['deleted' => 1],
     );
+}
+
+/**
+ * Serves submission comment feedback files.
+ *
+ * @param mixed $course course or id of the course
+ * @param mixed $cm course module or id of the course module
+ * @param context $context
+ * @param string $filearea
+ * @param array $args
+ * @param bool $forcedownload
+ * @param array $options - List of options affecting file serving.
+ * @return bool false if file not found, does not return if found - just send the file
+ */
+function panoptosubmission_pluginfile(
+        $course,
+        $cm,
+        context $context,
+        $filearea,
+        $args,
+        $forcedownload,
+        array $options = []) {
+
+    if ($context->contextlevel != CONTEXT_MODULE) {
+        return false;
+    }
+
+    require_course_login($course, true, $cm);
+    $itemid = (int)array_shift($args);
+
+    $relativepath = implode('/', $args);
+    $fullpath = "/{$context->id}/mod_panoptosubmission/$filearea/$itemid/$relativepath";
+
+    $fs = get_file_storage();
+
+    if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
+        return false;
+    }
+
+    // Download MUST be forced - security!
+    send_stored_file($file, 0, 0, true, $options);
 }
 
 /**
@@ -423,6 +472,6 @@ function panoptosubmission_grade_item_delete($targetrecord) {
  * Finds all assignment notifications that have yet to be mailed out, and mails them.
  * @return bool Returns false as the this module doesn't support cron jobs
  */
-function panoptosubmission_cron () {
+function panoptosubmission_cron() {
     return false;
 }

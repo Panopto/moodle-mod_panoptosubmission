@@ -46,7 +46,7 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-        $mform->addElement('text', 'name', get_string('name', 'panoptosubmission'), array('size' => '64'));
+        $mform->addElement('text', 'name', get_string('name', 'panoptosubmission'), ['size' => '64']);
 
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
@@ -58,21 +58,21 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
         $this->standard_intro_elements();
 
         $mform->addElement('date_time_selector',
-            'timeavailable', get_string('availabledate', 'panoptosubmission'), array('optional' => true));
+            'timeavailable', get_string('availabledate', 'panoptosubmission'), ['optional' => true]);
         $mform->addHelpButton('timeavailable', 'availabledate', 'panoptosubmission');
         $mform->setDefault('timeavailable', time());
 
         $mform->addElement('date_time_selector',
-            'timedue', get_string('duedate', 'panoptosubmission'), array('optional' => true));
+            'timedue', get_string('duedate', 'panoptosubmission'), ['optional' => true]);
         $mform->addHelpButton('timedue', 'duedate', 'panoptosubmission');
         $mform->setDefault('timedue', time() + 7 * 24 * 3600);
 
         $mform->addElement('date_time_selector',
-            'cutofftime', get_string('cutoffdate', 'panoptosubmission'), array('optional' => true));
+            'cutofftime', get_string('cutoffdate', 'panoptosubmission'), ['optional' => true]);
         $mform->addHelpButton('cutofftime', 'cutoffdate', 'panoptosubmission');
         $mform->setDefault('cutofftime', time() + 7 * 24 * 3600);
 
-        $ynoptions = array( 0 => get_string('no'), 1 => get_string('yes'));
+        $ynoptions = [0 => get_string('no'), 1 => get_string('yes')];
 
         $mform->addElement('select', 'preventlate', get_string('preventlate', 'panoptosubmission'), $ynoptions);
         $mform->addHelpButton('preventlate', 'preventlate', 'panoptosubmission');

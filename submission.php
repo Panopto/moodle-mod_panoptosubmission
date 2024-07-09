@@ -43,17 +43,17 @@ if (! $cm = get_coursemodule_from_id('panoptosubmission', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
-if (! $course = $DB->get_record('course', array('id' => $cm->course))) {
+if (! $course = $DB->get_record('course', ['id' => $cm->course])) {
     throw new moodle_exception('coursemisconf');
 }
 
-if (! $pansubmissionactivity = $DB->get_record('panoptosubmission', array('id' => $cm->instance))) {
+if (! $pansubmissionactivity = $DB->get_record('panoptosubmission', ['id' => $cm->instance])) {
     throw new moodle_exception('invalidid', 'panoptosubmission');
 }
 
 require_course_login($course->id, true, $cm);
 
-$PAGE->set_url('/mod/panoptosubmission/view.php', array('id' => $course->id));
+$PAGE->set_url('/mod/panoptosubmission/view.php', ['id' => $course->id]);
 $PAGE->set_title(format_string($pansubmissionactivity->name));
 $PAGE->set_heading($course->fullname);
 
@@ -66,11 +66,11 @@ if (panoptosubmission_submission_past_cutoff($pansubmissionactivity)) {
 
 echo $OUTPUT->header();
 
-$param = array('panactivityid' => $pansubmissionactivity->id, 'userid' => $USER->id);
+$param = ['panactivityid' => $pansubmissionactivity->id, 'userid' => $USER->id];
 $submission = $DB->get_record('panoptosubmission_submission', $param);
 
 $time = time();
-$url = new moodle_url('/mod/panoptosubmission/view.php', array('id' => $cm->id));
+$url = new moodle_url('/mod/panoptosubmission/view.php', ['id' => $cm->id]);
 
 if ($submission) {
     $submission->source = $source;
@@ -99,10 +99,10 @@ if ($submission) {
         echo $OUTPUT->single_button($url, $continue, 'post');
         echo html_writer::end_tag('center');
 
-        $event = \mod_panoptosubmission\event\assignment_submitted::create(array(
+        $event = \mod_panoptosubmission\event\assignment_submitted::create([
             'objectid' => $pansubmissionactivity->id,
-            'context' => context_module::instance($cm->id)
-        ));
+            'context' => context_module::instance($cm->id),
+        ]);
         $event->trigger();
     } else {
         notice(get_string('failedtoinsertsubmission', 'panoptosubmission'), $url, $course);
@@ -136,10 +136,10 @@ if ($submission) {
         echo $OUTPUT->single_button($url, $continue, 'post');
         echo html_writer::end_tag('center');
 
-        $event = \mod_panoptosubmission\event\assignment_submitted::create(array(
+        $event = \mod_panoptosubmission\event\assignment_submitted::create([
             'objectid' => $pansubmissionactivity->id,
-            'context' => context_module::instance($cm->id)
-        ));
+            'context' => context_module::instance($cm->id),
+        ]);
         $event->trigger();
     } else {
         notice(get_string('failedtoinsertsubmission', 'panoptosubmission'), $url, $course);

@@ -38,7 +38,7 @@ require_course_login($course->id, true, $cm);
 
 global $CFG, $PAGE, $OUTPUT, $DB;
 
-$PAGE->set_url('/mod/panoptosubmission/view.php', array('id' => $id));
+$PAGE->set_url('/mod/panoptosubmission/view.php', ['id' => $id]);
 $PAGE->set_title(format_string($panactivityinstance->name));
 $PAGE->set_heading($course->fullname);
 $pageclass = 'panoptosubmission-body';
@@ -49,7 +49,8 @@ if ($ismoodle40minimum) {
         $PAGE->activityheader->set_attrs([
             "title" => '',
             "hidecompletion" => false,
-            "description" => '']);
+            "description" => '',
+        ]);
 }
 
 $context = context_module::instance($cm->id);
@@ -58,10 +59,10 @@ $PAGE->requires->css('/mod/panoptosubmission/styles.css');
 $renderer = $PAGE->get_renderer('mod_panoptosubmission');
 
 // Send the viewed activity event once this page is viewed.
-$detailsviewedevent = \mod_panoptosubmission\event\assignment_details_viewed::create(array(
+$detailsviewedevent = \mod_panoptosubmission\event\assignment_details_viewed::create([
     'objectid' => $panactivityinstance->id,
-    'context' => context_module::instance($cm->id)
-));
+    'context' => context_module::instance($cm->id),
+]);
 $detailsviewedevent->trigger();
 
 // Set the activity as viewed in Moodle.
@@ -83,12 +84,12 @@ if (panoptosubmission_submission_past_due($panactivityinstance) ||
 }
 
 $submission = $DB->get_record('panoptosubmission_submission',
-    array('panactivityid' => $panactivityinstance->id, 'userid' => $USER->id)
+    ['panactivityid' => $panactivityinstance->id, 'userid' => $USER->id]
 );
 
-$contentitemparams = array(
+$contentitemparams = [
     'courseid' => $course->id,
-);
+];
 
 // Limit the instructor buttons to ONLY those users with the role appropriate for them.
 if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
@@ -111,16 +112,15 @@ if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
 
     $url = new moodle_url('/mod/panoptosubmission/contentitem.php', $contentitemparams);
 
-    $params = array(
+    $params = [
         'addvidbtnid' => 'id_add_video',
         'ltilaunchurl' => $url->out(false),
         'height' => PANOPTO_PANEL_HEIGHT,
         'width' => PANOPTO_PANEL_WIDTH,
-        'courseid' => $course->id
-    );
+        'courseid' => $course->id,
+    ];
 
-    $PAGE->requires->yui_module('moodle-mod_panoptosubmission-submissionpanel',
-        'M.mod_panoptosubmission.initsubmissionpanel', array($params), null, true);
+    $PAGE->requires->js_call_amd('mod_panoptosubmission/submissionpanel', 'initsubmissionpanel', [$params]);
     $PAGE->requires->string_for_js('replacevideo', 'panoptosubmission');
     $PAGE->requires->string_for_js('select_submission', 'panoptosubmission');
 }

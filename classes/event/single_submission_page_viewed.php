@@ -65,15 +65,6 @@ class single_submission_page_viewed extends \core\event\base {
      * @return string a url to the grade submission page
      */
     public function get_url() {
-        return new \moodle_url('/mod/panoptosubmission/single_submission.php', array('cmid' => $this->contextinstanceid));
-    }
-
-    /**
-     * returns an array of legacy log data
-     * @return array a array used to store the legacy log data
-     */
-    public function get_legacy_logdata() {
-        return array($this->courseid, 'panoptosubmission', 'view submission page',
-            $this->get_url(), $this->objectid, $this->contextinstanceid);
+        return new \moodle_url('/mod/panoptosubmission/single_submission.php', ['id' => $this->contextinstanceid]);
     }
 }

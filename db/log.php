@@ -24,9 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$logs = array(
-        array('module' => 'panoptosubmission', 'action' => 'add', 'mtable' => 'panoptosubmission', 'field' => 'name'),
-        array('module' => 'panoptosubmission', 'action' => 'update', 'mtable' => 'panoptosubmission', 'field' => ' name'),
-        array('module' => 'panoptosubmission', 'action' => 'view', 'mtable' => 'panoptosubmission', 'field' => 'name'),
-        array('module' => 'panoptosubmission', 'action' => 'delete', 'mtable' => 'panoptosubmission', 'field' => 'name')
-);
+$logs = [
+        ['module' => 'panoptosubmission', 'action' => 'add', 'mtable' => 'panoptosubmission', 'field' => 'name'],
+        ['module' => 'panoptosubmission', 'action' => 'update', 'mtable' => 'panoptosubmission', 'field' => ' name'],
+        ['module' => 'panoptosubmission', 'action' => 'view', 'mtable' => 'panoptosubmission', 'field' => 'name'],
+        ['module' => 'panoptosubmission', 'action' => 'delete', 'mtable' => 'panoptosubmission', 'field' => 'name'],
+];

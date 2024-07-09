@@ -95,7 +95,7 @@ if (!empty($theight)) {
 $title = "";
 $itemtitle = $contentitems->{'@graph'}[0]->title;
 if (!empty($itemtitle)) {
-    $invalidcharacters = array("$", "%", "#", "<", ">");
+    $invalidcharacters = ["$", "%", "#", "<", ">"];
     $cleantitle = str_replace($invalidcharacters, "", $itemtitle);
     $title = is_string($cleantitle) ? $cleantitle : $title;
 }
@@ -127,32 +127,33 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
 ?>
 
 <script type="text/javascript">
+    /**
+     * Trigger the handleError callback with the errors.
+     */
     <?php if (count($errors) > 0): ?>
         parent.document.CALLBACKS.handleError(<?php echo json_encode($errors); ?>);
     <?php else: ?>
-        // This event should close the panopto popup and pass the new content url to the existing iframe.
-        var sessionSelectedEvent;
-        var detailObject = {
-            'detail': {
-                'title': "<?php echo $title ?>",
-                'ltiViewerUrl': "<?php echo $ltiviewerurl->out(false) ?>",
-                'contentUrl': "<?php echo $url ?>",
-                'customData': "<?php echo urlencode(json_encode($customdata)) ?>",
-                'width': <?php echo $framewidth ?>,
-                'height': <?php echo $frameheight ?>,
-                'thumbnailUrl': "<?php echo $thumbnailurlfinal ?>",
-                'thumbnailWidth': <?php echo $thumbnailwidth ?>,
-                'thumbnailHeight': <?php echo $thumbnailheight ?>,
-            }
+        /**
+         * Create and dispatch a custom event 'sessionSelected' with session details.
+         * This event should close the panopto popup and pass the new content URL to the existing iframe.
+         */
+        const detailObject = {
+            title: "<?php echo $title ?>",
+            ltiViewerUrl: "<?php echo $ltiviewerurl->out(false) ?>",
+            contentUrl: "<?php echo $url ?>",
+            customData: "<?php echo urlencode(json_encode($customdata)) ?>",
+            width: <?php echo $framewidth ?>,
+            height: <?php echo $frameheight ?>,
+            thumbnailUrl: "<?php echo $thumbnailurlfinal ?>",
+            thumbnailWidth: <?php echo $thumbnailwidth ?>,
+            thumbnailHeight: <?php echo $thumbnailheight ?>
         };
 
-        if (typeof window.CustomEvent === 'function') {
-            sessionSelectedEvent = new CustomEvent('sessionSelected', detailObject);
-        } else {
-            // ie >= 9
-            sessionSelectedEvent = document.createEvent('CustomEvent');
-            sessionSelectedEvent.initCustomEvent('sessionSelected', false, false, detailObject);
-        }
+        const sessionSelectedEvent = new CustomEvent('sessionSelected', {
+            detail: detailObject,
+            bubbles: false,
+            cancelable: false
+        });
 
         parent.document.body.dispatchEvent(sessionSelectedEvent);
     <?php endif; ?>

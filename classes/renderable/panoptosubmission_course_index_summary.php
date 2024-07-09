@@ -27,8 +27,8 @@
  */
 class panoptosubmission_course_index_summary implements renderable {
     /** @var array activities A list of course modules and their status or submission counts depending on the user capabilities */
-    public $activities = array();
-    /** @var boolean usesections True if the parent course supports sections */
+    public $activities = [];
+    /** @var bool usesections True if the parent course supports sections */
     public $usesections = false;
     /** @var string courseformat The current course format name */
     public $courseformatname = '';
@@ -45,7 +45,7 @@ class panoptosubmission_course_index_summary implements renderable {
     }
 
     /**
-     * Adds information for an activity on the acitivity index page
+     * Adds information for an activity on the activity index page
      *
      * @param int $cmid The course module id of the activity
      * @param string $cmname The name of the activity
@@ -56,13 +56,13 @@ class panoptosubmission_course_index_summary implements renderable {
      * @param string $gradeinfo The current users grade if the activity has been graded.
      */
     public function add_assign_info($cmid, $cmname, $sectionname, $timedue, $submissioninfo, $gradeinfo) {
-        $this->activities[] = array(
+        $this->activities[] = [
             'cmid' => $cmid,
             'cmname' => $cmname,
             'sectionname' => $sectionname,
             'timedue' => $timedue,
             'submissioninfo' => $submissioninfo,
-            'gradeinfo' => $gradeinfo
-        );
+            'gradeinfo' => $gradeinfo,
+        ];
     }
 }

@@ -36,7 +36,7 @@ class restore_panoptosubmission_activity_structure_step extends restore_activity
      * @return object The structure object
      */
     protected function define_structure() {
-        $paths = array();
+        $paths = [];
         $userinfo = $this->get_setting_value('userinfo');
         $paths[] = new restore_path_element('panoptosubmission', '/activity/panoptosubmission');
 

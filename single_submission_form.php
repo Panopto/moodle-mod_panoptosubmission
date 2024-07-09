@@ -96,7 +96,7 @@ class panoptosubmission_singlesubmission_form extends moodleform {
             $gradingelement = $mform->addElement('grading',
                                                  'advancedgrading',
                                                  get_string('gradeverb', 'panoptosubmission').':',
-                                                 array('gradinginstance' => $gradinginstance));
+                                                 ['gradinginstance' => $gradinginstance]);
             if ($gradingdisabled) {
                 $gradingelement->freeze();
             } else {
@@ -105,20 +105,20 @@ class panoptosubmission_singlesubmission_form extends moodleform {
             }
         } else {
             if ($this->_customdata->cminstance->grade > 0) {
-                $gradeinputattributes = array(
+                $gradeinputattributes = [
                     'id' => 'panoptogradeinputbox',
-                    'class' => 'panopto-grade-input-box',
+                    'class' => 'mod-panoptosubmission-grade-input-box',
                     'type' => 'number',
                     'step' => 'any',
                     'min' => 0,
-                    'max' => $this->_customdata->cminstance->grade
-                );
+                    'max' => $this->_customdata->cminstance->grade,
+                ];
 
                 $mform->addElement('text', 'xgrade', get_string('grade_out_of', 'panoptosubmission',
                     $this->_customdata->cminstance->grade), $grademenu, $gradeinputattributes);
                 $mform->setDefault('xgrade', $currentgrade);
             } else {
-                $attributes = array();
+                $attributes = [];
                 $mform->addElement('select', 'xgrade', get_string('gradenoun', 'panoptosubmission') . ':', $grademenu, $attributes);
 
                 if (isset($submission->grade)) {
@@ -146,7 +146,7 @@ class panoptosubmission_singlesubmission_form extends moodleform {
                 } else {
 
                     $options[''] = get_string('nooutcome', 'grades');
-                    $attributes = array('id' => 'menuoutcome_' . $n );
+                    $attributes = ['id' => 'menuoutcome_' . $n ];
                     $mform->addElement('select', 'outcome_' . $n . '[' . $this->_customdata->userid . ']',
                         $outcome->name . ':', $options, $attributes );
                     $mform->setType('outcome_' . $n . '[' . $this->_customdata->userid . ']', PARAM_INT);
@@ -202,6 +202,37 @@ class panoptosubmission_singlesubmission_form extends moodleform {
                 get_string('feedback', 'panoptosubmission') . ':', null, $this->get_editor_options());
             $mform->setType('submissioncomment_editor', PARAM_RAW);
 
+            // Prepare draft area for existing feedback.
+            $draftitemid = file_get_submitted_draft_itemid('submissioncomment_editor');
+            $currenttext = file_prepare_draft_area($draftitemid,
+                $this->_customdata->context->id,
+                STUDENTSUBMISSION_FILE_COMPONENT,
+                STUDENTSUBMISSION_FILE_FILEAREA,
+                $submission->id,
+                ['subdirs' => true],
+                $submission->submissioncomment ?? ""
+            );
+
+            // Replace @@PLUGINFILE@@ with actual URLs for display in editor if necessary.
+            if (!empty($submission->submissioncomment)) {
+                $feedbackcontent = file_rewrite_pluginfile_urls(
+                    $currenttext,
+                    'pluginfile.php',
+                    $this->_customdata->context->id,
+                    STUDENTSUBMISSION_FILE_COMPONENT,
+                    STUDENTSUBMISSION_FILE_FILEAREA,
+                    $submission->id
+                );
+            } else {
+                $feedbackcontent = $currenttext;
+            }
+
+            $feedbackeditor = [
+                'text' => $feedbackcontent,
+                'format' => $submission->format ?? FORMAT_HTML,
+                'itemid' => $draftitemid,
+            ];
+            $mform->setDefault('submissioncomment_editor', $feedbackeditor);
         }
 
         // Notify student checkbox.
@@ -236,12 +267,12 @@ class panoptosubmission_singlesubmission_form extends moodleform {
      * @return array An array of editor options.
      */
     protected function get_editor_options() {
-        $editoroptions = array();
-        $editoroptions['component'] = 'mod_panoptosubmission';
-        $editoroptions['noclean'] = false;
-        $editoroptions['maxfiles'] = 0;
-        $editoroptions['context'] = $this->_customdata->context;
-
-        return $editoroptions;
+        return [
+            'component' => 'mod_panoptosubmission',
+            'noclean' => false,
+            'accepted_types' => '*',
+            'maxfiles' => '-1',
+            'context' => $this->_customdata->context
+        ];
     }
 }
