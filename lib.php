@@ -467,6 +467,31 @@ function panoptosubmission_pluginfile(
 }
 
 /**
+ * Retrieve a property in a case-insensitive way and assign default if missing or invalid.
+ *
+ * @param object $object The object to search.
+ * @param string $property The property name to find.
+ * @param mixed $default The default value to return if not found or invalid.
+ */
+function panoptosubmission_get_property_or_default($object, $property, $default) {
+    // Ensure the input is an object, return default otherwise.
+    if (!is_object($object)) {
+        return $default;
+    }
+
+    // Iterate over object properties in a case-insensitive manner.
+    foreach ($object as $key => $value) {
+        if (strcasecmp($key, $property) === 0) { // strcasecmp is case-insensitive.
+            // Return default if the value is strictly 0 or evaluates to false.
+            return ($value === 0 || !$value) ? $default : $value;
+        }
+    }
+
+    // Return default if the property is not found.
+    return $default;
+}
+
+/**
  * Function to be run periodically according to the moodle cron
  *
  * Finds all assignment notifications that have yet to be mailed out, and mails them.

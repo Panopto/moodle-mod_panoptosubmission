@@ -18,7 +18,7 @@
  * Handles content item return.
  *
  * @package    mod_panoptosubmission
- * @copyright  2021 Panopto
+ * @copyright  2024 Panopto
  * @author     Panopto
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,6 +26,7 @@
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/lti/panoptoblock_lti_utility.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
+require_once(dirname(__FILE__) . '/lib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
 
@@ -68,57 +69,54 @@ if (!is_object($contentitems) && !is_array($contentitems)) {
 }
 
 // Get and validate frame and thumbnail sizes.
-$framewidth = 720;
-$fwidth = $contentitems->{'@graph'}[0]->placementAdvice->displayWidth;
-if (!empty($fwidth)) {
-    $framewidth = is_numeric($fwidth) ? $fwidth : $framewidth;
-}
+$framewidth = panoptosubmission_get_property_or_default(
+    $contentitems->{'@graph'}[0]->placementAdvice ?? new stdClass(),
+    'displayWidth',
+    720
+);
 
-$frameheight = 480;
-$fheight = $contentitems->{'@graph'}[0]->placementAdvice->displayHeight;
-if (!empty($fheight)) {
-    $frameheight = is_numeric($fheight) ? $fheight : $frameheight;
-}
+$frameheight = panoptosubmission_get_property_or_default(
+    $contentitems->{'@graph'}[0]->placementAdvice ?? new stdClass(),
+    'displayHeight',
+    480
+);
 
-$thumbnailwidth = 128;
-$twidth = $contentitems->{'@graph'}[0]->thumbnail->width;
-if (!empty($twidth)) {
-    $thumbnailwidth = is_numeric($twidth) ? $twidth : $thumbnailwidth;
-}
+$title = panoptosubmission_get_property_or_default(
+    $contentitems->{'@graph'}[0] ?? new stdClass(),
+    'title',
+    ''
+);
 
-$thumbnailheight = 72;
-$theight = $contentitems->{'@graph'}[0]->thumbnail->height;
-if (!empty($theight)) {
-    $thumbnailheight = is_numeric($theight) ? $theight : $thumbnailheight;
-}
-
-$title = "";
-$itemtitle = $contentitems->{'@graph'}[0]->title;
-if (!empty($itemtitle)) {
+if (!empty($title)) {
     $invalidcharacters = ["$", "%", "#", "<", ">"];
-    $cleantitle = str_replace($invalidcharacters, "", $itemtitle);
-    $title = is_string($cleantitle) ? $cleantitle : $title;
+    $title = str_replace($invalidcharacters, "", $title);
 }
 
-$url = "";
-$contenturl = $contentitems->{'@graph'}[0]->url;
-if (!empty($contenturl)) {
+$url = panoptosubmission_get_property_or_default(
+    $contentitems->{'@graph'}[0] ?? new stdClass(),
+    'url',
+    ''
+);
+
+if (!empty($url)) {
     $panoptodata = new \panopto_data($courseid);
-    $baseurl = parse_url($contenturl, PHP_URL_HOST);
-    if (strcmp($panoptodata->servername, $baseurl) === 0) {
-        $url = $contenturl;
+    $baseurl = parse_url($url, PHP_URL_HOST);
+    if (strcmp($panoptodata->servername, $baseurl) !== 0) {
+        $url = '';
     }
 }
 
-$thumbnailurl = "";
-$thumbnailurlfinal = !empty($contentitems->{'@graph'}[0]->thumbnail->id)
-    ? $contentitems->{'@graph'}[0]->thumbnail->id
-    : $contentitems->{'@graph'}[0]->thumbnail->{'@id'};
-if (!empty($thumbnailurlfinal)) {
-    $thumbnailurl = is_string($thumbnailurlfinal) ? $thumbnailurlfinal : $thumbnailurl;
-}
+$thumbnail = $contentitems->{'@graph'}[0]->thumbnail ?? new stdClass();
+$thumbnailurlfinal = panoptosubmission_get_property_or_default(
+    $thumbnail,
+    'id',
+    panoptosubmission_get_property_or_default($thumbnail, '@id', '')
+);
 
-$customdata = $contentitems->{'@graph'}[0]->custom;
+$thumbnailwidth = panoptosubmission_get_property_or_default($thumbnail, 'width', 128);
+$thumbnailheight = panoptosubmission_get_property_or_default($thumbnail, 'height', 72);
+
+$customdata = $contentitems->{'@graph'}[0]->custom ?? new stdClass();
 
 // In this version of Moodle LTI contentitem request we do not want the interactive viewer.
 unset($customdata->use_panopto_interactive_view);
@@ -135,7 +133,7 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
     <?php else: ?>
         /**
          * Create and dispatch a custom event 'sessionSelected' with session details.
-         * This event should close the panopto popup and pass the new content URL to the existing iframe.
+         * This event should close the Panopto popup and pass the new content URL to the existing iframe.
          */
         const detailObject = {
             title: "<?php echo $title ?>",
@@ -157,4 +155,5 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
 
         parent.document.body.dispatchEvent(sessionSelectedEvent);
     <?php endif; ?>
+
 </script>
