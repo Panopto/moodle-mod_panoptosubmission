@@ -77,15 +77,31 @@ function xmldb_panoptosubmission_upgrade($oldversion) {
         }
 
         // Add sendlatenotifications field.
-        $field = new xmldb_field('sendlatenotifications', XMLDB_TYPE_INTEGER,
-            '2', null, XMLDB_NOTNULL, null, '0', 'sendnotifications');
+        $field = new xmldb_field(
+            'sendlatenotifications',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'sendnotifications'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
         // Add sendstudentnotifications field.
-        $field = new xmldb_field('sendstudentnotifications', XMLDB_TYPE_INTEGER,
-            '2', null, XMLDB_NOTNULL, null, '0', 'sendlatenotifications');
+        $field = new xmldb_field(
+            'sendstudentnotifications',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'sendlatenotifications'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }

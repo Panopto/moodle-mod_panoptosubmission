@@ -18,478 +18,18 @@
  * This file contains the renderers for the Panopto Student Submission activity within Moodle
  *
  * @package mod_panoptosubmission
- * @copyright Panopto 2021
+ * @copyright Panopto 2025
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(dirname(dirname(__FILE__))).'/lib/tablelib.php');
-require_once(dirname(dirname(dirname(__FILE__))).'/lib/moodlelib.php');
-require_once(dirname(dirname(dirname(__FILE__))).'/lib/filelib.php');
-require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosubmission_course_index_summary.php');
-require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosubmission_submissions_feedback_status.php');
-require_once($CFG->dirroot.'/mod/panoptosubmission/classes/renderable/panoptosubmission_grading_summary.php');
-
-/**
- * Table class for displaying video submissions for grading
- */
-class panoptosubmission_submissions_table extends table_sql {
-    /**
-     * @var bool $quickgrade Set to true if a quick grade form needs to be rendered.
-     */
-    public $quickgrade;
-    /**
-     * @var object $currentgrades Current grade information for an activity
-     */
-    public $currentgrades;
-    /**
-     * @var int $cminstance The course module instnace id.
-     */
-    public $cminstance;
-    /**
-     * @var int $grademax The maximum grade for an activity
-     */
-    public $grademax;
-    /**
-     * @var string $tifirst First initial of the first name, needed for name filter
-     */
-    public $tifirst;
-    /**
-     * @var string $tilast First initial of the last name, needed for name filter
-     */
-    public $tilast;
-    /**
-     * @var int $page The current page number.
-     */
-    public $page;
-    /**
-     * @var int $courseid The current course ID
-     */
-    public $courseid;
-    /**
-     * @var int $cols The number of columns of the quick grade textarea element.
-     */
-    public $cols = 20;
-    /**
-     * @var int $rows The number of rows of the quick grade textarea element.
-     */
-    public $rows = 4;
-
-    /**
-     * Constructor function for the submissions table class.
-     * @param int $uniqueid Unique id.
-     * @param int $cm Course module id.
-     * @param object $currentgrades The current grades for the activity, returned from grade_get_grades.
-     * @param bool $quickgrade Set to true if quick grade was enabled
-     * @param string $tifirst The first initial of the first name filter.
-     * @param string $tilast The first initial of the first name filter.
-     * @param int $page The current page number.
-     */
-    public function __construct($uniqueid, $cm, $currentgrades, $quickgrade = false, $tifirst = '', $tilast = '', $page = 0) {
-        global $DB;
-
-        parent::__construct($uniqueid);
-
-        $this->currentgrades = $currentgrades;
-        $this->quickgrade = $quickgrade;
-        $this->grademax = $this->currentgrades->items[0]->grademax;
-        $this->tifirst = $tifirst;
-        $this->tilast = $tilast;
-        $this->page = $page;
-        $this->courseId = $cm->course;
-
-        $instance = $DB->get_record('panoptosubmission', ['id' => $cm->instance], 'id,grade,timedue');
-        $instance->cmid = $cm->id;
-        $this->cminstance = $instance;
-    }
-
-    /**
-     * The function renders the picture column.
-     * @param object $rowdata target row information
-     * @return string HTML markup.
-     */
-    public function col_picture($rowdata) {
-        global $OUTPUT;
-
-        $user = new stdClass();
-        $user->id = $rowdata->id;
-        $user->picture = $rowdata->picture;
-        $user->imagealt = $rowdata->imagealt;
-        $user->firstname = $rowdata->firstname;
-        $user->lastname = $rowdata->lastname;
-        $user->email = $rowdata->email;
-        $user->alternatename = $rowdata->alternatename;
-        $user->middlename = $rowdata->middlename;
-        $user->firstnamephonetic = $rowdata->firstnamephonetic;
-        $user->lastnamephonetic = $rowdata->lastnamephonetic;
-
-        $output = $OUTPUT->user_picture($user);
-
-        $attr = ['type' => 'hidden', 'name' => 'users['.$rowdata->id.']', 'value' => $rowdata->id];
-        $output .= html_writer::empty_tag('input', $attr);
-
-        return $output;
-    }
-
-    /**
-     * The function renders the submission status column.
-     * @param object $data information about the current row being rendered.
-     * @return string HTML markup.
-     */
-    public function col_status($data) {
-        global $OUTPUT, $CFG;
-
-        require_once(dirname(dirname(dirname(__FILE__))).'/lib/weblib.php');
-
-        $url = new moodle_url('/mod/panoptosubmission/single_submission.php',
-            ['cmid' => $this->cminstance->cmid, 'userid' => $data->id, 'sesskey' => sesskey()]);
-
-        if (!empty($this->tifirst)) {
-            $url->param('tifirst', $this->tifirst);
-        }
-
-        if (!empty($this->tilast)) {
-            $url->param('tilast', $this->tilast);
-        }
-
-        if (!empty($this->page)) {
-            $url->param('page', $this->page);
-        }
-
-        $submitted = !is_null($data->timemodified) && !empty($data->timemodified);
-        $output = '';
-
-        if ($data->timemarked > 0) {
-            $gradedstatusattributes = [
-                'class' => 'mod-panoptosubmission-status-graded',
-            ];
-            $output .= html_writer::tag('div', get_string('has_grade', 'panoptosubmission'), $gradedstatusattributes);
-        } else {
-            $gradedstatusattributes = [
-                'class' => 'mod-panoptosubmission-status-not-graded',
-            ];
-            $output .= html_writer::tag('div', get_string('needs_grade', 'panoptosubmission'), $gradedstatusattributes);
-        }
-
-        $due = $this->cminstance->timedue;
-        if (!empty($this->quickgrade) && $submitted && ($data->timemodified > $due)) {
-            $latestr = get_string('late', 'panoptosubmission', format_time($data->timemodified - $due));
-            $lateattributes = [
-                'class' => 'mod-panoptosubmission-latesubmission',
-            ];
-            $output .= html_writer::tag('div', $latestr, $lateattributes);
-        }
-
-        if (!$submitted) {
-            $gradedstatusattributes = [
-                'class' => 'mod-panoptosubmission-status-not-submitted',
-            ];
-            $output .= html_writer::tag('div', get_string('nosubmission', 'panoptosubmission'), $gradedstatusattributes);
-
-            $now = time();
-            if ($due && ($now > $due)) {
-                $overduestr = get_string('overdue', 'assign', format_time($now - $due));
-                $overdueattributes = [
-                    'class' => 'mod-panoptosubmission-overduesubmission',
-                ];
-                $output .= html_writer::tag('div', $overduestr, $overdueattributes);
-            }
-        }
-
-        return $output;
-    }
-
-    /**
-     * The function renders the select grade column.
-     * @param object $rowdata target row information
-     * @return string HTML markup.
-     */
-    public function col_selectgrade($rowdata) {
-        global $CFG;
-
-        $output = '';
-        $finalgrade = false;
-
-        if (array_key_exists($rowdata->id, $this->currentgrades->items[0]->grades)) {
-
-            $finalgrade = $this->currentgrades->items[0]->grades[$rowdata->id];
-
-            if ($CFG->enableoutcomes) {
-                $finalgrade->formatted_grade = $this->currentgrades->items[0]->grades[$rowdata->id]->str_grade;
-            } else {
-                // Taken from mod/assignment/lib.php display_submissions().
-                $finalgrade->formatted_grade = round($finalgrade->grade ?? 0, 2) . ' / ' . round($this->grademax, 2);
-            }
-        }
-
-        if (!is_bool($finalgrade) && ($finalgrade->locked || $finalgrade->overridden) ) {
-
-            $lockedoverridden = 'locked';
-
-            if ($finalgrade->overridden) {
-                $lockedoverridden = 'overridden';
-            }
-            $attr = ['id' => 'g'.$rowdata->id, 'class' => $lockedoverridden];
-
-            $output = html_writer::tag('div', $finalgrade->formatted_grade, $attr);
-
-        } else if (!empty($this->quickgrade)) {
-
-            $gradesmenu = make_grades_menu($this->cminstance->grade);
-
-            $default = [-1 => get_string('nograde')];
-
-            $grade = null;
-
-            if (!empty($rowdata->timemarked)) {
-                $grade = $rowdata->grade;
-            }
-
-            if ($this->cminstance->grade > 0) {
-                $gradeinputattributes = [
-                    'id' => 'panoptogradeinputbox',
-                    'class' => 'mod-panoptosubmission-grade-input-box',
-                    'type' => 'number',
-                    'step' => 'any',
-                    'min' => 0,
-                    'max' => $this->cminstance->grade,
-                    'name' => 'menu[' . $rowdata->id . ']',
-                    'value' => $grade,
-                ];
-                $gradeinput = html_writer::empty_tag('input', $gradeinputattributes);
-
-                $gradecontainerattributes = [
-                    'id' => 'panoptogradeinputcontainer',
-                    'class' => 'mod-panoptosubmission-grade-input-container',
-                ];
-                $output = html_writer::tag('span', $gradeinput . ' / ' . $this->cminstance->grade , $gradecontainerattributes);
-            } else {
-                $gradeselectattributes = [];
-                $output = html_writer::select($gradesmenu, 'menu[' . $rowdata->id . ']', $grade, $default, $gradeselectattributes);
-            }
-
-        } else {
-
-            $output = get_string('nograde');
-
-            if (!empty($rowdata->timemarked)) {
-                $output = $this->display_grade($rowdata->grade);
-            }
-        }
-
-        $gradeoutput = $output;
-
-        $output = $this->get_grade_button($rowdata);
-
-        $output .= $gradeoutput;
-
-        return $output;
-    }
-
-    /**
-     * The function renders the submissions comment column.
-     * @param object $rowdata target row information
-     * @return string HTML markup.
-     */
-    public function col_submissioncomment($rowdata) {
-        global $OUTPUT;
-
-        $output = '';
-        $finalgrade = false;
-
-        if (array_key_exists($rowdata->id, $this->currentgrades->items[0]->grades)) {
-            $finalgrade = $this->currentgrades->items[0]->grades[$rowdata->id];
-        }
-
-        $submissioncomment = strip_tags($rowdata->submissioncomment ?? '');
-        if ( (!is_bool($finalgrade) && ($finalgrade->locked || $finalgrade->overridden)) ) {
-
-            $output = shorten_text($submissioncomment, 15);
-
-        } else if (!empty($this->quickgrade)) {
-
-            $param = [
-                'id' => 'comments_' . $rowdata->submitid,
-                'rows' => $this->rows,
-                'cols' => $this->cols,
-                'name' => 'submissioncomment[' . $rowdata->id.']',
-            ];
-
-            $output .= html_writer::tag('textarea', $submissioncomment, $param);
-
-        } else {
-            $output = shorten_text($submissioncomment, 15);
-        }
-
-        return $output;
-    }
-
-    /**
-     * The function renders the grade marked column.
-     * @param object $rowdata target row information
-     * @return string HTML markup.
-     */
-    public function col_grademarked($rowdata) {
-
-        $output = '';
-
-        if (!empty($rowdata->timemarked)) {
-            $output = userdate($rowdata->timemarked);
-        }
-
-        return $output;
-    }
-
-    /**
-     * The function renders the time modified column.
-     * @param object $rowdata target row information
-     * @return string HTML markup.
-     */
-    public function col_timemodified($rowdata) {
-        $attr = ['name' => 'media_submission'];
-        $attr = ['id' => 'ts'.$rowdata->id];
-
-        $datemodified = $rowdata->timemodified;
-        $datemodified = is_null($datemodified) || empty($rowdata->timemodified) ? '' : userdate($datemodified);
-
-        $output = html_writer::tag('div', $datemodified, $attr);
-        return $output;
-    }
-
-    /**
-     * The function renders the grade column.
-     * @param object $rowdata target row information
-     * @return string HTML markup.
-     */
-    public function col_grade($rowdata) {
-        $finalgrade = false;
-
-        if (array_key_exists($rowdata->id, $this->currentgrades->items[0]->grades)) {
-            $finalgrade = $this->currentgrades->items[0]->grades[$rowdata->id];
-        }
-
-        $finalgrade = (!is_bool($finalgrade)) ? $finalgrade->str_grade : '-';
-
-        $attr = ['id' => 'finalgrade_' . $rowdata->id];
-        $output = html_writer::tag('span', $finalgrade, $attr);
-
-        return $output;
-    }
-
-    /**
-     * The function renders the time marked column.
-     * @param object $rowdata target row information
-     * @return string HTML markup.
-     */
-    public function col_timemarked($rowdata) {
-        $output = '-';
-
-        if (0 < $rowdata->timemarked) {
-            $attr = ['id' => 'tt'.$rowdata->id];
-            $output = html_writer::tag('div', userdate($rowdata->timemarked), $attr);
-        } else {
-            $otuput = '-';
-        }
-
-        return $output;
-    }
-
-    /**
-     *  Return a grade in user-friendly form, whether it's a scale or not
-     *
-     * @param mixed $grade
-     * @return string User-friendly representation of grade
-     *
-     * TODO: Move this to locallib.php
-     */
-    public function display_grade($grade) {
-        global $DB;
-
-        static $panoptoscalegrades = [];
-
-        // Normal number.
-        if ($this->cminstance->grade >= 0) {
-            if ($grade == -1) {
-                return '-';
-            } else {
-                return $grade.' / '.$this->cminstance->grade;
-            }
-
-        } else {
-            // Scale.
-            if (empty($panoptoscalegrades[$this->cminstance->id])) {
-
-                if ($scale = $DB->get_record('scale', ['id' => -($this->cminstance->grade)])) {
-
-                    $panoptoscalegrades[$this->cminstance->id] = make_menu_from_list($scale->scale);
-                } else {
-
-                    return '-';
-                }
-            }
-
-            if (isset($panoptoscalegrades[$this->cminstance->id][$grade])) {
-                return $panoptoscalegrades[$this->cminstance->id][$grade];
-            }
-            return '-';
-        }
-    }
-
-    /**
-     * The function renders the grade button
-     * @param object $rowdata target row information
-     * @return string HTML markup.
-     */
-    private function get_grade_button($rowdata) {
-        global $OUTPUT, $CFG;
-
-        require_once(dirname(dirname(dirname(__FILE__))).'/lib/weblib.php');
-
-        $url = new moodle_url('/mod/panoptosubmission/single_submission.php',
-            ['cmid' => $this->cminstance->cmid, 'userid' => $rowdata->id, 'sesskey' => sesskey()]);
-
-        if (!empty($this->tifirst)) {
-            $url->param('tifirst', $this->tifirst);
-        }
-
-        if (!empty($this->tilast)) {
-            $url->param('tilast', $this->tilast);
-        }
-
-        if (!empty($this->page)) {
-            $url->param('page', $this->page);
-        }
-
-        $buttontext = '';
-        // Check if the user submitted the assignment.
-        $submitted = !is_null($rowdata->timemarked);
-
-        $class = 'btn btn-primary';
-        if ($rowdata->timemarked > 0) {
-            $class = 'btn btn-secondary';
-            $buttontext = get_string('update');
-        } else {
-            $buttontext = get_string('gradenoun', 'panoptosubmission');
-        }
-
-        $attr = [
-            'id' => 'up'.$rowdata->id,
-            'class' => $class,
-        ];
-
-        if (!empty($this->quickgrade)) {
-            $attr['target'] = '_blank';
-            $attr['class'] = 'btn btn-primary';
-            $buttontext = get_string('viewsubmission', 'panoptosubmission');
-        }
-
-        $output = html_writer::start_tag('div');
-        $output .= html_writer::link($url, $buttontext, $attr);
-        $output .= html_writer::end_tag('div');
-        return $output;
-    }
-}
+require_once(dirname(dirname(dirname(__FILE__))) . '/lib/moodlelib.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/lib/filelib.php');
+require_once($CFG->dirroot . '/mod/panoptosubmission/classes/renderable/panoptosubmission_course_index_summary.php');
+require_once($CFG->dirroot . '/mod/panoptosubmission/classes/renderable/panoptosubmission_submissions_feedback_status.php');
+require_once($CFG->dirroot . '/mod/panoptosubmission/classes/renderable/panoptosubmission_grading_summary.php');
+require_once($CFG->dirroot . '/mod/panoptosubmission/classes/table/panoptosubmission_submissions_table.php');
 
 /**
  * This class renders the submission pages.
@@ -511,28 +51,27 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         if (!empty($pansubmissiondata->timeavailable)) {
             $html .= html_writer::start_tag('p');
-            $html .= html_writer::tag('b', get_string('availabledate', 'panoptosubmission').': ');
+            $html .= html_writer::tag('b', get_string('availabledate', 'panoptosubmission') . ': ');
             $html .= userdate($pansubmissiondata->timeavailable);
             $html .= html_writer::end_tag('p');
         }
 
         if (!empty($pansubmissiondata->timedue)) {
             $html .= html_writer::start_tag('p');
-            $html .= html_writer::tag('b', get_string('duedate', 'panoptosubmission').': ');
+            $html .= html_writer::tag('b', get_string('duedate', 'panoptosubmission') . ': ');
             $html .= userdate($pansubmissiondata->timedue);
             $html .= html_writer::end_tag('p');
         }
 
         if (!empty($pansubmissiondata->cutofftime)) {
             $html .= html_writer::start_tag('p');
-            $html .= html_writer::tag('b', get_string('cutoffdate', 'panoptosubmission').': ');
+            $html .= html_writer::tag('b', get_string('cutoffdate', 'panoptosubmission') . ': ');
             $html .= userdate($pansubmissiondata->cutofftime);
             $html .= html_writer::end_tag('p');
         }
 
         // Display a count of the numuber of submissions.
         if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
-
             $param = ['panactivityid' => $pansubmissiondata->id, 'timecreated' => 0, 'timemodified' => 0];
 
             $csql = "SELECT COUNT(*) " .
@@ -547,7 +86,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                 $html .= get_string('numberofsubmissions', 'panoptosubmission', $count);
                 $html .= html_writer::end_tag('p');
             }
-
         }
 
         return $html;
@@ -583,22 +121,38 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         ];
         $html .= html_writer::empty_tag('input', $attr);
 
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'width', 'name' => 'width', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'height', 'name' => 'height', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'source', 'name' => 'source', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'customdata', 'name' => 'customdata', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'sessiontitle', 'name' => 'sessiontitle', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'thumbnailwidth', 'name' => 'thumbnailwidth', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'thumbnailheight', 'name' => 'thumbnailheight', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'thumbnailsource', 'name' => 'thumbnailsource', 'value' => 0]);
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'width', 'name' => 'width', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'height', 'name' => 'height', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'source', 'name' => 'source', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'customdata', 'name' => 'customdata', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'sessiontitle', 'name' => 'sessiontitle', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'thumbnailwidth', 'name' => 'thumbnailwidth', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'thumbnailheight', 'name' => 'thumbnailheight', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'thumbnailsource', 'name' => 'thumbnailsource', 'value' => 0]
+        );
 
         $html .= html_writer::start_tag('center', ['class' => 'm-t-2 m-b-1']);
 
@@ -671,22 +225,38 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $html .= html_writer::empty_tag('input', $attr);
 
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'width', 'name' => 'width', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'height', 'name' => 'height', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'source', 'name' => 'source', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'customdata', 'name' => 'customdata', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'sessiontitle', 'name' => 'sessiontitle', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'thumbnailwidth', 'name' => 'thumbnailwidth', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'thumbnailheight', 'name' => 'thumbnailheight', 'value' => 0]);
-        $html .= html_writer::empty_tag('input',
-            ['type' => 'hidden', 'id' => 'thumbnailsource', 'name' => 'thumbnailsource', 'value' => 0]);
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'width', 'name' => 'width', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'height', 'name' => 'height', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'source', 'name' => 'source', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'customdata', 'name' => 'customdata', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'sessiontitle', 'name' => 'sessiontitle', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'thumbnailwidth', 'name' => 'thumbnailwidth', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'thumbnailheight', 'name' => 'thumbnailheight', 'value' => 0]
+        );
+        $html .= html_writer::empty_tag(
+            'input',
+            ['type' => 'hidden', 'id' => 'thumbnailsource', 'name' => 'thumbnailsource', 'value' => 0]
+        );
 
         $html .= html_writer::start_tag('center', ['class' => 'm-t-2 m-b-1']);
 
@@ -733,7 +303,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
      * @param int $userid The current user id.
      * @return string Returns HTML markup.
      */
-    public function display_instructor_buttons($cm,  $userid) {
+    public function display_instructor_buttons($cm, $userid) {
         $html = '';
 
         $target = new moodle_url('/mod/panoptosubmission/grade_submissions.php');
@@ -787,7 +357,15 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
      * @return string Returns HTML markup.
      */
     public function display_submissions_table(
-        $cm, $perpage, $groupfilter = 0, $filter = 'all', $quickgrade = false, $tifirst = '', $tilast = '', $page = 0) {
+        $cm,
+        $perpage,
+        $groupfilter = 0,
+        $filter = 'all',
+        $quickgrade = false,
+        $tifirst = '',
+        $tilast = '',
+        $page = 0
+    ) {
 
         global $DB, $COURSE, $USER, $CFG;
 
@@ -907,7 +485,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                         $param['courseid'] = $cm->course;
                         $groupswhere .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
-                        $groupswhere .= ' AND g.id IN ('.$groupids.') ';
+                        $groupswhere .= ' AND g.id IN (' . $groupids . ') ';
                     } else {
                         $groupscolumn = ', gm.groupid ';
                         $groupsjoin = ' INNER JOIN {groups_members} gm ON gm.userid = u.id' .
@@ -915,16 +493,13 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                         $param['courseid'] = $cm->course;
                         $groupswhere .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
-                        $groupswhere .= ' AND g.id IN ('.$groupids.') AND g.id = :groupid ';
-
+                        $groupswhere .= ' AND g.id IN (' . $groupids . ') AND g.id = :groupid ';
                     }
                     break;
-
                 case VISIBLEGROUPS:
                     // If visible groups but displaying a specific group then we must display users within.
                     // That group, if displaying all groups then display all users in the course.
                     if (0 != $groupfilter) {
-
                         $groupscolumn = ', gm.groupid ';
                         $groupsjoin = ' RIGHT JOIN {groups_members} gm ON gm.userid = u.id' .
                             ' RIGHT JOIN {groups} g ON g.id = gm.groupid ';
@@ -934,7 +509,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
                         $param['groupid'] = $groupfilter;
                         $groupswhere .= ' AND gm.groupid = :groupid ';
-
                     }
                     break;
             }
@@ -957,7 +531,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         // In order for the sortable first and last names to work.  User ID has to be the first column returned and must be.
         // Returned as id.  Otherwise the table will display links to user profiles that are incorrect or do not exist.
-        $columns = $userfields .', ps.id AS submitid, ';
+        $columns = $userfields . ', ps.id AS submitid, ';
         $columns .= ' ps.grade, ps.submissioncomment, ps.timemodified, ps.source, ps.width, ps.height, ps.timemarked, ';
         $columns .= '1 AS status, 1 AS selectgrade ' . $groupscolumn;
         $where .= ' u.deleted = 0 AND u.id IN (' . implode(',', $students) . ') ' . $groupswhere;
@@ -1032,7 +606,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         if (!$cms = get_coursemodules_in_course('panoptosubmission', $course->id, 'm.timedue')) {
             echo get_string('noassignments', 'mod_panoptosubmission');
-            echo $this->output->continue_button($CFG->wwwroot.'/course/view.php?id='.$course->id);
+            echo $this->output->continue_button($CFG->wwwroot . '/course/view.php?id=' . $course->id);
         }
 
         $usesections = course_format_uses_sections($course->format);
@@ -1050,6 +624,11 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                     continue;
                 }
 
+                // Skip course modules that are marked for deletion (in recycle bin).
+                if (!empty($cm->deletioninprogress)) {
+                    continue;
+                }
+
                 $activitycount++;
 
                 $sectionname = '';
@@ -1063,9 +642,12 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                 if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
                     $submitted = $DB->count_records('panoptosubmission_submission', ['panactivityid' => $cm->instance]);
                 } else if (has_capability('mod/panoptosubmission:submit', $context)) {
-                    if ($DB->count_records('panoptosubmission_submission',
-                        ['panactivityid' => $cm->instance, 'userid' => $USER->id]) > 0) {
-
+                    if (
+                        $DB->count_records(
+                            'panoptosubmission_submission',
+                            ['panactivityid' => $cm->instance, 'userid' => $USER->id]
+                        ) > 0
+                    ) {
                         $submitted = get_string('submitted', 'mod_panoptosubmission');
                     } else {
                         $submitted = get_string('nosubmission', 'mod_panoptosubmission');
@@ -1073,14 +655,19 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                 }
 
                 $currentgrades = grade_get_grades($course->id, 'mod', 'panoptosubmission', $cm->instance, $USER->id);
-                if (isset($currentgrades->items[0]->grades[$USER->id]) && !$currentgrades->items[0]->grades[$USER->id]->hidden ) {
+                if (isset($currentgrades->items[0]->grades[$USER->id]) && !$currentgrades->items[0]->grades[$USER->id]->hidden) {
                     $grade = $currentgrades->items[0]->grades[$USER->id]->str_grade;
                 } else {
                     $grade = '-';
                 }
 
                 $courseindexsummary->add_assign_info(
-                    $cm->id, $cm->name, $sectionname, $cms[$cm->id]->timedue, $submitted, $grade
+                    $cm->id,
+                    $cm->name,
+                    $sectionname,
+                    $cms[$cm->id]->timedue,
+                    $submitted,
+                    $grade
                 );
             }
         }
@@ -1166,7 +753,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $thumbnailheight = '';
 
         if (!is_null($submission) && !empty($submission->source)) {
-
             $contenturl = new moodle_url($submission->source);
 
             $thumbnailsource = new moodle_url($submission->thumbnailsource);
@@ -1238,8 +824,11 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         ];
 
         $output .= html_writer::start_tag('div', $thumbnailcontainerparams);
-        $output .= html_writer::tag('a',
-            html_writer::img($thumbnailsource, $sessiontitle, $thumbnailparams), $thumbnaillinkparams);
+        $output .= html_writer::tag(
+            'a',
+            html_writer::img($thumbnailsource, $sessiontitle, $thumbnailparams),
+            $thumbnaillinkparams
+        );
 
         $titleparams = [
             'id' => 'panoptosessiontitle',
@@ -1275,7 +864,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         global $USER, $CFG, $DB;
         $renderer = $this->page->get_renderer('mod_panoptosubmission');
 
-        require_once($CFG->libdir.'/gradelib.php');
+        require_once($CFG->libdir . '/gradelib.php');
 
         // Check if the user is enrolled to the coruse and can submit to the assignment.
         if (!is_enrolled($context, $USER, 'mod/panoptosubmission:submit')) {
@@ -1284,8 +873,13 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         }
 
         // Get the user's submission obj.
-        $currentgrades = grade_get_grades($pansubmissionactivity->course,
-            'mod', 'panoptosubmission', $pansubmissionactivity->id, $USER->id);
+        $currentgrades = grade_get_grades(
+            $pansubmissionactivity->course,
+            'mod',
+            'panoptosubmission',
+            $pansubmissionactivity->id,
+            $USER->id
+        );
 
         $item = $currentgrades->items[0];
         $grade = $item->grades[$USER->id];
@@ -1309,12 +903,12 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         // Get the files if there are any.
         $feedbackcontent = file_rewrite_pluginfile_urls(
-                $submission->submissioncomment,
-                'pluginfile.php',
-                $context->id,
-                STUDENTSUBMISSION_FILE_COMPONENT,
-                STUDENTSUBMISSION_FILE_FILEAREA,
-                $submission->id
+            $submission->submissioncomment,
+            'pluginfile.php',
+            $context->id,
+            STUDENTSUBMISSION_FILE_COMPONENT,
+            STUDENTSUBMISSION_FILE_FILEAREA,
+            $submission->id
         );
 
         $grade->str_feedback = $submission->format
@@ -1323,11 +917,19 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                 $submission->format,
                 [
                     'context' => $context,
-                ])
+                ]
+            )
             : $feedbackcontent;
 
-        $feedbackstatus = panoptosubmission_get_feedback_status_renderable($cm,
-            $pansubmissionactivity, $submission, $context, $USER->id, $grade, $teacher);
+        $feedbackstatus = panoptosubmission_get_feedback_status_renderable(
+            $cm,
+            $pansubmissionactivity,
+            $submission,
+            $context,
+            $USER->id,
+            $grade,
+            $teacher
+        );
 
         if ($feedbackstatus) {
             return $renderer->render($feedbackstatus);
@@ -1433,8 +1035,13 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
      * @param array $secondattributes The second column attributes (optional)
      * @return void
      */
-    private function add_table_row_tuple(html_table $table, $first, $second, $firstattributes = [],
-        $secondattributes = []) {
+    private function add_table_row_tuple(
+        html_table $table,
+        $first,
+        $second,
+        $firstattributes = [],
+        $secondattributes = []
+    ) {
         $row = new html_table_row();
         $cell1 = new html_table_cell($first);
         $cell1->header = true;

@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/course/moodleform_mod.php');
-require_once(dirname(__FILE__).'/locallib.php');
+require_once(dirname(__FILE__) . '/locallib.php');
 
 /**
  * This form is used to view and grade a single submission
@@ -35,7 +35,6 @@ require_once(dirname(__FILE__).'/locallib.php');
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class panoptosubmission_singlesubmission_form extends moodleform {
-
     /**
      * This function defines the forums elments that are to be displayed
      */
@@ -63,8 +62,12 @@ class panoptosubmission_singlesubmission_form extends moodleform {
         /* Submission section */
         $mform->addElement('header', 'single_submission_1', get_string('submission', 'panoptosubmission'));
 
-        $mform->addelement('static', 'submittinguser',
-            $this->_customdata->submissionuserpic, $this->_customdata->submissionuserinfo);
+        $mform->addElement(
+            'static',
+            'submittinguser',
+            $this->_customdata->submissionuserpic,
+            $this->_customdata->submissionuserinfo
+        );
 
         $submission = $this->_customdata->submission;
         $gradinginfo = $this->_customdata->grading_info;
@@ -93,10 +96,12 @@ class panoptosubmission_singlesubmission_form extends moodleform {
 
         $mform->addElement('header', 'gradeheader', get_string('gradeverb', 'panoptosubmission'));
         if ($gradinginstance) {
-            $gradingelement = $mform->addElement('grading',
-                                                 'advancedgrading',
-                                                 get_string('gradeverb', 'panoptosubmission').':',
-                                                 ['gradinginstance' => $gradinginstance]);
+            $gradingelement = $mform->addElement(
+                'grading',
+                'advancedgrading',
+                get_string('gradeverb', 'panoptosubmission') . ':',
+                ['gradinginstance' => $gradinginstance]
+            );
             if ($gradingdisabled) {
                 $gradingelement->freeze();
             } else {
@@ -114,8 +119,13 @@ class panoptosubmission_singlesubmission_form extends moodleform {
                     'max' => $this->_customdata->cminstance->grade,
                 ];
 
-                $mform->addElement('text', 'xgrade', get_string('grade_out_of', 'panoptosubmission',
-                    $this->_customdata->cminstance->grade), $grademenu, $gradeinputattributes);
+                $mform->addElement(
+                    'text',
+                    'xgrade',
+                    get_string('grade_out_of', 'panoptosubmission', $this->_customdata->cminstance->grade),
+                    $grademenu,
+                    $gradeinputattributes
+                );
                 $mform->setDefault('xgrade', $currentgrade);
             } else {
                 $attributes = [];
@@ -132,79 +142,91 @@ class panoptosubmission_singlesubmission_form extends moodleform {
         $mform->setType('xgrade', PARAM_NUMBER);
 
         if (!empty($this->_customdata->enableoutcomes) && !empty($gradinginfo)) {
-
             foreach ($gradinginfo->outcomes as $n => $outcome) {
-
                 $options = make_grades_menu(-$outcome->scaleid);
 
-                if (array_key_exists($this->_customdata->userid, $outcome->grades) &&
-                    $outcome->grades[$this->_customdata->userid]->locked) {
-
+                if (
+                    array_key_exists($this->_customdata->userid, $outcome->grades) &&
+                    $outcome->grades[$this->_customdata->userid]->locked
+                ) {
                     $options[0] = get_string('nooutcome', 'grades');
                     echo $options[$outcome->grades[$this->_customdata->userid]->grade];
-
                 } else {
-
                     $options[''] = get_string('nooutcome', 'grades');
-                    $attributes = ['id' => 'menuoutcome_' . $n ];
-                    $mform->addElement('select', 'outcome_' . $n . '[' . $this->_customdata->userid . ']',
-                        $outcome->name . ':', $options, $attributes );
-                    $mform->setType('outcome_' . $n . '[' . $this->_customdata->userid . ']', PARAM_INT);
+                    $attributes = ['id' => 'menuoutcome_' . $n];
+                    $mform->addElement(
+                        'select',
+                        'outcome_' . $n . '[' . $this->_customdata->userid . ']',
+                        $outcome->name . ':',
+                        $options,
+                        $attributes
+                    );
+                    $mform->setType(
+                        'outcome_' . $n . '[' . $this->_customdata->userid . ']',
+                        PARAM_INT
+                    );
 
                     if (array_key_exists($this->_customdata->userid, $outcome->grades)) {
-                        $mform->setDefault('outcome_' . $n . '[' . $this->_customdata->userid . ']',
-                            $outcome->grades[$this->_customdata->userid]->grade );
+                        $mform->setDefault(
+                            'outcome_' . $n . '[' . $this->_customdata->userid . ']',
+                            $outcome->grades[$this->_customdata->userid]->grade
+                        );
                     }
                 }
             }
         }
 
-        if (has_capability('gradereport/grader:view', $this->_customdata->context) &&
-            has_capability('moodle/grade:viewall', $this->_customdata->context)) {
-
+        if (
+            has_capability('gradereport/grader:view', $this->_customdata->context) &&
+            has_capability('moodle/grade:viewall', $this->_customdata->context)
+        ) {
             if (empty($gradinginfo) || !array_key_exists($this->_customdata->userid, $gradinginfo->items[0]->grades)) {
-
                 $grade = ' - ';
-
             } else if (0 != strcmp('-', $gradinginfo->items[0]->grades[$this->_customdata->userid]->str_grade)) {
-
                 $grade = '<a href="' . $CFG->wwwroot . '/grade/report/grader/index.php?id=' .
                     $this->_customdata->cm->course . '" >';
                 $grade .= $this->_customdata->grading_info->items[0]->grades[$this->_customdata->userid]->str_grade . '</a>';
             } else {
-
                 $grade = $this->_customdata->grading_info->items[0]->grades[$this->_customdata->userid]->str_grade;
             }
-
         } else {
-
             $grade = $this->_customdata->grading_info->items[0]->grades[$this->_customdata->userid]->str_grade;
-
         }
 
         $mform->addElement('static', 'finalgrade', get_string('currentgrade', 'panoptosubmission') . ':', $grade);
         $mform->setType('finalgrade', PARAM_NUMBER);
-        $mform->addElement('static', 'markingteacher',
-            $this->_customdata->markingteacherpic, $this->_customdata->markingteacherinfo);
+        $mform->addElement(
+            'static',
+            'markingteacher',
+            $this->_customdata->markingteacherpic,
+            $this->_customdata->markingteacherinfo
+        );
 
         if (!empty($this->_customdata->gradingdisabled)) {
-
             if (array_key_exists($this->_customdata->userid, $gradinginfo->items[0]->grades)) {
-                $mform->addElement('static', 'disabledfeedback', '&nbsp;',
-                    $gradinginfo->items[0]->grades[$this->_customdata->userid]->str_feedback );
+                $mform->addElement(
+                    'static',
+                    'disabledfeedback',
+                    '&nbsp;',
+                    $gradinginfo->items[0]->grades[$this->_customdata->userid]->str_feedback
+                );
             } else {
-                $mform->addElement('static', 'disabledfeedback', '&nbsp;', '' );
+                $mform->addElement('static', 'disabledfeedback', '&nbsp;', '');
             }
-
         } else {
-
-            $mform->addElement('editor', 'submissioncomment_editor',
-                get_string('feedback', 'panoptosubmission') . ':', null, $this->get_editor_options());
+            $mform->addElement(
+                'editor',
+                'submissioncomment_editor',
+                get_string('feedback', 'panoptosubmission') . ':',
+                null,
+                $this->get_editor_options()
+            );
             $mform->setType('submissioncomment_editor', PARAM_RAW);
 
             // Prepare draft area for existing feedback.
             $draftitemid = file_get_submitted_draft_itemid('submissioncomment_editor');
-            $currenttext = file_prepare_draft_area($draftitemid,
+            $currenttext = file_prepare_draft_area(
+                $draftitemid,
                 $this->_customdata->context->id,
                 STUDENTSUBMISSION_FILE_COMPONENT,
                 STUDENTSUBMISSION_FILE_FILEAREA,
@@ -242,7 +264,6 @@ class panoptosubmission_singlesubmission_form extends moodleform {
 
         $this->add_action_buttons();
     }
-
     /**
      * This function sets the text editor format.
      * @param object|array $data object or array of default values
@@ -259,7 +280,6 @@ class panoptosubmission_singlesubmission_form extends moodleform {
         $editoroptions = $this->get_editor_options();
 
         return parent::set_data($data);
-
     }
 
     /**
@@ -272,7 +292,7 @@ class panoptosubmission_singlesubmission_form extends moodleform {
             'noclean' => false,
             'accepted_types' => '*',
             'maxfiles' => '-1',
-            'context' => $this->_customdata->context
+            'context' => $this->_customdata->context,
         ];
     }
 }

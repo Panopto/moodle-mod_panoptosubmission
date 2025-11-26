@@ -24,7 +24,7 @@
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/lti/panoptoblock_lti_utility.php');
-require_once(dirname(__FILE__). '/locallib.php');
+require_once(dirname(__FILE__) . '/locallib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/lib.php');
 require_once(dirname(dirname(dirname(__FILE__))) . '/mod/lti/locallib.php');
 
@@ -41,8 +41,7 @@ if (empty($resourcelinkid)) {
     $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
     $resourcelinkid = sha1($ltiviewerurl->out(false) .
         '&' . $courseid .
-        '&' . $course->timecreated
-    );
+        '&' . $course->timecreated);
 }
 
 require_login($course);

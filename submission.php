@@ -22,8 +22,8 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
-require_once(dirname(__FILE__).'/locallib.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
+require_once(dirname(__FILE__) . '/locallib.php');
 
 require_sesskey();
 
@@ -88,7 +88,6 @@ if ($submission) {
     }
 
     if ($DB->update_record('panoptosubmission_submission', $submission)) {
-
         $message = get_string('assignmentsubmitted', 'panoptosubmission');
         $continue = get_string('continue');
 
@@ -107,7 +106,6 @@ if ($submission) {
     } else {
         notice(get_string('failedtoinsertsubmission', 'panoptosubmission'), $url, $course);
     }
-
 } else {
     $submission = new stdClass();
     $submission->userid = $USER->id;
@@ -125,7 +123,6 @@ if ($submission) {
     $submission->timemodified = $time;
 
     if ($DB->insert_record('panoptosubmission_submission', $submission)) {
-
         $message = get_string('assignmentsubmitted', 'panoptosubmission');
         $continue = get_string('continue');
 
@@ -149,11 +146,13 @@ if ($submission) {
 $context = $PAGE->context;
 
 // Email an alert to the teacher.
-panoptosubmission_notify_graders($pansubmissionactivity,
+panoptosubmission_notify_graders(
+    $pansubmissionactivity,
     $submission,
     $cm,
     $context,
-    $course);
+    $course
+);
 
 
 echo $OUTPUT->footer();

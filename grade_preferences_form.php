@@ -24,10 +24,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(dirname(dirname(__FILE__))).'/course/moodleform_mod.php');
-require_once(dirname(__FILE__).'/locallib.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/course/moodleform_mod.php');
+require_once(dirname(__FILE__) . '/locallib.php');
 require_once($CFG->dirroot . '/grade/grading/lib.php');
-require_once($CFG->libdir.'/formslib.php');
+require_once($CFG->libdir . '/formslib.php');
 
 /**
  * This class contains the settings used to determine how the submissions will be graded
@@ -57,9 +57,8 @@ class panoptosubmission_gradepreferences_form extends moodleform {
 
         // If the user doesn't have access to all group print the groups they have access to.
         if (!has_capability('moodle/site:accessallgroups', $context)) {
-
             // Determine the groups mode.
-            switch($this->_customdata['groupmode']) {
+            switch ($this->_customdata['groupmode']) {
                 case NOGROUPS:
                     // No groups, do nothing.
                     break;
@@ -76,7 +75,6 @@ class panoptosubmission_gradepreferences_form extends moodleform {
             foreach ($groups as $groupobj) {
                 $groupopt[$groupobj->id] = $groupobj->name;
             }
-
         } else {
             $groups = groups_get_all_groups($COURSE->id);
 

@@ -68,17 +68,19 @@ class panoptosubmission_grading_summary implements renderable {
      * @param int $coursestartdate unix timestamp representation of the course start date.
      * @param bool $isvisible
      */
-    public function __construct($participantcount,
-                                $submissionsenabled,
-                                $submissionssubmittedcount,
-                                $cutoffdate,
-                                $duedate,
-                                $timelimit,
-                                $coursemoduleid,
-                                $submissionsneedgradingcount,
-                                $courserelativedatesmode,
-                                $coursestartdate,
-                                $isvisible = true) {
+    public function __construct(
+        $participantcount,
+        $submissionsenabled,
+        $submissionssubmittedcount,
+        $cutoffdate,
+        $duedate,
+        $timelimit,
+        $coursemoduleid,
+        $submissionsneedgradingcount,
+        $courserelativedatesmode,
+        $coursestartdate,
+        $isvisible = true
+    ) {
         $this->participantcount = $participantcount;
         $this->submissionsenabled = $submissionsenabled;
         $this->submissionssubmittedcount = $submissionssubmittedcount;

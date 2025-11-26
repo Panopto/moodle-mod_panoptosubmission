@@ -76,26 +76,81 @@ define([
             {
                 modal.setTitle(selectText);
                 modal.getRoot().addClass(modalClass);
-                modal
-                    .getRoot()
-                    .find(".modal-dialog")
-                    .addClass(modalDialogClass)
-                    .css({
-                        width: `${width}px`,
-                        "max-width": `${width}px`,
+                
+                // Get screen width for responsive sizing
+                const screenWidth = window.innerWidth;
+                
+                let modalDialog = modal.getRoot().find(".modal-dialog");
+                let modalContent = modal.getRoot().find(".modal-content");
+                let modalBody = modal.getRoot().find(".modal-body");
+                
+                modalDialog.addClass(modalDialogClass);
+                modalContent.addClass(modalContentClass);
+                modalBody.addClass(modalBodyClass);
+                
+                // Responsive sizing logic
+                if (screenWidth <= 600) {
+                    // Small screens - use viewport dimensions with scrolling
+                    modalDialog.css({
+                        width: "98vw",
+                        "max-width": "98vw",
+                        margin: "0.25rem auto"
                     });
-                modal
-                    .getRoot()
-                    .find(".modal-content")
-                    .addClass(modalContentClass)
-                    .css({
-                        height: `${height}px`,
-                        "max-height": `${height}px`,
+                    modalContent.css({
+                        height: "50vh",
+                        "max-height": "50vh"
                     });
-                modal
-                    .getRoot()
-                    .find(".modal-body")
-                    .addClass(modalBodyClass);
+                    modalBody.css({
+                        overflow: "auto",
+                        padding: "0"
+                    });
+                } else if (screenWidth <= 768) {
+                    // Medium screens
+                    modalDialog.css({
+                        width: "95vw",
+                        "max-width": "95vw",
+                        margin: "0.5rem auto"
+                    });
+                    modalContent.css({
+                        height: "60vh",
+                        "max-height": "60vh"
+                    });
+                    modalBody.css({
+                        overflow: "auto",
+                        padding: "0"
+                    });
+                } else if (screenWidth <= 900) {
+                    // Large screens but still constrained
+                    modalDialog.css({
+                        width: "90vw",
+                        "max-width": "90vw",
+                        margin: "1rem auto"
+                    });
+                    modalContent.css({
+                        height: "70vh",
+                        "max-height": "70vh"
+                    });
+                    modalBody.css({
+                        overflow: "auto",
+                        padding: "0"
+                    });
+                } else {
+                    // Desktop - use responsive dimensions without forcing scroll
+                    modalDialog.css({
+                        width: "90vw",
+                        "max-width": "1200px",
+                        margin: "2rem auto"
+                    });
+                    modalContent.css({
+                        height: "80vh",
+                        "max-height": "80vh"
+                    });
+                    modalBody.css({
+                        overflow: "hidden",
+                        padding: "0"
+                    });
+                }
+                
                 modal.show();
 
                 document.body.panoptoWindow = modal;

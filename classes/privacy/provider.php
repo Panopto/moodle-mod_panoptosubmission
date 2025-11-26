@@ -24,6 +24,7 @@ use core_privacy\local\request\writer;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 
+// phpcs:disable Universal.OOStructures.AlphabeticExtendsImplements
 /**
  * This class defines the privacy information for the panopto submission module
  *
@@ -31,11 +32,12 @@ use core_privacy\local\request\userlist;
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\user_preference_provider,
+class provider implements
+    \core_privacy\local\metadata\provider,
     \core_privacy\local\request\core_userlist_provider,
-    \core_privacy\local\request\plugin\provider {
-
+    \core_privacy\local\request\plugin\provider,
+    \core_privacy\local\request\user_preference_provider {
+// phpcs:enable Universal.OOStructures.AlphabeticExtendsImplements
     /**
      *
      * This function defines and returns the metadata that is stored by this module
@@ -73,16 +75,20 @@ class provider implements \core_privacy\local\metadata\provider,
             'privacy:metadata:panoptosubmission_submission'
         );
 
-        $collection->add_user_preference('panoptosubmission_filter',
+        $collection->add_user_preference(
+            'panoptosubmission_filter',
             'privacy:metadata:panoptosubmissionfilter'
         );
-        $collection->add_user_preference('panoptosubmission_group_filter',
+        $collection->add_user_preference(
+            'panoptosubmission_group_filter',
             'privacy:metadata:panoptosubmissiongroupfilter'
         );
-        $collection->add_user_preference('panoptosubmission_perpage',
+        $collection->add_user_preference(
+            'panoptosubmission_perpage',
             'privacy:metadata:panoptosubmissionperpage'
         );
-        $collection->add_user_preference('panoptosubmission_quickgrade',
+        $collection->add_user_preference(
+            'panoptosubmission_quickgrade',
             'privacy:metadata:panoptosubmissionquickgrade'
         );
 
@@ -99,7 +105,9 @@ class provider implements \core_privacy\local\metadata\provider,
         $assignmentpreferences = [
             'panoptosubmission_filter' => get_string('privacy:metadata:panoptosubmissionfilter', 'mod_panoptosubmission'),
             'panoptosubmission_group_filter' => get_string(
-                'privacy:metadata:panoptosubmissiongroupfilter', 'mod_panoptosubmission'),
+                'privacy:metadata:panoptosubmissiongroupfilter',
+                'mod_panoptosubmission'
+            ),
             'panoptosubmission_perpage' => get_string('privacy:metadata:panoptosubmissionperpage', 'mod_panoptosubmission'),
             'panoptosubmission_quickgrade' => get_string('privacy:metadata:panoptosubmissionquickgrade', 'mod_panoptosubmission'),
         ];
@@ -205,7 +213,9 @@ class provider implements \core_privacy\local\metadata\provider,
 
             // Check if the user has marked any panoptosubmission's submissions to determine submissions to export.
             $teacher = (self::has_marked_panoptosubmission_submissions(
-                $panoptosubmissiondata->id, $user->id) == true) ? true : false;
+                $panoptosubmissiondata->id,
+                $user->id
+            ) == true) ? true : false;
 
             // Get the panoptosubmission submissions submitted by & marked by the user for an panoptosubmission.
             $submissionsdata = self::get_panoptosubmission_submissions_by_panoptosubmission(
@@ -237,8 +247,14 @@ class provider implements \core_privacy\local\metadata\provider,
 
                 // Check for advanced grading and retrieve that information.
                 if (isset($controller)) {
-                    \core_grading\privacy\provider::export_item_data($context, $submissiondata->id, get_string(
-                        'privacy:submissionpath', 'mod_panoptosubmission'));
+                    \core_grading\privacy\provider::export_item_data(
+                        $context,
+                        $submissiondata->id,
+                        get_string(
+                            'privacy:submissionpath',
+                            'mod_panoptosubmission'
+                        )
+                    );
                 }
             }
         }
@@ -289,21 +305,47 @@ class provider implements \core_privacy\local\metadata\provider,
 
         $userid = $contextlist->get_user()->id;
 
-        // Only retrieve panoptosubmission submissions submitted by the user for deletion.
-        $panoptosubmissionsubmissionids = array_keys(
-            self::get_panoptosubmission_submissions_by_contextlist($contextlist, $userid)
-        );
-
-        $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
-        $controller = $gradingmanager->get_active_controller();
-        if (isset($controller)) {
-            // Careful here, if no submissionids are provided then all data is deleted for the context.
-            foreach ($panoptosubmissionsubmissionids as $submissionid) {
-                \core_grading\privacy\provider::delete_instance_data($context, $submissionid);
+        // Loop through each context to handle grading data properly.
+        foreach ($contextlist->get_contexts() as $context) {
+            if ($context->contextlevel !== CONTEXT_MODULE) {
+                continue;
             }
-        }
 
-        $DB->delete_records_list('panoptosubmission_submission', 'id', $panoptosubmissionsubmissionids);
+            // Get submissions for this specific context.
+            $panoptosubmission = self::get_panoptosubmission_by_context($context);
+            if (!$panoptosubmission) {
+                continue;
+            }
+
+            // Get submission IDs for this user in this context.
+            $sql = "SELECT s.id
+                    FROM {panoptosubmission_submission} s
+                    WHERE s.panactivityid = :panactivityid
+                    AND s.userid = :userid";
+
+            $params = [
+                'panactivityid' => $panoptosubmission->id,
+                'userid' => $userid,
+            ];
+
+            $submissionids = array_keys($DB->get_records_sql($sql, $params));
+
+            if (empty($submissionids)) {
+                continue;
+            }
+
+            // Delete grading data.
+            $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
+            $controller = $gradingmanager->get_active_controller();
+            if (isset($controller)) {
+                foreach ($submissionids as $submissionid) {
+                    \core_grading\privacy\provider::delete_instance_data($context, $submissionid);
+                }
+            }
+
+            // Delete submission records.
+            $DB->delete_records_list('panoptosubmission_submission', 'id', $submissionids);
+        }
     }
 
     /**
@@ -325,7 +367,7 @@ class provider implements \core_privacy\local\metadata\provider,
         $panoptosubmission = self::get_panoptosubmission_by_context($context);
         $userids = $userlist->get_userids();
 
-        list($inorequalsql, $params) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        [$inorequalsql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $params['videoassignid'] = $panoptosubmission->id;
 
         // Get panoptosubmission submissions ids.
@@ -345,7 +387,7 @@ class provider implements \core_privacy\local\metadata\provider,
         }
 
         // Delete related tables.
-        $DB->delete_records_list('assignment_submissions', 'id', array_keys($submissionids));
+        $DB->delete_records_list('panoptosubmission_submission', 'id', array_keys($submissionids));
     }
 
     /**
@@ -360,7 +402,7 @@ class provider implements \core_privacy\local\metadata\provider,
     protected static function get_panoptosubmission_submissions_by_contextlist($contextlist, $userid) {
         global $DB;
 
-        list($contextsql, $contextparams) = $DB->get_in_or_equal($contextlist->get_contextids(), SQL_PARAMS_NAMED);
+        [$contextsql, $contextparams] = $DB->get_in_or_equal($contextlist->get_contextids(), SQL_PARAMS_NAMED);
 
         $params = [
             'contextlevel' => CONTEXT_MODULE,
@@ -488,7 +530,10 @@ class provider implements \core_privacy\local\metadata\provider,
      * @throws \dml_exception
      */
     protected static function get_panoptosubmission_submissions_by_panoptosubmission(
-        $panoptosubmissionid, $userid, $teacher = false) {
+        $panoptosubmissionid,
+        $userid,
+        $teacher = false
+    ) {
         global $DB;
 
         $params = [

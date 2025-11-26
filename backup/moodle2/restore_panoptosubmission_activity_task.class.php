@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/mod/panoptosubmission/backup/moodle2/restore_panoptosubmission_stepslib.php');
+require_once($CFG->dirroot . '/mod/panoptosubmission/backup/moodle2/restore_panoptosubmission_stepslib.php');
 
 /**
  * Panopto Submission restore activity task.
@@ -34,7 +34,6 @@ require_once($CFG->dirroot.'/mod/panoptosubmission/backup/moodle2/restore_panopt
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_panoptosubmission_activity_task extends restore_activity_task {
-
     /**
      * defines settings for restore
      */
@@ -71,7 +70,6 @@ class restore_panoptosubmission_activity_task extends restore_activity_task {
         $rules[] = new restore_decode_rule('PANOPTOSUBMISSIONINDEX', '/mod/panoptosubmission/index.php?id=$1', 'course');
 
         return $rules;
-
     }
 
     /**

@@ -122,29 +122,126 @@ $customdata = $contentitems->{'@graph'}[0]->custom ?? new stdClass();
 unset($customdata->use_panopto_interactive_view);
 
 $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
+
 ?>
 
 <script type="text/javascript">
+    // Trigger the handleError callback with the errors.
+    <?php
     /**
-     * Trigger the handleError callback with the errors.
+     * This is the if statement checking for errors.
+     *
+     * @package    mod_panoptosubmission
+     * @copyright  2025 Panopto
+     * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
      */
-    <?php if (count($errors) > 0): ?>
-        parent.document.CALLBACKS.handleError(<?php echo json_encode($errors); ?>);
-    <?php else: ?>
+    if (count($errors) > 0) {
+        ?>
+        parent.document.CALLBACKS.handleError(<?php
+        /**
+         * JSON encode the errors array for the handleError callback.
+         *
+         * @package    mod_panoptosubmission
+         * @copyright  2025 Panopto
+         * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+         */
+        echo json_encode($errors); ?>);
+        <?php
+        /**
+         * Else statement for handling successful event dispatch.
+         *
+         * @package    mod_panoptosubmission
+         * @copyright  2025 Panopto
+         * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+         */
+    } else {
+        ?>
         /**
          * Create and dispatch a custom event 'sessionSelected' with session details.
          * This event should close the Panopto popup and pass the new content URL to the existing iframe.
          */
         const detailObject = {
-            title: "<?php echo $title ?>",
-            ltiViewerUrl: "<?php echo $ltiviewerurl->out(false) ?>",
-            contentUrl: "<?php echo $url ?>",
-            customData: "<?php echo urlencode(json_encode($customdata)) ?>",
-            width: <?php echo $framewidth ?>,
-            height: <?php echo $frameheight ?>,
-            thumbnailUrl: "<?php echo $thumbnailurlfinal ?>",
-            thumbnailWidth: <?php echo $thumbnailwidth ?>,
-            thumbnailHeight: <?php echo $thumbnailheight ?>
+            title: "<?php
+            /**
+             * Title for the session, dynamically retrieved from PHP.
+             *
+             * @package    mod_panoptosubmission
+             * @copyright  2025 Panopto
+             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+             */
+            echo $title ?>",
+            ltiViewerUrl: "<?php
+            /**
+             * URL for the LTI viewer, generated without additional parameters.
+             *
+             * @package    mod_panoptosubmission
+             * @copyright  2025 Panopto
+             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+             */
+            echo $ltiviewerurl->out(false) ?>",
+            contentUrl: "<?php
+            /**
+             * Content URL for embedding in the iframe.
+             *
+             * @package    mod_panoptosubmission
+             * @copyright  2025 Panopto
+             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+             */
+            echo $url ?>",
+            customData: "<?php
+            /**
+             * Custom data encoded in JSON format, URL-encoded for safe transport.
+             *
+             * @package    mod_panoptosubmission
+             * @copyright  2025 Panopto
+             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+             */
+            echo urlencode(json_encode($customdata)) ?>",
+            width: <?php
+            /**
+             * Frame width, dynamically retrieved from PHP.
+             *
+             * @package    mod_panoptosubmission
+             * @copyright  2025 Panopto
+             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+             */
+            echo $framewidth ?>,
+            height: <?php
+            /**
+             * Frame height, dynamically retrieved from PHP.
+             *
+             * @package    mod_panoptosubmission
+             * @copyright  2025 Panopto
+             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+             */
+            echo $frameheight ?>,
+            thumbnailUrl: "<?php
+            /**
+             * Thumbnail URL for the session, dynamically retrieved from PHP.
+             *
+             * @package    mod_panoptosubmission
+             * @copyright  2025 Panopto
+             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+             */
+            echo $thumbnailurlfinal ?>",
+            thumbnailWidth: <?php
+            /**
+             * Thumbnail width, dynamically retrieved from PHP.
+             *
+             * @package    mod_panoptosubmission
+             * @copyright  2025 Panopto
+             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+             */
+            echo $thumbnailwidth ?>,
+            thumbnailHeight: <?php
+            /**
+             * Thumbnail height, dynamically retrieved from PHP.
+             *
+             * @package    mod_panoptosubmission
+             * @copyright  2025 Panopto
+             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+             */
+            echo $thumbnailheight ?>
         };
 
         const sessionSelectedEvent = new CustomEvent('sessionSelected', {
@@ -154,6 +251,14 @@ $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
         });
 
         parent.document.body.dispatchEvent(sessionSelectedEvent);
-    <?php endif; ?>
+        <?php
+        /**
+         * End of if-else statement.
+         *
+         * @package    mod_panoptosubmission
+         * @copyright  2025 Panopto
+         * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+         */
+    } ?>
 
 </script>

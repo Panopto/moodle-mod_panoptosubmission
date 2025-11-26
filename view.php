@@ -22,8 +22,8 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
-require_once(dirname(__FILE__).'/locallib.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
+require_once(dirname(__FILE__) . '/locallib.php');
 
 define('PANOPTO_PANEL_WIDTH', 800);
 define('PANOPTO_PANEL_HEIGHT', 600);
@@ -31,7 +31,7 @@ define('PANOPTO_PANEL_HEIGHT', 600);
 $id = required_param('id', PARAM_INT);
 
 if (!empty($id)) {
-    list($cm, $course, $panactivityinstance) = panoptosubmission_validate_cmid($id);
+    [$cm, $course, $panactivityinstance] = panoptosubmission_validate_cmid($id);
 }
 
 require_course_login($course->id, true, $cm);
@@ -77,13 +77,16 @@ echo format_module_intro('panoptosubmission', $panactivityinstance, $cm->id);
 echo $OUTPUT->box_end();
 
 $submitdisabled = false;
-if (panoptosubmission_submission_past_due($panactivityinstance) ||
+if (
+    panoptosubmission_submission_past_due($panactivityinstance) ||
     panoptosubmission_submission_past_cutoff($panactivityinstance) ||
-    !panoptosubmission_submission_available_yet($panactivityinstance)) {
+    !panoptosubmission_submission_available_yet($panactivityinstance)
+) {
     $submitdisabled = true;
 }
 
-$submission = $DB->get_record('panoptosubmission_submission',
+$submission = $DB->get_record(
+    'panoptosubmission_submission',
     ['panactivityid' => $panactivityinstance->id, 'userid' => $USER->id]
 );
 

@@ -22,7 +22,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace mod_panoptosubmission\grades;
 
@@ -36,8 +36,7 @@ use core_grades\local\gradeitem\advancedgrading_mapping;
  * @copyright  Panopto 2021
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class gradeitems implements itemnumber_mapping, advancedgrading_mapping {
-
+class gradeitems implements advancedgrading_mapping, itemnumber_mapping {
     /**
      * Return the list of grade item mappings for the panoptosubmission.
      *

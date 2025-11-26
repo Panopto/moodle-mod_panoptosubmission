@@ -15,32 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Contains the version information for the Panopto Student Submission mod
+ * Event observers for panoptosubmission.
  *
- * @package mod_panoptosubmission
+ * @package    mod_panoptosubmission
  * @copyright  Panopto 2025
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-// The current plugin version (Date: YYYYMMDDXX).
-$plugin->version = 2025112600;
-
-// Requires this Moodle version - 4.1.0.
-$plugin->requires = 2022112800;
-
-// Never run cron for this plugin.
-$plugin->cron = 0;
-
-// Full name of the plugin (used for diagnostics).
-$plugin->component = 'mod_panoptosubmission';
-
-// This is considered as ready for production sites.
-$plugin->maturity = MATURITY_STABLE;
-
-// Dependencies.
-$plugin->dependencies = [
-    'block_panopto' => 2022122000,
-    'mod_lti' => ANY_VERSION,
+$observers = [
+    [
+        'eventname' => '\core\event\course_content_deleted',
+        'callback' => 'mod_panoptosubmission_observer::course_content_deleted',
+    ],
+    [
+        'eventname' => '\core\event\course_deleted',
+        'callback' => 'mod_panoptosubmission_observer::course_deleted',
+    ],
 ];

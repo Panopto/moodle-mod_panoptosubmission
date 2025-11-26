@@ -96,19 +96,188 @@
 .mod-panoptosubmission-modal-dialog-custom {
     width: 100%;
     max-width: 100%;
+    margin: 1rem auto;
 }
 
 .mod-panoptosubmission-modal-content-custom {
     height: 100%;
-    max-height: 100%;
+    max-height: 90vh;
 }
 
 .mod-panoptosubmission-modal-body-custom {
     height: 100%;
     overflow: hidden;
+    padding: 0;
+    -webkit-overflow-scrolling: touch;
 }
 
 .mod-panoptosubmission-iframe-custom {
     width: 100%;
     height: 100%;
+    border: none;
+    display: block;
+    transform-origin: top left;
+}
+
+/* Desktop screens - no scroll bars needed */
+@media screen and (min-width: 901px) {
+    .mod-panoptosubmission-modal-dialog-custom {
+        width: 90vw;
+        max-width: 1200px;
+        margin: 2rem auto;
+    }
+    
+    .mod-panoptosubmission-modal-content-custom {
+        height: 80vh;
+        max-height: 80vh;
+    }
+    
+    .mod-panoptosubmission-modal-body-custom {
+        overflow: hidden;
+        padding: 0;
+    }
+    
+    .mod-panoptosubmission-iframe-custom {
+        width: 100%;
+        height: 100%;
+    }
+}
+
+/* Simple approach - make modal smaller with horizontal scroll */
+@media screen and (max-width: 900px) {
+    .mod-panoptosubmission-modal-dialog-custom {
+        width: 90vw !important;
+        max-width: 90vw !important;
+        margin: 1rem auto;
+    }
+    
+    .mod-panoptosubmission-modal-content-custom {
+        height: 70vh !important;
+        max-height: 70vh !important;
+    }
+    
+    .mod-panoptosubmission-modal-body-custom {
+        overflow: auto !important;
+        padding: 0 !important;
+    }
+    
+    .mod-panoptosubmission-iframe-custom {
+        width: 800px !important;
+        height: 600px !important;
+        min-width: 800px !important;
+        min-height: 600px !important;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .mod-panoptosubmission-modal-dialog-custom {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        margin: 0.5rem auto;
+    }
+    
+    .mod-panoptosubmission-modal-content-custom {
+        height: 60vh !important;
+        max-height: 60vh !important;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .mod-panoptosubmission-modal-dialog-custom {
+        width: 98vw !important;
+        max-width: 98vw !important;
+        margin: 0.25rem auto;
+    }
+    
+    .mod-panoptosubmission-modal-content-custom {
+        height: 50vh !important;
+        max-height: 50vh !important;
+    }
+}
+
+/* Ensure buttons are visible and properly styled on all screen sizes */
+.btn {
+    min-height: 44px;
+    padding: 8px 16px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 4px;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+}
+
+/* Button container responsive styling */
+center {
+    text-align: center;
+    margin: 10px 0;
+}
+
+.m-t-2 {
+    margin-top: 1rem;
+}
+
+.m-b-1 {
+    margin-bottom: 0.5rem;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}
+
+/* Responsive button adjustments */
+@media screen and (max-width: 768px) {
+    .btn {
+        min-width: 120px;
+        margin: 4px 2px;
+        font-size: 16px;
+        min-height: 48px;
+        padding: 12px 16px;
+    }
+    
+    center {
+        padding: 0 10px;
+    }
+    
+    /* Stack buttons vertically on very small screens */
+    .btn.mr-2 {
+        margin-right: 2px;
+        margin-bottom: 8px;
+        display: inline-block;
+        width: auto;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .btn {
+        width: 100%;
+        max-width: 300px;
+        margin: 4px auto;
+        display: block;
+    }
+    
+    .btn.mr-2 {
+        margin-right: auto;
+        margin-bottom: 8px;
+    }
+    
+    center {
+        padding: 0 15px;
+    }
 }
