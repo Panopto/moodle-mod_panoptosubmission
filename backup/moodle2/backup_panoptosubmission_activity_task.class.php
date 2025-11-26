@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/mod/panoptosubmission/backup/moodle2/backup_panoptosubmission_stepslib.php');
+require_once($CFG->dirroot . '/mod/panoptosubmission/backup/moodle2/backup_panoptosubmission_stepslib.php');
 
 /**
  * Panopto Student Submission backup activity task class.
@@ -34,7 +34,6 @@ require_once($CFG->dirroot.'/mod/panoptosubmission/backup/moodle2/backup_panopto
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_panoptosubmission_activity_task extends backup_activity_task {
-
     /**
      * Defines settings
      */
@@ -61,10 +60,10 @@ class backup_panoptosubmission_activity_task extends backup_activity_task {
 
         $base = preg_quote($CFG->wwwroot, '/');
 
-        $search = "/(".$base."\/mod\/panoptosubmission\/index.php\?id\=)([0-9]+)/";
+        $search = "/(" . $base . "\/mod\/panoptosubmission\/index.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@PANOPTOSUBMISSIONINDEX*$2@$', $content);
 
-        $search = "/(".$base."\/mod\/panoptosubmission\/view.php\?id\=)([0-9]+)/";
+        $search = "/(" . $base . "\/mod\/panoptosubmission\/view.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@PANOPTOSUBMISSIONVIEWBYID*$2@$', $content);
 
         return $content;

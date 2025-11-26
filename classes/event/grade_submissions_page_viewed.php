@@ -32,7 +32,6 @@ namespace mod_panoptosubmission\event;
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class grade_submissions_page_viewed extends \core\event\base {
-
     /**
      * Initializes eventdata
      *

@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(dirname(dirname(__FILE__))).'/course/moodleform_mod.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/course/moodleform_mod.php');
 
 /**
  * This class contains the forms to create and edit an instance of this module
@@ -57,18 +57,30 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
 
         $this->standard_intro_elements();
 
-        $mform->addElement('date_time_selector',
-            'timeavailable', get_string('availabledate', 'panoptosubmission'), ['optional' => true]);
+        $mform->addElement(
+            'date_time_selector',
+            'timeavailable',
+            get_string('availabledate', 'panoptosubmission'),
+            ['optional' => true]
+        );
         $mform->addHelpButton('timeavailable', 'availabledate', 'panoptosubmission');
         $mform->setDefault('timeavailable', time());
 
-        $mform->addElement('date_time_selector',
-            'timedue', get_string('duedate', 'panoptosubmission'), ['optional' => true]);
+        $mform->addElement(
+            'date_time_selector',
+            'timedue',
+            get_string('duedate', 'panoptosubmission'),
+            ['optional' => true]
+        );
         $mform->addHelpButton('timedue', 'duedate', 'panoptosubmission');
         $mform->setDefault('timedue', time() + 7 * 24 * 3600);
 
-        $mform->addElement('date_time_selector',
-            'cutofftime', get_string('cutoffdate', 'panoptosubmission'), ['optional' => true]);
+        $mform->addElement(
+            'date_time_selector',
+            'cutofftime',
+            get_string('cutoffdate', 'panoptosubmission'),
+            ['optional' => true]
+        );
         $mform->addHelpButton('cutofftime', 'cutoffdate', 'panoptosubmission');
         $mform->setDefault('cutofftime', time() + 7 * 24 * 3600);
 
@@ -120,7 +132,7 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
             }
         }
         if (!empty($data['cutofftime']) && !empty($data['timedue'])) {
-            if ($data['cutofftime'] < $data['timedue'] ) {
+            if ($data['cutofftime'] < $data['timedue']) {
                 $errors['cutofftime'] = get_string('cutoffdatevalidation', 'panoptosubmission');
             }
         }

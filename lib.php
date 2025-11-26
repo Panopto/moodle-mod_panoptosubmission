@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/calendar/lib.php');
+require_once($CFG->dirroot . '/calendar/lib.php');
 
 /**
  * Given an object containing all the necessary data,
@@ -43,7 +43,6 @@ function panoptosubmission_add_instance($newactivity) {
     $newactivity->id = $DB->insert_record('panoptosubmission', $newactivity);
 
     if ($newactivity->timedue) {
-
         $event = new stdClass();
         $event->name = $newactivity->name;
         $event->description = format_module_intro('panoptosubmission', $newactivity, $newactivity->coursemodule, false);
@@ -84,9 +83,13 @@ function panoptosubmission_update_instance($targetinstance) {
     if ($targetinstance->timedue) {
         $event = new stdClass();
 
-        if ($event->id = $DB->get_field(
-            'event', 'id', ['modulename' => 'panoptosubmission', 'instance' => $targetinstance->id])) {
-
+        if (
+            $event->id = $DB->get_field(
+                'event',
+                'id',
+                ['modulename' => 'panoptosubmission', 'instance' => $targetinstance->id]
+            )
+        ) {
             $event->name = $targetinstance->name;
             $event->description = format_module_intro('panoptosubmission', $targetinstance, $targetinstance->coursemodule, false);
             $event->format = FORMAT_HTML;
@@ -153,9 +156,12 @@ function panoptosubmission_delete_instance($id) {
     panoptosubmission_grade_item_delete($targetinstance);
 
     // Delete files associated with this module.
-    $context = context_module::instance($id);
-    $fs = get_file_storage();
-    $fs->delete_area_files($context->id);
+    $cm = get_coursemodule_from_instance('panoptosubmission', $id);
+    if ($cm) {
+        $context = context_module::instance($cm->id);
+        $fs = get_file_storage();
+        $fs->delete_area_files($context->id);
+    }
 
     return $result;
 }
@@ -175,7 +181,7 @@ function panoptosubmission_delete_instance($id) {
  * @return object Returns time and info properties.
  */
 function panoptosubmission_user_outline($course, $user, $mod, $data) {
-    $return = new stdClass;
+    $return = new stdClass();
 
     $return->time = 0;
     $return->info = '';
@@ -263,7 +269,7 @@ function panoptosubmission_scale_used_anywhere($scaleid) {
  * @return mixed True if module supports feature, null if doesn't know
  */
 function panoptosubmission_supports($feature) {
-    switch($feature) {
+    switch ($feature) {
         case FEATURE_MOD_INTRO:
             return true;
         case FEATURE_COMPLETION_TRACKS_VIEWS:
@@ -276,7 +282,7 @@ function panoptosubmission_supports($feature) {
             return true;
         case FEATURE_BACKUP_MOODLE2:
             return true;
-        case FEATURE_SHOW_DESCRIPTION;
+        case FEATURE_SHOW_DESCRIPTION:
             return true;
         default:
             return null;
@@ -300,7 +306,7 @@ function panoptosubmission_grading_areas_list() {
  * @return int, 0 if ok, error code otherwise
  */
 function panoptosubmission_grade_item_update($targetinstance, $grades = null) {
-    require_once(dirname(dirname(dirname(__FILE__))).'/lib/gradelib.php');
+    require_once(dirname(dirname(dirname(__FILE__))) . '/lib/gradelib.php');
 
     $params = ['itemname' => $targetinstance->name, 'idnumber' => $targetinstance->cmidnumber];
 
@@ -308,11 +314,9 @@ function panoptosubmission_grade_item_update($targetinstance, $grades = null) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
         $params['grademax'] = $targetinstance->grade;
         $params['grademin'] = 0;
-
     } else if ($targetinstance->grade < 0) {
         $params['gradetype'] = GRADE_TYPE_SCALE;
         $params['scaleid'] = -$targetinstance->grade;
-
     } else {
         $params['gradetype'] = GRADE_TYPE_TEXT;
     }
@@ -322,8 +326,16 @@ function panoptosubmission_grade_item_update($targetinstance, $grades = null) {
         $grades = null;
     }
 
-    return grade_update('mod/panoptosubmission',
-        $targetinstance->course, 'mod', 'panoptosubmission', $targetinstance->id, 0, $grades, $params);
+    return grade_update(
+        'mod/panoptosubmission',
+        $targetinstance->course,
+        'mod',
+        'panoptosubmission',
+        $targetinstance->id,
+        0,
+        $grades,
+        $params
+    );
 }
 
 /**
@@ -353,7 +365,6 @@ function panoptosubmission_reset_gradebook($courseid, $type = '') {
     $params = ['course' => $courseid];
 
     if ($existinggrades = $DB->get_records_sql($sql, $params)) {
-
         foreach ($existinggrades as $existinggrade) {
             panoptosubmission_grade_item_update($existinggrade, 'reset');
         }
@@ -395,9 +406,11 @@ function panoptosubmission_reset_userdata($data) {
 
     // Updating dates - shift may be negative too.
     if ($data->timeshift) {
-        shift_course_mod_dates('panoptosubmission',
+        shift_course_mod_dates(
+            'panoptosubmission',
             ['timedue', 'timeavailable', 'cutofftime'],
-            $data->timeshift, $data->courseid
+            $data->timeshift,
+            $data->courseid
         );
         $status[] = ['component' => $componentstr, 'item' => get_string('datechanged'), 'error' => false];
     }
@@ -412,7 +425,7 @@ function panoptosubmission_reset_userdata($data) {
  */
 function panoptosubmission_grade_item_delete($targetrecord) {
     global $CFG;
-    require_once($CFG->libdir.'/gradelib.php');
+    require_once($CFG->libdir . '/gradelib.php');
     return grade_update(
         'mod/panoptosubmission',
         $targetrecord->course,
@@ -438,13 +451,14 @@ function panoptosubmission_grade_item_delete($targetrecord) {
  * @return bool false if file not found, does not return if found - just send the file
  */
 function panoptosubmission_pluginfile(
-        $course,
-        $cm,
-        context $context,
-        $filearea,
-        $args,
-        $forcedownload,
-        array $options = []) {
+    $course,
+    $cm,
+    context $context,
+    $filearea,
+    $args,
+    $forcedownload,
+    array $options = []
+) {
 
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
@@ -481,7 +495,7 @@ function panoptosubmission_get_property_or_default($object, $property, $default)
 
     // Iterate over object properties in a case-insensitive manner.
     foreach ($object as $key => $value) {
-        if (strcasecmp($key, $property) === 0) { // strcasecmp is case-insensitive.
+        if (strcasecmp($key, $property) === 0) { // Strcasecmp is case-insensitive.
             // Return default if the value is strictly 0 or evaluates to false.
             return ($value === 0 || !$value) ? $default : $value;
         }

@@ -30,7 +30,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class panoptosubmission_submissions_feedback_status implements renderable {
-
     /** @var string $gradefordisplay the student grade rendered into a format suitable for display */
     public $gradefordisplay = '';
     /** @var mixed the graded date (may be null) */
@@ -53,12 +52,14 @@ class panoptosubmission_submissions_feedback_status implements renderable {
      * @param int $coursemoduleid
      * @param bool $canviewfullnames
      */
-    public function __construct($gradefordisplay,
-                                $gradeddate,
-                                $grader,
-                                $grade,
-                                $coursemoduleid,
-                                $canviewfullnames) {
+    public function __construct(
+        $gradefordisplay,
+        $gradeddate,
+        $grader,
+        $grade,
+        $coursemoduleid,
+        $canviewfullnames
+    ) {
         $this->gradefordisplay = $gradefordisplay;
         $this->gradeddate = $gradeddate;
         $this->grader = $grader;

@@ -18,7 +18,7 @@
  * Main locallib.php file for the Panopto Student Submission mod
  *
  * @package mod_panoptosubmission
- * @copyright  Panopto 2021
+ * @copyright  Panopto 2025
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -186,6 +186,11 @@ function panoptosubmission_validate_cmid($cmid) {
         throw new moodle_exception('invalidcoursemodule');
     }
 
+    // Check if the course module is marked for deletion (in recycle bin).
+    if (!empty($cm->deletioninprogress)) {
+        throw new moodle_exception('invalidcoursemodule');
+    }
+
     if (!$course = $DB->get_record('course', ['id' => $cm->course])) {
         throw new moodle_exception('coursemisconf');
     }
@@ -211,10 +216,10 @@ function panoptosubmission_display_lateness($timesubmitted, $timedue) {
     $time = $timedue - $timesubmitted;
     if ($time < 0) {
         $timetext = get_string('late', 'panoptosubmission', format_time($time));
-        return ' (<span class="late">'.$timetext.'</span>)';
+        return ' (<span class="late">' . $timetext . '</span>)';
     } else {
         $timetext = get_string('early', 'panoptosubmission', format_time($time));
-        return ' (<span class="early">'.$timetext.'</span>)';
+        return ' (<span class="early">' . $timetext . '</span>)';
     }
 }
 
@@ -230,13 +235,15 @@ function panoptosubmission_display_lateness($timesubmitted, $timedue) {
  * @param stdClass $userto User that is receiving notification.
  * @param string $messagetype Message type.
  */
-function panoptosubmission_send_notification($cm,
-                                            $course,
-                                            $name,
-                                            $submission,
-                                            $userfrom,
-                                            $userto,
-                                            $messagetype) {
+function panoptosubmission_send_notification(
+    $cm,
+    $course,
+    $name,
+    $submission,
+    $userfrom,
+    $userto,
+    $messagetype
+) {
     global $CFG;
 
     $modulename = get_string('modulename', 'panoptosubmission');
@@ -287,8 +294,16 @@ function panoptosubmission_send_notification($cm,
  */
 function panoptosubmission_get_graders($cm, $user, $context) {
     // Potential graders.
-    $potgraders = get_enrolled_users($context, 'mod/panoptosubmission:gradesubmission',
-                                                0, 'u.*', null, 0, 0, true);
+    $potgraders = get_enrolled_users(
+        $context,
+        'mod/panoptosubmission:gradesubmission',
+        0,
+        'u.*',
+        null,
+        0,
+        0,
+        true
+    );
 
     $graders = [];
     // Separate groups are being used.
@@ -341,11 +356,13 @@ function panoptosubmission_get_graders($cm, $user, $context) {
  * @param object $course The course object.
  * @return void
  */
-function panoptosubmission_notify_graders($pansubmissionactivity,
-                                        $submission,
-                                        $cm,
-                                        $context,
-                                        $course) {
+function panoptosubmission_notify_graders(
+    $pansubmissionactivity,
+    $submission,
+    $cm,
+    $context,
+    $course
+) {
     global $DB, $USER;
 
     $late = $pansubmissionactivity->timedue && ($pansubmissionactivity->timedue < time());
@@ -363,7 +380,8 @@ function panoptosubmission_notify_graders($pansubmissionactivity,
 
     if ($teachers = panoptosubmission_get_graders($cm, $user, $context)) {
         foreach ($teachers as $teacher) {
-            panoptosubmission_send_notification($cm,
+            panoptosubmission_send_notification(
+                $cm,
                 $course,
                 $pansubmissionactivity->name,
                 $submission,
@@ -483,9 +501,11 @@ function panoptosubmission_get_grading_instance($cminstance, $context, $submissi
                 $gradinginstance = $controller->get_current_instance($USER->id, $itemid);
             } else if (!$gradingdisabled) {
                 $instanceid = optional_param('advancedgradinginstanceid', 0, PARAM_INT);
-                $gradinginstance = $controller->get_or_create_instance($instanceid,
-                                                                       $USER->id,
-                                                                       $itemid);
+                $gradinginstance = $controller->get_or_create_instance(
+                    $instanceid,
+                    $USER->id,
+                    $itemid
+                );
             }
         } else {
             $advancedgradingwarning = $controller->form_unavailable_notification();
@@ -509,20 +529,24 @@ function panoptosubmission_get_grading_instance($cminstance, $context, $submissi
  * @param object $teacher user that graded the submission
  * @return panoptosubmission_submissions_feedback_status renderable object
  */
-function panoptosubmission_get_feedback_status_renderable($cm,
+function panoptosubmission_get_feedback_status_renderable(
+    $cm,
     $pansubmissionactivity,
     $submission,
     $context,
     $userid,
     $grade,
-    $teacher) {
+    $teacher
+) {
     global $DB, $PAGE;
 
-    $gradinginfo = grade_get_grades($pansubmissionactivity->course,
-                                'mod',
-                                'panoptosubmission',
-                                $cm->instance,
-                                $userid);
+    $gradinginfo = grade_get_grades(
+        $pansubmissionactivity->course,
+        'mod',
+        'panoptosubmission',
+        $cm->instance,
+        $userid
+    );
 
     $gradingitem = null;
     $gradebookgrade = null;
@@ -537,7 +561,6 @@ function panoptosubmission_get_feedback_status_renderable($cm,
 
     // If there is a visible grade, show the summary.
     if ($hasgrade && $gradevisible) {
-
         $gradefordisplay = null;
         $gradeddate = null;
         $grader = null;
@@ -547,11 +570,13 @@ function panoptosubmission_get_feedback_status_renderable($cm,
         if ($controller = $gradingmanager->get_active_controller()) {
             $menu = make_grades_menu($submission->grade);
             $controller->set_grade_range($menu, $submission->grade > 0);
-            $gradefordisplay = $controller->render_grade($PAGE,
-                                                            $submission->id,
-                                                            $gradingitem,
-                                                            $gradebookgrade->str_long_grade,
-                                                            $cangrade);
+            $gradefordisplay = $controller->render_grade(
+                $PAGE,
+                $submission->id,
+                $gradingitem,
+                $gradebookgrade->str_long_grade,
+                $cangrade
+            );
         } else {
             // Normal feedback, which is just a grade.
             $gradefordisplay = $grade->str_long_grade;
@@ -560,9 +585,11 @@ function panoptosubmission_get_feedback_status_renderable($cm,
 
         if (isset($teacher)) {
             $grader = $DB->get_record('user', ['id' => $teacher->id]);
-        } else if (isset($gradebookgrade->usermodified)
+        } else if (
+            isset($gradebookgrade->usermodified)
             && $gradebookgrade->usermodified > 0
-            && has_capability('mod/panoptosubmission:gradesubmission', $context, $gradebookgrade->usermodified)) {
+            && has_capability('mod/panoptosubmission:gradesubmission', $context, $gradebookgrade->usermodified)
+        ) {
             // Grader not provided. Check that usermodified is a user who can grade.
             // Case 1: When an assignment is reopened an empty grade is created so the feedback
             // plugin can know which attempt it's referring to. In this case, usermodifed is a student.
@@ -571,12 +598,14 @@ function panoptosubmission_get_feedback_status_renderable($cm,
         }
 
         $viewfullnames = has_capability('moodle/site:viewfullnames', $context);
-        $feedbackstatus = new panoptosubmission_submissions_feedback_status($gradefordisplay,
-                                                $gradeddate,
-                                                $grader,
-                                                $grade,
-                                                $cm->id,
-                                                $viewfullnames);
+        $feedbackstatus = new panoptosubmission_submissions_feedback_status(
+            $gradefordisplay,
+            $gradeddate,
+            $grader,
+            $grade,
+            $cm->id,
+            $viewfullnames
+        );
 
         return $feedbackstatus;
     }
@@ -642,8 +671,10 @@ function panoptosubmission_verify_panopto($courseid) {
             $panopto->applicationkey = $targetserver->appkey;
             $provisioninginfo = $panopto->get_provisioning_info();
 
-            if (   (isset($provisioninginfo->unknownerror) && $provisioninginfo->unknownerror === true)
-                || (isset($provisioninginfo->accesserror) && $provisioninginfo->accesserror === true)) {
+            if (
+                (isset($provisioninginfo->unknownerror) && $provisioninginfo->unknownerror === true)
+                || (isset($provisioninginfo->accesserror) && $provisioninginfo->accesserror === true)
+            ) {
                 return false;
             }
 

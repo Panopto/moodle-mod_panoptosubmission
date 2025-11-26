@@ -22,12 +22,12 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
-require_once(dirname(dirname(dirname(__FILE__))).'/lib/filelib.php');
-require_once(dirname(__FILE__).'/lib.php');
-require_once(dirname(__FILE__).'/renderer.php');
-require_once(dirname(__FILE__).'/locallib.php');
-require_once(dirname(__FILE__).'/single_submission_form.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/lib/filelib.php');
+require_once(dirname(__FILE__) . '/lib.php');
+require_once(dirname(__FILE__) . '/renderer.php');
+require_once(dirname(__FILE__) . '/locallib.php');
+require_once(dirname(__FILE__) . '/single_submission_form.php');
 
 $id = required_param('cmid', PARAM_INT);
 $userid = required_param('userid', PARAM_INT);
@@ -36,7 +36,7 @@ $tilast = optional_param('tilast', '', PARAM_TEXT);
 $page = optional_param('page', 0, PARAM_INT);
 
 
-list($cm, $course, $pansubmissionactivity) = panoptosubmission_validate_cmid($id);
+[$cm, $course, $pansubmissionactivity] = panoptosubmission_validate_cmid($id);
 
 require_login($course->id, false, $cm);
 require_sesskey();
@@ -53,8 +53,10 @@ $PAGE->set_title(format_string($pansubmissionactivity->name));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_context($context);
 
-$previousurl = new moodle_url('/mod/panoptosubmission/grade_submissions.php',
-    ['cmid' => $cm->id, 'tifirst' => $tifirst, 'tilast' => $tilast, 'page' => $page]);
+$previousurl = new moodle_url(
+    '/mod/panoptosubmission/grade_submissions.php',
+    ['cmid' => $cm->id, 'tifirst' => $tifirst, 'tilast' => $tilast, 'page' => $page]
+);
 
 $prevousurlstring = get_string('singlesubmissionheader', 'panoptosubmission');
 $PAGE->navbar->add($prevousurlstring, $previousurl);
@@ -107,7 +109,7 @@ $markingtreacherinfo = '';
 
 if (!empty($teacher)) {
     $markingteacherpic = $OUTPUT->user_picture($teacher);
-    $markingtreacherinfo = fullname($teacher).'<br />'.$datestring;
+    $markingtreacherinfo = fullname($teacher) . '<br />' . $datestring;
 }
 
 // Setup form data.
@@ -134,10 +136,10 @@ $submissionform = new panoptosubmission_singlesubmission_form(null, $formdata);
 if ($submissionform->is_cancelled()) {
     redirect($previousurl);
 } else if ($submitteddata = $submissionform->get_data()) {
-
-    if (!isset($submitteddata->cancel) && (isset($submitteddata->xgrade) ||
-        isset($submitteddata->advancedgrading)) && isset($submitteddata->submissioncomment_editor)) {
-
+    if (
+        !isset($submitteddata->cancel) && (isset($submitteddata->xgrade) ||
+            isset($submitteddata->advancedgrading)) && isset($submitteddata->submissioncomment_editor)
+    ) {
         // Flag used when an instructor is about to grade a user who does not have a submission.
         $updategrade = true;
 
@@ -161,8 +163,10 @@ if ($submissionform->is_cancelled()) {
         $gradinginstance = panoptosubmission_get_grading_instance($cmgrade, $context, $submission, $gradingdisabled);
 
         if ($gradinginstance) {
-            $advancedgrade = $gradinginstance->submit_and_get_grade($submitteddata->advancedgrading,
-                                                                    $submission->id);
+            $advancedgrade = $gradinginstance->submit_and_get_grade(
+                $submitteddata->advancedgrading,
+                $submission->id
+            );
 
             $currentgrade = $advancedgrade;
         } else {
@@ -171,14 +175,15 @@ if ($submissionform->is_cancelled()) {
 
         $notifystudentchanged = $pansubmissionactivity->sendstudentnotifications != $submitteddata->sendstudentnotifications;
         if (!$blanksubmission) {
-
             $submissionchanged = strcmp(
                 $submission->submissioncomment ?? '',
                 $submitteddata->submissioncomment_editor['text'] ?? ''
             );
-            if (   $submission->grade == $currentgrade
+            if (
+                $submission->grade == $currentgrade
                 && !$notifystudentchanged
-                && !$submissionchanged) {
+                && !$submissionchanged
+            ) {
                 $updategrade = false;
             }
             if ($submissionchanged || $updategrade) {
@@ -190,12 +195,10 @@ if ($submissionform->is_cancelled()) {
                 $DB->update_record('panoptosubmission_submission', $submission);
             }
         } else {
-
             // Check for unchanged values.
             if ('-1' == $currentgrade && empty($submitteddata->submissioncomment_editor['text'])) {
                 $updategrade = false;
             } else {
-
                 $submission->grade = $currentgrade;
                 $DB->update_record('panoptosubmission_submission', $submission);
             }
@@ -203,13 +206,13 @@ if ($submissionform->is_cancelled()) {
 
         // Save files if any were uploaded.
         $submission->submissioncomment = file_save_draft_area_files(
-                $submitteddata->submissioncomment_editor['itemid'],
-                $context->id,
-                STUDENTSUBMISSION_FILE_COMPONENT,
-                STUDENTSUBMISSION_FILE_FILEAREA,
-                $submission->id,
-                ['subdirs' => true],
-                $submitteddata->submissioncomment_editor['text']
+            $submitteddata->submissioncomment_editor['itemid'],
+            $context->id,
+            STUDENTSUBMISSION_FILE_COMPONENT,
+            STUDENTSUBMISSION_FILE_FILEAREA,
+            $submission->id,
+            ['subdirs' => true],
+            $submitteddata->submissioncomment_editor['text']
         );
         $DB->update_record('panoptosubmission_submission', $submission);
 
@@ -231,7 +234,8 @@ if ($submissionform->is_cancelled()) {
 
             // Send notification to student.
             if ($pansubmissionactivity->sendstudentnotifications) {
-                panoptosubmission_send_notification($cm,
+                panoptosubmission_send_notification(
+                    $cm,
                     $course,
                     $pansubmissionactivity->name,
                     $submission,
@@ -250,25 +254,33 @@ if ($submissionform->is_cancelled()) {
 
         // Handle outcome data.
         if (!empty($CFG->enableoutcomes)) {
-            require_once($CFG->libdir.'/gradelib.php');
+            require_once($CFG->libdir . '/gradelib.php');
 
             $data = [];
             $gradinginfo = grade_get_grades($course->id, 'mod', 'panoptosubmission', $pansubmissionactivity->id, $userid);
 
             if (!empty($gradinginfo->outcomes)) {
                 foreach ($gradinginfo->outcomes as $n => $old) {
-                    $name = 'outcome_'.$n;
-                    if (isset($submitteddata->{$name}[$userid]) &&
-                        $old->grades[$userid]->grade != $submitteddata->{$name}[$userid]) {
-
+                    $name = 'outcome_' . $n;
+                    if (
+                        isset($submitteddata->{$name}[$userid]) &&
+                        $old->grades[$userid]->grade != $submitteddata->{$name}[$userid]
+                    ) {
                         $data[$n] = $submitteddata->{$name}[$userid];
                     }
                 }
             }
 
             if (count($data) > 0) {
-                grade_update_outcomes('mod/panoptosubmission',
-                    $course->id, 'mod', 'panoptosubmission', $pansubmissionactivity->id, $userid, $data);
+                grade_update_outcomes(
+                    'mod/panoptosubmission',
+                    $course->id,
+                    'mod',
+                    'panoptosubmission',
+                    $pansubmissionactivity->id,
+                    $userid,
+                    $data
+                );
             }
         }
     }

@@ -22,11 +22,11 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
-require_once(dirname(__FILE__).'/lib.php');
-require_once(dirname(__FILE__).'/renderer.php');
-require_once(dirname(__FILE__).'/locallib.php');
-require_once(dirname(__FILE__).'/grade_preferences_form.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
+require_once(dirname(__FILE__) . '/lib.php');
+require_once(dirname(__FILE__) . '/renderer.php');
+require_once(dirname(__FILE__) . '/locallib.php');
+require_once(dirname(__FILE__) . '/grade_preferences_form.php');
 
 // Course Module ID.
 $id = required_param('cmid', PARAM_INT);
@@ -42,7 +42,7 @@ if (!empty($mode)) {
     require_sesskey();
 }
 
-list($cm, $course, $pansubmissionactivity) = panoptosubmission_validate_cmid($id);
+[$cm, $course, $pansubmissionactivity] = panoptosubmission_validate_cmid($id);
 
 require_login($course->id, false, $cm);
 
@@ -112,24 +112,20 @@ $gradedata = data_submitted();
 
 // Check if fast grading was passed to the form and process the data.
 if (!empty($gradedata->mode)) {
-
     $usersubmission = [];
     $time = time();
     $updated = false;
 
     foreach ($gradedata->users as $userid => $val) {
-
         $userto = $DB->get_record('user', ['id' => $userid]);
         $param = ['panactivityid' => $pansubmissionactivity->id, 'userid' => $userid];
 
         $usersubmissions = $DB->get_record('panoptosubmission_submission', $param);
 
         if ($usersubmissions) {
-
             if (array_key_exists($userid, $gradedata->menu)) {
                 // Update grade.
                 if (($gradedata->menu[$userid] != $usersubmissions->grade)) {
-
                     $usersubmissions->grade = $gradedata->menu[$userid];
                     $usersubmissions->timemarked = $time;
                     $usersubmissions->teacher = $USER->id;
@@ -138,15 +134,16 @@ if (!empty($gradedata->mode)) {
                 }
             }
 
-            if (   array_key_exists($userid, $gradedata->submissioncomment)
-                && 0 != strcmp($usersubmissions->submissioncomment, $gradedata->submissioncomment[$userid])) {
+            if (
+                array_key_exists($userid, $gradedata->submissioncomment)
+                && 0 != strcmp($usersubmissions->submissioncomment ?? '', $gradedata->submissioncomment[$userid] ?? '')
+            ) {
                 $usersubmissions->submissioncomment = $gradedata->submissioncomment[$userid];
                 $updated = true;
             }
 
             // Trigger grade event.
             if ($DB->update_record('panoptosubmission_submission', $usersubmissions)) {
-
                 $grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
 
                 $pansubmissionactivity->cmidnumber = $cm->idnumber;
@@ -155,14 +152,15 @@ if (!empty($gradedata->mode)) {
 
                 // Send notification to student.
                 if ($pansubmissionactivity->sendstudentnotifications) {
-                        panoptosubmission_send_notification($cm,
-                            $course,
-                            $pansubmissionactivity->name,
-                            $submission,
-                            $USER,
-                            $userto,
-                            'feedbackavailable'
-                        );
+                    panoptosubmission_send_notification(
+                        $cm,
+                        $course,
+                        $pansubmissionactivity->name,
+                        $submission,
+                        $USER,
+                        $userto,
+                        'feedbackavailable'
+                    );
                 }
 
                 // Add to log only if updating.
@@ -174,7 +172,6 @@ if (!empty($gradedata->mode)) {
                 ]);
                 $event->trigger();
             }
-
         } else {
             // No user submission however the instructor has submitted grade data.
             $usersubmissions = new stdClass();
@@ -190,8 +187,9 @@ if (!empty($gradedata->mode)) {
                 (array_key_exists($userid, $gradedata->menu) && '-1' == $gradedata->menu[$userid]);
 
             $emptycomment = array_key_exists(
-                $userid, $gradedata->submissioncomment) && empty($gradedata->submissioncomment[$userid]
-            );
+                $userid,
+                $gradedata->submissioncomment
+            ) && empty($gradedata->submissioncomment[$userid]);
 
             if ($emptygrade && $emptycomment) {
                 continue;
@@ -207,7 +205,6 @@ if (!empty($gradedata->mode)) {
 
             // Trigger grade event.
             if ($DB->insert_record('panoptosubmission_submission', $usersubmissions)) {
-
                 $grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
 
                 $pansubmissionactivity->cmidnumber = $cm->idnumber;
@@ -216,7 +213,8 @@ if (!empty($gradedata->mode)) {
 
                 // Send notification to student.
                 if ($pansubmissionactivity->sendstudentnotifications) {
-                    panoptosubmission_send_notification($cm,
+                    panoptosubmission_send_notification(
+                        $cm,
                         $course,
                         $pansubmissionactivity->name,
                         $submission,
@@ -242,7 +240,14 @@ if (!empty($gradedata->mode)) {
 }
 
 $renderer->display_submissions_table(
-    $cm, $data->perpage, $data->group_filter, $data->filter, $data->quickgrade, $tifirst, $tilast, $page
+    $cm,
+    $data->perpage,
+    $data->group_filter,
+    $data->filter,
+    $data->quickgrade,
+    $tifirst,
+    $tilast,
+    $page
 );
 
 $prefform->set_data($data);
