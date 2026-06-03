@@ -44,8 +44,6 @@ if (empty($resourcelinkid)) {
         '&' . $course->timecreated);
 }
 
-require_login($course);
-
 // Provision the course if we can.
 if (panoptosubmission_verify_panopto($courseid)) {
     // Get a matching LTI tool for the course.
@@ -93,5 +91,7 @@ if ($config->lti_ltiversion === LTI_VERSION_1P3) {
         unset($SESSION->lti_initiatelogin_status);
     }
 }
+
+require_login($course);
 
 echo \panoptoblock_lti_utility::launch_tool($lti);

@@ -686,3 +686,35 @@ function panoptosubmission_verify_panopto($courseid) {
         return false;
     }
 }
+
+/**
+ * Ensure the user is logged in, or perform a cross-site repost if cookies were blocked.
+ *
+ * @param int $courseid Course to require login for after repost succeeds.
+ */
+function panoptosubmission_require_login_or_repost(int $courseid): void {
+    global $PAGE, $_POST;
+
+    $context = context_course::instance($courseid);
+    $PAGE->set_pagelayout('popup');
+    $PAGE->set_context($context);
+
+    if (method_exists('panoptoblock_lti_utility', 'require_login_or_repost')) {
+        panoptoblock_lti_utility::require_login_or_repost($courseid, $context);
+        return;
+    }
+
+    if (!empty($_POST['repost'])) {
+        unset($_POST['repost']);
+    } else if (!isloggedin()) {
+        header_remove('Set-Cookie');
+        $output = $PAGE->get_renderer('mod_lti');
+        $page = new \mod_lti\output\repost_crosssite_page($_SERVER['REQUEST_URI'], $_POST);
+        echo $output->header();
+        echo $output->render($page);
+        echo $output->footer();
+        exit;
+    }
+
+    require_login($courseid);
+}
