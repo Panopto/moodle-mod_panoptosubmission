@@ -154,10 +154,10 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             ['type' => 'hidden', 'id' => 'thumbnailsource', 'name' => 'thumbnailsource', 'value' => 0]
         );
 
-        $html .= html_writer::start_tag('center', ['class' => 'm-t-2 m-b-1']);
+        $html .= html_writer::start_tag('div', ['class' => 'd-flex flex-column flex-sm-row justify-content-center mt-3 mb-2']);
 
         $attr = [
-            'class' => 'btn btn-primary mr-2',
+            'class' => 'btn btn-primary mb-2 mb-sm-0 mr-sm-2',
             'type' => 'button',
             'id' => 'id_add_video',
             'name' => 'add_video',
@@ -181,7 +181,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $html .= html_writer::empty_tag('input', $attr);
 
-        $html .= html_writer::end_tag('center');
+        $html .= html_writer::end_tag('div');
 
         $html .= html_writer::end_tag('form');
 
@@ -258,11 +258,11 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             ['type' => 'hidden', 'id' => 'thumbnailsource', 'name' => 'thumbnailsource', 'value' => 0]
         );
 
-        $html .= html_writer::start_tag('center', ['class' => 'm-t-2 m-b-1']);
+        $html .= html_writer::start_tag('div', ['class' => 'd-flex flex-column flex-sm-row justify-content-center mt-3 mb-2']);
 
         // Add submit and review buttons.
         $attr = [
-            'class' => 'btn btn-primary mr-2',
+            'class' => 'btn btn-primary mb-2 mb-sm-0 mr-sm-2',
             'type' => 'button',
             'name' => 'add_video',
             'id' => 'id_add_video',
@@ -290,7 +290,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $html .= html_writer::empty_tag('input', $attr);
 
-        $html .= html_writer::end_tag('center');
+        $html .= html_writer::end_tag('div');
 
         $html .= html_writer::end_tag('form');
 
@@ -312,7 +312,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $html .= html_writer::start_tag('form', $attr);
 
-        $html .= html_writer::start_tag('center');
+        $html .= html_writer::start_tag('div', ['class' => 'text-center mt-3 mb-2']);
 
         $attr = [
             'type' => 'hidden',
@@ -337,7 +337,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $html .= html_writer::empty_tag('input', $attr);
 
-        $html .= html_writer::end_tag('center');
+        $html .= html_writer::end_tag('div');
 
         $html .= html_writer::end_tag('form');
 
@@ -430,7 +430,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
             if (empty($groups)) {
                 $message = get_string('nosubmissions', 'panoptosubmission');
-                echo html_writer::tag('center', $message);
+                echo html_writer::tag('p', $message, ['class' => 'text-center']);
                 return;
             }
             // Collapse all the group ids into one array for use later.
@@ -559,7 +559,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $col9 = get_string('finalgrade', 'panoptosubmission');
         $table->define_headers([$col1, $col2, $col3, $col4, $col5, $col6, $col7, $col8, $col9]);
 
-        echo html_writer::start_tag('center');
+        echo html_writer::start_tag('div', ['class' => 'text-center']);
 
         $attributes = ['action' => new moodle_url('grade_submissions.php'), 'id' => 'fastgrade', 'method' => 'post'];
         echo html_writer::start_tag('form', $attributes);
@@ -591,7 +591,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         echo html_writer::end_tag('form');
 
-        echo html_writer::end_tag('center');
+        echo html_writer::end_tag('div');
     }
 
     /**
@@ -602,7 +602,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
     public function display_panoptosubmission_activities_table($course) {
         global $CFG, $DB, $USER;
 
-        echo html_writer::start_tag('center');
+        echo html_writer::start_tag('div', ['class' => 'text-center']);
 
         if (!$cms = get_coursemodules_in_course('panoptosubmission', $course->id, 'm.timedue')) {
             echo get_string('noassignments', 'mod_panoptosubmission');
@@ -677,7 +677,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             echo $pagerenderer->render($courseindexsummary);
         }
 
-        echo html_writer::end_tag('center');
+        echo html_writer::end_tag('div');
     }
 
     /**
@@ -1019,7 +1019,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         // Close the container and insert a spacer.
         $o .= $this->output->container_end();
-        $o .= \html_writer::end_tag('center');
 
         return $o;
     }
