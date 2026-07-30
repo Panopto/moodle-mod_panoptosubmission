@@ -222,39 +222,6 @@ class panoptosubmission_singlesubmission_form extends moodleform {
                 $this->get_editor_options()
             );
             $mform->setType('submissioncomment_editor', PARAM_RAW);
-
-            // Prepare draft area for existing feedback.
-            $draftitemid = file_get_submitted_draft_itemid('submissioncomment_editor');
-            $currenttext = file_prepare_draft_area(
-                $draftitemid,
-                $this->_customdata->context->id,
-                STUDENTSUBMISSION_FILE_COMPONENT,
-                STUDENTSUBMISSION_FILE_FILEAREA,
-                $submission->id,
-                ['subdirs' => true],
-                $submission->submissioncomment ?? ""
-            );
-
-            // Replace @@PLUGINFILE@@ with actual URLs for display in editor if necessary.
-            if (!empty($submission->submissioncomment)) {
-                $feedbackcontent = file_rewrite_pluginfile_urls(
-                    $currenttext,
-                    'pluginfile.php',
-                    $this->_customdata->context->id,
-                    STUDENTSUBMISSION_FILE_COMPONENT,
-                    STUDENTSUBMISSION_FILE_FILEAREA,
-                    $submission->id
-                );
-            } else {
-                $feedbackcontent = $currenttext;
-            }
-
-            $feedbackeditor = [
-                'text' => $feedbackcontent,
-                'format' => $submission->format ?? FORMAT_HTML,
-                'itemid' => $draftitemid,
-            ];
-            $mform->setDefault('submissioncomment_editor', $feedbackeditor);
         }
 
         // Notify student checkbox.
@@ -289,9 +256,11 @@ class panoptosubmission_singlesubmission_form extends moodleform {
     protected function get_editor_options() {
         return [
             'component' => 'mod_panoptosubmission',
-            'noclean' => false,
+            'subdirs' => true,
+            'maxfiles' => -1,
+            'maxbytes' => 0,
             'accepted_types' => '*',
-            'maxfiles' => '-1',
+            'noclean' => false,
             'context' => $this->_customdata->context,
         ];
     }

@@ -92,7 +92,7 @@ class panoptosubmission_submissions_table extends table_sql {
         $this->tifirst = $tifirst;
         $this->tilast = $tilast;
         $this->page = $page;
-        $this->courseId = $cm->course;
+        $this->courseid = $cm->course;
 
         $instance = $DB->get_record('panoptosubmission', ['id' => $cm->instance], 'id,grade,timedue');
         $instance->cmid = $cm->id;
