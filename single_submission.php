@@ -90,15 +90,12 @@ $gradingdisabled = $gradinginfo->items[0]->grades[$userid]->locked || $gradingin
 
 // Get marking teacher information and the time the submission was marked.
 $teacher = '';
-$submissioncomment = '';
 if (!empty($submission)) {
     $datestringlate = panoptosubmission_display_lateness($submission->timemodified, $pansubmissionactivity->timedue);
     $submissionmodified = userdate($submission->timemodified);
     $datestring = userdate($submission->timemarked) . "&nbsp; (" . format_time(time() - $submission->timemarked) . ")";
 
     $submissionuserinfo .= '<br />' . $submissionmodified . $datestringlate;
-
-    $submissioncomment = $submission->submissioncomment;
 
     $param = ['id' => $submission->teacher];
     $teacher = $DB->get_record('user', $param);
@@ -126,7 +123,6 @@ $formdata->cminstance = $pansubmissionactivity;
 $formdata->submission = $submission;
 $formdata->userid = $userid;
 $formdata->enableoutcomes = $CFG->enableoutcomes;
-$formdata->submissioncomment_editor = ['text' => $submissioncomment, 'format' => FORMAT_HTML];
 $formdata->tifirst = $tifirst;
 $formdata->tilast = $tilast;
 $formdata->page = $page;
@@ -290,6 +286,33 @@ if ($submissionform->is_cancelled()) {
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('gradesubmission', 'panoptosubmission') . ': ' . fullname($user));
+
+// Prepare the feedback editor draft area so any uploaded files resolve to real URLs and the
+// editor initialises with a valid draft item id.
+$editoroptions = [
+    'component' => 'mod_panoptosubmission',
+    'subdirs' => true,
+    'maxfiles' => -1,
+    'maxbytes' => 0,
+    'accepted_types' => '*',
+    'noclean' => false,
+    'context' => $context,
+];
+$formdata->submissioncomment = !empty($submission) ? ($submission->submissioncomment ?? '') : '';
+// The submission record defaults format to 0 (FORMAT_MOODLE) until feedback is saved; the HTML
+// editor only attaches for FORMAT_HTML, so fall back to it when no HTML format is stored yet.
+$formdata->submissioncommentformat = (!empty($submission) && !empty($submission->format))
+    ? $submission->format
+    : FORMAT_HTML;
+$formdata = file_prepare_standard_editor(
+    $formdata,
+    'submissioncomment',
+    $editoroptions,
+    $context,
+    STUDENTSUBMISSION_FILE_COMPONENT,
+    STUDENTSUBMISSION_FILE_FILEAREA,
+    !empty($submission) ? $submission->id : null
+);
 
 $submissionform->set_data($formdata);
 

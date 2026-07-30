@@ -24,9 +24,9 @@
 define([
     "jquery",
     "core/notification",
-    "core/modal_factory",
+    "core/modal",
     "core/str",
-], ($, notification, ModalFactory, str) =>
+], ($, notification, Modal, str) =>
 {
     let courseId = null;
 
@@ -67,8 +67,7 @@ define([
 
         Promise.all([
             str.get_string("select_submission", "panoptosubmission"),
-            ModalFactory.create({
-                type: ModalFactory.types.DEFAULT,
+            Modal.create({
                 body: `<iframe class="${iframeClass}" src="${url}" frameborder="0"></iframe>`,
             }),
         ])
