@@ -26,10 +26,21 @@ define([
     "core/notification",
     "core/modal",
     "core/str",
-], ($, notification, Modal, str) =>
+    "mod_panoptosubmission/viewerlaunch",
+], ($, notification, Modal, str, ViewerLaunch) =>
 {
     let courseId = null;
 
+    /**
+     * Bind the "Add video" button to open the Panopto selection popup.
+     *
+     * @param {Object} params Settings passed from view.php.
+     * @param {string} params.addvidbtnid Id of the button that opens the popup.
+     * @param {string} params.ltilaunchurl URL of contentitem.php, loaded in the popup.
+     * @param {number} params.courseid The course id.
+     * @param {number} params.height Popup height in pixels.
+     * @param {number} params.width Popup width in pixels.
+     */
     var init = (params) =>
     {
         if (   "0" === params.addvidbtnid
@@ -52,8 +63,21 @@ define([
                 params.width
             );
         });
+
+        // Listen once for the page, not once per popup, so a selection is only applied once.
+        document.body.addEventListener("sessionSelected", close_popup_callback, false);
+        document.body.addEventListener("sessionSelectionFailed", selection_failed_callback, false);
     };
 
+    /**
+     * Open the Panopto selection popup in a modal.
+     *
+     * The popup posts back to contentitem_return.php, which fires the sessionSelected event.
+     *
+     * @param {string} url URL loaded in the popup iframe.
+     * @param {number} height Requested popup height, unused as the modal sizes itself responsively.
+     * @param {number} width Requested popup width, unused as the modal sizes itself responsively.
+     */
     var open_panopto_window_callback = (url, height, width) =>
     {
         // Modal custom size class.
@@ -67,14 +91,18 @@ define([
 
         Promise.all([
             str.get_string("select_submission", "panoptosubmission"),
-            Modal.create({
-                body: `<iframe class="${iframeClass}" src="${url}" frameborder="0"></iframe>`,
-            }),
+            // Destroy the modal when it is closed, so popups closed with X do not pile up.
+            Modal.create({removeOnClose: true}),
         ])
             .then(([selectText, modal]) =>
             {
                 modal.setTitle(selectText);
                 modal.getRoot().addClass(modalClass);
+
+                // Build the iframe through the DOM so the URL is set as an attribute, never parsed as markup.
+                modal.getBody().append(
+                    $("<iframe>").addClass(iframeClass).attr({src: url, frameborder: "0"})
+                );
                 
                 // Get screen width for responsive sizing
                 const screenWidth = window.innerWidth;
@@ -153,14 +181,16 @@ define([
                 modal.show();
 
                 document.body.panoptoWindow = modal;
-                document.body.addEventListener(
-                    "sessionSelected",
-                    close_popup_callback.bind(this),
-                    false
-                );
             }).catch(notification.exception);
     };
 
+    /**
+     * Apply the session chosen in the popup to the submission form and preview, then close the popup.
+     *
+     * @param {CustomEvent} closeEvent The sessionSelected event from contentitem_return.php.
+     * @param {Object} closeEvent.detail The chosen session: title, ltiViewerUrl, contentUrl, customData,
+     *     width, height, thumbnailUrl, thumbnailWidth and thumbnailHeight.
+     */
     var close_popup_callback = (closeEvent) =>
     {
         $("input[id=submit_video]").removeAttr("disabled");
@@ -175,7 +205,7 @@ define([
 
         searchParams.set("course", courseId);
         searchParams.set("custom", decodeURI(closeEvent.detail.customData));
-        searchParams.set("contentUrl", closeEvent.detail.contentUrl);
+        searchParams.set("contenturl", closeEvent.detail.contentUrl);
 
         newSubmissionSource.search = searchParams.toString();
 
@@ -204,16 +234,37 @@ define([
         titleNode.attr("href", newSubmissionSource.toString());
 
         thumbnailLinkNode.attr("href", newSubmissionSource.toString());
-        thumbnailNode.attr("src", closeEvent.detail.thumbnailUrl);
-        thumbnailNode.attr("width", closeEvent.detail.thumbnailWidth);
-        thumbnailNode.attr("height", closeEvent.detail.thumbnailHeight);
+
+        // Create the image when the first submission has no thumbnail yet.
+        if (closeEvent.detail.thumbnailUrl)
+        {
+            if (0 === thumbnailNode.length)
+            {
+                thumbnailNode = $("<img>", {
+                    id: "panoptothumbnail",
+                    class: "mod-panoptosubmission-thumbnail",
+                }).appendTo(thumbnailLinkNode);
+            }
+
+            thumbnailNode.attr("src", closeEvent.detail.thumbnailUrl);
+            thumbnailNode.attr("alt", closeEvent.detail.title);
+            thumbnailNode.attr("width", closeEvent.detail.thumbnailWidth);
+            thumbnailNode.attr("height", closeEvent.detail.thumbnailHeight);
+        }
+        else
+        {
+            // An empty src would make the browser request this page as an image.
+            thumbnailNode.remove();
+        }
 
         iFrameNode.attr("width", closeEvent.detail.width);
         iFrameNode.attr("height", closeEvent.detail.height);
 
-        if (!iFrameNode.hasClass("session-hidden"))
+        // A hidden preview is launched by sessionpreview.js when it is shown. The class is on its container.
+        if (iFrameNode.length && 0 === iFrameNode.closest(".session-hidden").length)
         {
-            iFrameNode.attr("src", newSubmissionSource.toString());
+            // The viewer only accepts a POST with the session key.
+            ViewerLaunch.launch(newSubmissionSource.toString(), iFrameNode.attr("name"));
         }
 
         contentWrapperNode.removeClass("no-session");
@@ -230,6 +281,26 @@ define([
         $("#id_add_video").removeClass("btn-primary");
         $("#submit_video").removeClass("btn-secondary");
         document.body.panoptoWindow.destroy();
+    };
+
+    /**
+     * Close the popup and tell the user why the chosen session was rejected.
+     *
+     * The submission form is left unchanged, so nothing from the rejected selection can be submitted.
+     *
+     * @param {CustomEvent} failEvent The sessionSelectionFailed event from contentitem_return.php.
+     * @param {Object} failEvent.detail Holds messages, the translated reasons to show.
+     */
+    var selection_failed_callback = (failEvent) =>
+    {
+        if (document.body.panoptoWindow)
+        {
+            document.body.panoptoWindow.destroy();
+        }
+
+        str.get_string("error", "moodle")
+            .then((title) => notification.alert(title, failEvent.detail.messages.join("<br>")))
+            .catch(notification.exception);
     };
 
     return {

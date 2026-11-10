@@ -23,8 +23,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// phpcs:ignore moodle.Files.RequireLogin.Missing -- Login is enforced via panoptosubmission_require_login_or_repost() below.
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-require_once($CFG->dirroot . '/blocks/panopto/lib/lti/panoptoblock_lti_utility.php');
 require_once(dirname(__FILE__) . '/locallib.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
 require_once(dirname(__FILE__) . '/lib.php');
@@ -37,28 +37,36 @@ $jwt = optional_param('JWT', '', PARAM_RAW);
 
 panoptosubmission_require_login_or_repost($courseid);
 
+require_sesskey();
+
 $context = context_course::instance($courseid);
+
+// Submitters need this capability. Others need addinstance.
+if (!is_enrolled($context, $USER, 'mod/panoptosubmission:submit')) {
+    require_capability('moodle/course:manageactivities', $context);
+    require_capability('mod/lti:addcoursetool', $context);
+}
 
 $config = lti_get_type_type_config($id);
 $islti1p3 = $config->lti_ltiversion === LTI_VERSION_1P3;
-$items = '';
 
 if (!empty($jwt)) {
+    // Verifies the JWT signature against the tool's keys.
     $params = lti_convert_from_jwt($id, $jwt);
-    $consumerkey = $params['oauth_consumer_key'] ?? '';
-    $messagetype = $params['lti_message_type'] ?? '';
-    $version = $params['lti_version'] ?? '';
     $items = $params['content_items'] ?? '';
-    $errormsg = $params['lti_errormsg'] ?? '';
-    $msg = $params['lti_msg'] ?? '';
 } else {
-    $consumerkey = required_param('oauth_consumer_key', PARAM_RAW);
-    $messagetype = required_param('lti_message_type', PARAM_TEXT);
-    $version = required_param('lti_version', PARAM_TEXT);
+    // An LTI 1.3 tool must answer with a signed JWT.
+    if ($islti1p3) {
+        throw new moodle_exception('invalid_launch_parameters', 'panoptosubmission');
+    }
+
+    // Trust the items only when the tool signed the response with its shared secret, as mod/lti does.
+    lti_verify_oauth_signature($id, required_param('oauth_consumer_key', PARAM_RAW));
     $items = optional_param('content_items', '', PARAM_RAW_TRIMMED);
-    $errormsg = optional_param('lti_errormsg', '', PARAM_TEXT);
-    $msg = optional_param('lti_msg', '', PARAM_TEXT);
 }
+
+// Behind the sesskey and a verified response, queue provisioning for courses nothing else provisioned.
+panoptosubmission_queue_course_provisioning($courseid);
 
 $contentitems = json_decode($items);
 
@@ -66,7 +74,7 @@ $errors = [];
 
 // Affirm that the content item is a JSON object.
 if (!is_object($contentitems) && !is_array($contentitems)) {
-    $errors[] = 'invalidjson';
+    $errors[] = 'invalid_content_item';
 }
 
 // Get and validate frame and thumbnail sizes.
@@ -99,12 +107,10 @@ $url = panoptosubmission_get_property_or_default(
     ''
 );
 
-if (!empty($url)) {
-    $panoptodata = new \panopto_data($courseid);
-    $baseurl = parse_url($url, PHP_URL_HOST);
-    if (strcmp($panoptodata->servername, $baseurl) !== 0) {
-        $url = '';
-    }
+// Reject hosts outside the shared allowlist.
+if (!empty($url) && !panopto_is_allowed_panopto_host($url)) {
+    $errors[] = 'invalid_content_host';
+    $url = '';
 }
 
 $thumbnail = $contentitems->{'@graph'}[0]->thumbnail ?? new stdClass();
@@ -113,6 +119,8 @@ $thumbnailurlfinal = panoptosubmission_get_property_or_default(
     'id',
     panoptosubmission_get_property_or_default($thumbnail, '@id', '')
 );
+
+$thumbnailurlfinal = panoptosubmission_sanitise_thumbnail_url($thumbnailurlfinal);
 
 $thumbnailwidth = panoptosubmission_get_property_or_default($thumbnail, 'width', 128);
 $thumbnailheight = panoptosubmission_get_property_or_default($thumbnail, 'height', 72);
@@ -124,142 +132,37 @@ unset($customdata->use_panopto_interactive_view);
 
 $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php");
 
-?>
+$detail = [
+    'title' => $title,
+    'ltiViewerUrl' => $ltiviewerurl->out(false),
+    'contentUrl' => $url,
+    'customData' => urlencode(json_encode($customdata)),
+    'width' => (int) $framewidth,
+    'height' => (int) $frameheight,
+    'thumbnailUrl' => $thumbnailurlfinal,
+    'thumbnailWidth' => (int) $thumbnailwidth,
+    'thumbnailHeight' => (int) $thumbnailheight,
+];
 
-<script type="text/javascript">
-    // Trigger the handleError callback with the errors.
-    <?php
-    /**
-     * This is the if statement checking for errors.
-     *
-     * @package    mod_panoptosubmission
-     * @copyright  2025 Panopto
-     * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-     */
-    if (count($errors) > 0) {
-        ?>
-        parent.document.CALLBACKS.handleError(<?php
-        /**
-         * JSON encode the errors array for the handleError callback.
-         *
-         * @package    mod_panoptosubmission
-         * @copyright  2025 Panopto
-         * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-         */
-        echo json_encode($errors); ?>);
-        <?php
-        /**
-         * Else statement for handling successful event dispatch.
-         *
-         * @package    mod_panoptosubmission
-         * @copyright  2025 Panopto
-         * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-         */
-    } else {
-        ?>
-        /**
-         * Create and dispatch a custom event 'sessionSelected' with session details.
-         * This event should close the Panopto popup and pass the new content URL to the existing iframe.
-         */
-        const detailObject = {
-            title: "<?php
-            /**
-             * Title for the session, dynamically retrieved from PHP.
-             *
-             * @package    mod_panoptosubmission
-             * @copyright  2025 Panopto
-             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-             */
-            echo $title ?>",
-            ltiViewerUrl: "<?php
-            /**
-             * URL for the LTI viewer, generated without additional parameters.
-             *
-             * @package    mod_panoptosubmission
-             * @copyright  2025 Panopto
-             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-             */
-            echo $ltiviewerurl->out(false) ?>",
-            contentUrl: "<?php
-            /**
-             * Content URL for embedding in the iframe.
-             *
-             * @package    mod_panoptosubmission
-             * @copyright  2025 Panopto
-             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-             */
-            echo $url ?>",
-            customData: "<?php
-            /**
-             * Custom data encoded in JSON format, URL-encoded for safe transport.
-             *
-             * @package    mod_panoptosubmission
-             * @copyright  2025 Panopto
-             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-             */
-            echo urlencode(json_encode($customdata)) ?>",
-            width: <?php
-            /**
-             * Frame width, dynamically retrieved from PHP.
-             *
-             * @package    mod_panoptosubmission
-             * @copyright  2025 Panopto
-             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-             */
-            echo $framewidth ?>,
-            height: <?php
-            /**
-             * Frame height, dynamically retrieved from PHP.
-             *
-             * @package    mod_panoptosubmission
-             * @copyright  2025 Panopto
-             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-             */
-            echo $frameheight ?>,
-            thumbnailUrl: "<?php
-            /**
-             * Thumbnail URL for the session, dynamically retrieved from PHP.
-             *
-             * @package    mod_panoptosubmission
-             * @copyright  2025 Panopto
-             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-             */
-            echo $thumbnailurlfinal ?>",
-            thumbnailWidth: <?php
-            /**
-             * Thumbnail width, dynamically retrieved from PHP.
-             *
-             * @package    mod_panoptosubmission
-             * @copyright  2025 Panopto
-             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-             */
-            echo $thumbnailwidth ?>,
-            thumbnailHeight: <?php
-            /**
-             * Thumbnail height, dynamically retrieved from PHP.
-             *
-             * @package    mod_panoptosubmission
-             * @copyright  2025 Panopto
-             * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-             */
-            echo $thumbnailheight ?>
-        };
+// Escape script delimiters.
+$detailjson = panoptosubmission_encode_script_json($detail);
 
-        const sessionSelectedEvent = new CustomEvent('sessionSelected', {
-            detail: detailObject,
-            bubbles: false,
-            cancelable: false
-        });
+if ($detailjson === false) {
+    $errors[] = 'invalid_content_item';
+}
 
-        parent.document.body.dispatchEvent(sessionSelectedEvent);
-        <?php
-        /**
-         * End of if-else statement.
-         *
-         * @package    mod_panoptosubmission
-         * @copyright  2025 Panopto
-         * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-         */
-    } ?>
+if (count($errors) > 0) {
+    // Tell the activity page why the selection was rejected, so it can close the popup and say so.
+    $messages = array_map(fn($error) => get_string($error, 'panoptosubmission'), array_values(array_unique($errors)));
+    $js = 'const sessionSelectionFailedEvent = new CustomEvent("sessionSelectionFailed", {' .
+        'detail: ' . panoptosubmission_encode_script_json(['messages' => $messages]) . ', bubbles: false, cancelable: false});' .
+        'parent.document.body.dispatchEvent(sessionSelectionFailedEvent);';
+} else {
+    // Pass the session details to the activity page, which closes the popup and loads the new session.
+    $js = 'const sessionSelectedEvent = new CustomEvent("sessionSelected", {' .
+        'detail: ' . $detailjson . ', bubbles: false, cancelable: false});' .
+        'parent.document.body.dispatchEvent(sessionSelectedEvent);';
+}
 
-</script>
+// Every dynamic value above is JSON encoded with script delimiters escaped.
+echo html_writer::script($js);

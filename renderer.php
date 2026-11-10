@@ -354,6 +354,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
      * @param string $tifirst The first initial of the first name.
      * @param string $tilast The first initial of the last name.
      * @param int $page The current page to render.
+     * @param int[]|null $gradableuserids The users this grader may grade, when the caller has already loaded them.
      * @return string Returns HTML markup.
      */
     public function display_submissions_table(
@@ -364,7 +365,8 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $quickgrade = false,
         $tifirst = '',
         $tilast = '',
-        $page = 0
+        $page = 0,
+        $gradableuserids = null
     ) {
 
         global $DB, $COURSE, $USER, $CFG;
@@ -388,13 +390,18 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             $users = [];
         }
 
-        // Compare student who have submitted to the assignment with students who are.
-        // Currently enrolled in the course.
-        $students = array_keys(panoptosubmission_get_assignment_students($cm));
+        // Compare student who have submitted to the assignment with the students this grader may grade.
+        // Saves are checked against the same list, so the table never offers a row the save would reject.
+        $modulecontext = context_module::instance($cm->id);
+        $students = $gradableuserids ?? panoptosubmission_get_gradable_userids($cm, $modulecontext);
         $users = array_intersect(array_keys($users), $students);
 
         if (empty($students)) {
-            echo html_writer::tag('p', get_string('noenrolledstudents', 'panoptosubmission'));
+            // Say why: nobody is enrolled, or separate groups leave this grader with nobody to grade.
+            $message = is_null(panoptosubmission_get_grader_group_limit($cm, $modulecontext))
+                ? 'noenrolledstudents'
+                : 'nogradablestudents';
+            echo html_writer::tag('p', get_string($message, 'panoptosubmission'));
             return;
         }
 
@@ -420,7 +427,6 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $groupsjoin = '';
         $groups = [];
         $mergedgroups = [];
-        $groupids = '';
         $context = context_course::instance($COURSE->id);
 
         // Get all groups that the user belongs to, check if the user has capability to access all groups.
@@ -453,10 +459,12 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             }
         }
 
-        // Create a comma separated list of group ids.
-        $groupids .= implode(',', (array)$mergedgroups);
-        // If the user is not a member of any groups, set $groupids = 0 to avoid issues.
-        $groupids = $groupids ? $groupids : 0;
+        // Bind the group ids. A user in no groups gets 0, which matches no group.
+        [$groupinsql, $groupinparams] = $DB->get_in_or_equal(
+            $mergedgroups ? array_map('intval', $mergedgroups) : [0],
+            SQL_PARAMS_NAMED,
+            'grp'
+        );
 
         // Ignore all this if there are no course groups.
         if (groups_get_all_groups($COURSE->id)) {
@@ -485,7 +493,8 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                         $param['courseid'] = $cm->course;
                         $groupswhere .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
-                        $groupswhere .= ' AND g.id IN (' . $groupids . ') ';
+                        $param += $groupinparams;
+                        $groupswhere .= ' AND g.id ' . $groupinsql . ' ';
                     } else {
                         $groupscolumn = ', gm.groupid ';
                         $groupsjoin = ' INNER JOIN {groups_members} gm ON gm.userid = u.id' .
@@ -493,7 +502,8 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
                         $param['courseid'] = $cm->course;
                         $groupswhere .= ' AND g.courseid = :courseid ';
                         $param['groupid'] = $groupfilter;
-                        $groupswhere .= ' AND g.id IN (' . $groupids . ') AND g.id = :groupid ';
+                        $param += $groupinparams;
+                        $groupswhere .= ' AND g.id ' . $groupinsql . ' AND g.id = :groupid ';
                     }
                     break;
                 case VISIBLEGROUPS:
@@ -532,10 +542,13 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         // In order for the sortable first and last names to work.  User ID has to be the first column returned and must be.
         // Returned as id.  Otherwise the table will display links to user profiles that are incorrect or do not exist.
         $columns = $userfields . ', ps.id AS submitid, ';
-        $columns .= ' ps.grade, ps.submissioncomment, ps.timemodified, ps.source, ps.width, ps.height, ps.timemarked, ';
+        $columns .= ' ps.grade, ps.submissioncomment, ps.format AS submissionformat, ps.timemodified, ps.source, ';
+        $columns .= ' ps.width, ps.height, ps.timemarked, ';
         $columns .= '1 AS status, 1 AS selectgrade ' . $groupscolumn;
-        $where .= ' u.deleted = 0 AND u.id IN (' . implode(',', $students) . ') ' . $groupswhere;
+        [$studentinsql, $studentinparams] = $DB->get_in_or_equal($students, SQL_PARAMS_NAMED, 'stu');
+        $where .= ' u.deleted = 0 AND u.id ' . $studentinsql . ' ' . $groupswhere;
 
+        $param += $studentinparams;
         $param['instanceid'] = $cm->instance;
         $from = "{user} u LEFT JOIN {panoptosubmission_submission} ps ON ps.userid = u.id AND ps.panactivityid = :instanceid " .
             $groupsjoin;
@@ -619,6 +632,26 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $courseindexsummary = new panoptosubmission_course_index_summary($usesections, $courseformatname);
         $activitycount = 0;
         if (array_key_exists('panoptosubmission', $modinfo->instances)) {
+            // Count submissions for every activity up front instead of querying once per activity.
+            $instanceids = array_map(fn($cm) => $cm->instance, $modinfo->instances['panoptosubmission']);
+            [$insql, $params] = $DB->get_in_or_equal(array_values($instanceids), SQL_PARAMS_NAMED);
+
+            $submissioncounts = $DB->get_records_sql_menu(
+                "SELECT panactivityid, COUNT(1)
+                   FROM {panoptosubmission_submission}
+                  WHERE panactivityid $insql
+               GROUP BY panactivityid",
+                $params
+            );
+
+            $params['userid'] = $USER->id;
+            $usersubmitted = $DB->get_records_sql_menu(
+                "SELECT panactivityid, 1
+                   FROM {panoptosubmission_submission}
+                  WHERE panactivityid $insql AND userid = :userid",
+                $params
+            );
+
             foreach ($modinfo->instances['panoptosubmission'] as $cm) {
                 if (!$cm->uservisible) {
                     continue;
@@ -640,20 +673,14 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
                 $context = context_module::instance($cm->id);
                 if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
-                    $submitted = $DB->count_records('panoptosubmission_submission', ['panactivityid' => $cm->instance]);
+                    $submitted = (int) ($submissioncounts[$cm->instance] ?? 0);
                 } else if (has_capability('mod/panoptosubmission:submit', $context)) {
-                    if (
-                        $DB->count_records(
-                            'panoptosubmission_submission',
-                            ['panactivityid' => $cm->instance, 'userid' => $USER->id]
-                        ) > 0
-                    ) {
-                        $submitted = get_string('submitted', 'mod_panoptosubmission');
-                    } else {
-                        $submitted = get_string('nosubmission', 'mod_panoptosubmission');
-                    }
+                    $submitted = isset($usersubmitted[$cm->instance])
+                        ? get_string('submitted', 'mod_panoptosubmission')
+                        : get_string('nosubmission', 'mod_panoptosubmission');
                 }
 
+                // The gradebook API reads one activity at a time; mod/assign's index page does the same.
                 $currentgrades = grade_get_grades($course->id, 'mod', 'panoptosubmission', $cm->instance, $USER->id);
                 if (isset($currentgrades->items[0]->grades[$USER->id]) && !$currentgrades->items[0]->grades[$USER->id]->hidden) {
                     $grade = $currentgrades->items[0]->grades[$USER->id]->str_grade;
@@ -713,7 +740,12 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
 
         $ltiviewerparams = ['course' => $courseid];
 
-        if (!is_null($submission) && !empty($submission->source)) {
+        // Skip a stored source the allowlist rejects.
+        if (
+            !is_null($submission)
+            && !empty($submission->source)
+            && panoptosubmission_is_allowed_source_url($submission->source)
+        ) {
             $contenturl = new moodle_url($submission->source);
             $ltiviewerparams['resourcelinkid'] =
                 sha1($submission->source . '&' . $courseid . '&' . $submission->id . '&' . $submission->timemodified);
@@ -724,8 +756,12 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             $ltiviewerparams['resourcelinkid'] = sha1($viewsubmissionurl->out(false) . '&' . $courseid . '&' . $cmid);
         }
 
+        // The viewer only accepts a POST with the session key, so the iframe gets no src: the
+        // viewerlaunch module posts this URL's parameters into it, keeping the key out of every URL.
         $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php", $ltiviewerparams);
-        $params['src'] = $ltiviewerurl->out(false);
+        $params['name'] = 'contentframe';
+        $params['data-launch-url'] = $ltiviewerurl->out(false);
+        $this->page->requires->js_call_amd('mod_panoptosubmission/viewerlaunch', 'init');
 
         $iframe = html_writer::tag('iframe', '', $params);
 
@@ -748,14 +784,21 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
         $ltiviewerparams = ['course' => $courseid];
 
         $sessiontitle = '';
-        $thumbnailsource = new moodle_url('');
+        $thumbnailsource = null;
         $thumbnailwidth = '';
         $thumbnailheight = '';
 
-        if (!is_null($submission) && !empty($submission->source)) {
+        // Fall back when the stored source is rejected.
+        if (
+            !is_null($submission)
+            && !empty($submission->source)
+            && panoptosubmission_is_allowed_source_url($submission->source)
+        ) {
             $contenturl = new moodle_url($submission->source);
 
-            $thumbnailsource = new moodle_url($submission->thumbnailsource);
+            // Keep only a thumbnail on a known host.
+            $safethumbnail = panoptosubmission_sanitise_thumbnail_url($submission->thumbnailsource);
+            $thumbnailsource = ($safethumbnail === '') ? null : new moodle_url($safethumbnail);
             $thumbnailwidth = $submission->thumbnailwidth;
             $thumbnailheight = $submission->thumbnailheight;
 
@@ -763,39 +806,24 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             $ltiviewerparams['contenturl'] = $contenturl->out(false);
             $sessiontitle = $submission->title;
         } else {
-            // Do not display an empty iframe and do not give it an invalid source.
+            // Show the no-session state.
             $containerparams['class'] = 'mod-panoptosubmission-player-container no-session';
         }
 
         $ltiviewerurl = new moodle_url("/mod/panoptosubmission/view_submission.php", $ltiviewerparams);
 
-        $output = '<script type="text/javascript">' .
-                    'function panoptosubmission_toggleSessionDisplay() {' .
-                        'var showSessionPreviewToggle = document.getElementById("showsessiontoggle");' .
-                        'var sessionContainerDiv = document.getElementById("sessioncontainer");' .
-                        'var sessionIframe = document.getElementById("contentframe");' .
-                        'var titleElem = document.getElementById("panoptosessiontitle");' .
+        // The AMD module reads both labels from the toggle's escaped data attributes.
+        $this->page->requires->js_call_amd('mod_panoptosubmission/sessionpreview', 'init');
 
-                        'if (sessionContainerDiv.classList.contains("session-hidden")) {' .
-                            'sessionContainerDiv.classList.remove("session-hidden");' .
-                            'sessionIframe.setAttribute("src", titleElem.getAttribute("href"));' .
-                            'showSessionPreviewToggle.textContent = "' . get_string('sessionpreview_hide', 'panoptosubmission') .
-                            '";' .
-                        '} else {' .
-                            'sessionContainerDiv.classList.add("session-hidden");' .
-                            'sessionIframe.setAttribute("src", "about:blank");' .
-                            'showSessionPreviewToggle.textContent = "' . get_string('sessionpreview_show', 'panoptosubmission') .
-                            '";' .
-                        '}' .
-                    '}' .
-                '</script>';
-
-        $output .= html_writer::start_tag('div', $containerparams);
+        $output = html_writer::start_tag('div', $containerparams);
 
         $showsessiontoggleparams = [
             'id' => 'showsessiontoggle',
             'class' => 'mod-panoptosubmission-show-session-toggle',
-            'href' => 'javascript:panoptosubmission_toggleSessionDisplay()',
+            'href' => '#',
+            'role' => 'button',
+            'data-show-text' => get_string('sessionpreview_show', 'panoptosubmission'),
+            'data-hide-text' => get_string('sessionpreview_hide', 'panoptosubmission'),
         ];
 
         $output .= html_writer::tag('a', get_string('sessionpreview_show', 'panoptosubmission'), $showsessiontoggleparams);
@@ -811,6 +839,7 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             'class' => 'mod-panoptosubmission-thumbnail-link',
             'href' => $ltiviewerurl,
             'target' => '_blank',
+            'data-post-launch' => 1,
         ];
         $thumbnailparams = [
             'id' => 'panoptothumbnail',
@@ -823,24 +852,26 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             'class' => 'mod-panoptosubmission-thumbnail-container',
         ];
 
+        // Omit the image when there is no thumbnail to show.
+        $thumbnailhtml = is_null($thumbnailsource)
+            ? ''
+            : html_writer::img($thumbnailsource, $sessiontitle, $thumbnailparams);
+
         $output .= html_writer::start_tag('div', $thumbnailcontainerparams);
-        $output .= html_writer::tag(
-            'a',
-            html_writer::img($thumbnailsource, $sessiontitle, $thumbnailparams),
-            $thumbnaillinkparams
-        );
+        $output .= html_writer::tag('a', $thumbnailhtml, $thumbnaillinkparams);
 
         $titleparams = [
             'id' => 'panoptosessiontitle',
             'class' => 'mod-panoptosubmission-session-title',
             'href' => $ltiviewerurl,
             'target' => '_blank',
+            'data-post-launch' => 1,
         ];
 
-        $output .= html_writer::tag('a', $sessiontitle, $titleparams);
+        $output .= html_writer::tag('a', s($sessiontitle), $titleparams);
         $output .= html_writer::end_tag('div');
 
-        $output .= $this->get_video_iframe($submission, $courseid, $cmid, $ltiviewerparams);
+        $output .= $this->get_video_iframe($submission, $courseid, $cmid);
 
         $output .= html_writer::end_tag('div');
 
@@ -911,15 +942,14 @@ class mod_panoptosubmission_renderer extends plugin_renderer_base {
             $submission->id
         );
 
-        $grade->str_feedback = $submission->format
-            ? format_text(
-                $feedbackcontent,
-                $submission->format,
-                [
-                    'context' => $context,
-                ]
-            )
-            : $feedbackcontent;
+        // Always clean the feedback. A format of 0 is FORMAT_MOODLE, which older quick grading saved.
+        $grade->str_feedback = format_text(
+            $feedbackcontent,
+            $submission->format,
+            [
+                'context' => $context,
+            ]
+        );
 
         $feedbackstatus = panoptosubmission_get_feedback_status_renderable(
             $cm,

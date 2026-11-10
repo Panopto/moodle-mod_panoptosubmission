@@ -15,18 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Panopto Student Submission log definition script
+ * Panopto Student Submission uninstall script.
  *
  * @package mod_panoptosubmission
- * @copyright  Panopto 2021
+ * @copyright  Panopto 2026
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$logs = [
-        ['module' => 'panoptosubmission', 'action' => 'add', 'mtable' => 'panoptosubmission', 'field' => 'name'],
-        ['module' => 'panoptosubmission', 'action' => 'update', 'mtable' => 'panoptosubmission', 'field' => ' name'],
-        ['module' => 'panoptosubmission', 'action' => 'view', 'mtable' => 'panoptosubmission', 'field' => 'name'],
-        ['module' => 'panoptosubmission', 'action' => 'delete', 'mtable' => 'panoptosubmission', 'field' => 'name'],
-];
+/**
+ * Runs before the plugin is uninstalled.
+ *
+ * Core drops the tables in db/install.xml, the capabilities, the settings and the
+ * module's files, so nothing is left for the plugin to clean up here.
+ *
+ * @return bool True on success.
+ */
+function xmldb_panoptosubmission_uninstall() {
+    return true;
+}

@@ -62,8 +62,9 @@ class backup_panoptosubmission_activity_structure_step extends backup_activity_s
 
         $columns = [
                 'userid',
-                'entry_id',
+                'title',
                 'source',
+                'customdata',
                 'width',
                 'height',
                 'thumbnailsource',
@@ -89,7 +90,10 @@ class backup_panoptosubmission_activity_structure_step extends backup_activity_s
         }
 
         $issue->annotate_ids('user', 'userid');
-        $issue->annotate_files('mod_panoptosubmission', 'submission', 'id');
+        $issue->annotate_ids('user', 'teacher');
+
+        $panoptosubmission->annotate_files('mod_panoptosubmission', 'intro', null);
+        $issue->annotate_files('mod_panoptosubmission', 'studentsubmission_files', 'id');
 
         return $this->prepare_activity_structure($panoptosubmission);
     }

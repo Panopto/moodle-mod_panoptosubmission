@@ -26,6 +26,10 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/calendar/lib.php');
 
+// Feedback file area. Defined here so code that only loads lib.php, such as the privacy provider, can use it.
+define('STUDENTSUBMISSION_FILE_COMPONENT', 'mod_panoptosubmission');
+define('STUDENTSUBMISSION_FILE_FILEAREA', 'studentsubmission_files');
+
 /**
  * Given an object containing all the necessary data,
  * (defined by the form in mod_form.php) this function
@@ -60,6 +64,9 @@ function panoptosubmission_add_instance($newactivity) {
     }
 
     panoptosubmission_grade_item_update($newactivity);
+
+    // Provision in the background, so viewing the activity never has to and the save never waits on Panopto.
+    panoptosubmission_queue_course_provisioning($newactivity->course);
 
     return $newactivity->id;
 }
@@ -119,6 +126,9 @@ function panoptosubmission_update_instance($targetinstance) {
 
     if ($updated) {
         panoptosubmission_grade_item_update($targetinstance);
+
+        // Provision in the background, so viewing the activity never has to and the save never waits on Panopto.
+        panoptosubmission_queue_course_provisioning($targetinstance->course);
     }
 
     return $updated;
@@ -129,41 +139,87 @@ function panoptosubmission_update_instance($targetinstance) {
  * this function will permanently delete the instance
  * and any data that depends on it.
  *
+ * Safe to call again after an interrupted attempt: an earlier release could delete the activity
+ * row and then fail, and returning false then would leave core unable to delete the course module.
+ *
  * @param int $id Id of the module instance
- * @return bool True on success, else false.
+ * @return bool Always true, as there is nothing left that could stop the course module being deleted.
  */
 function panoptosubmission_delete_instance($id) {
     global $DB;
 
-    $result = true;
+    // The grade item lives in the course, which only the activity row or the grade item itself still records.
+    $courseid = $DB->get_field('panoptosubmission', 'course', ['id' => $id]) ?: $DB->get_field(
+        'grade_items',
+        'courseid',
+        ['itemtype' => 'mod', 'itemmodule' => 'panoptosubmission', 'iteminstance' => $id, 'itemnumber' => 0]
+    );
 
-    if (! $targetinstance = $DB->get_record('panoptosubmission', ['id' => $id])) {
-        return false;
+    $DB->delete_records('panoptosubmission_submission', ['panactivityid' => $id]);
+    $DB->delete_records('event', ['modulename' => 'panoptosubmission', 'instance' => $id]);
+    $DB->delete_records('panoptosubmission', ['id' => $id]);
+
+    if ($courseid) {
+        panoptosubmission_grade_item_delete((object) ['id' => $id, 'course' => $courseid]);
     }
 
-    if (! $DB->delete_records('panoptosubmission_submission', ['panactivityid' => $targetinstance->id])) {
-        $result = false;
+    // Core deletes the module context next, and the feedback files with it.
+    return true;
+}
+
+/**
+ * Queues background provisioning of a course with Panopto.
+ *
+ * Identical pending tasks are merged, so repeated saves queue the course once.
+ *
+ * @param int $courseid The course id.
+ * @return void
+ */
+function panoptosubmission_queue_course_provisioning($courseid) {
+    $task = new \mod_panoptosubmission\task\provision_course();
+    $task->set_custom_data(['courseid' => (int) $courseid]);
+    \core\task\manager::queue_adhoc_task($task, true);
+}
+
+/**
+ * Deletes every Panopto Student Submission instance left in a course, with bulk queries.
+ *
+ * Used by the course deletion observers as a clean-up pass after core has deleted the modules.
+ *
+ * @param int $courseid The course id.
+ * @return void
+ */
+function panoptosubmission_delete_course_instances($courseid) {
+    global $DB;
+
+    $activities = $DB->get_records('panoptosubmission', ['course' => $courseid]);
+    if (empty($activities)) {
+        return;
     }
 
-    if (! $DB->delete_records('event', ['modulename' => 'panoptosubmission', 'instance' => $targetinstance->id])) {
-        $result = false;
-    }
+    $ids = array_keys($activities);
 
-    if (! $DB->delete_records('panoptosubmission', ['id' => $targetinstance->id])) {
-        $result = false;
-    }
-
-    panoptosubmission_grade_item_delete($targetinstance);
-
-    // Delete files associated with this module.
-    $cm = get_coursemodule_from_instance('panoptosubmission', $id);
-    if ($cm) {
-        $context = context_module::instance($cm->id);
+    // Module contexts are normally gone by now, so this usually finds nothing to clean.
+    $cms = get_coursemodules_in_course('panoptosubmission', $courseid);
+    if ($cms) {
         $fs = get_file_storage();
-        $fs->delete_area_files($context->id);
+        foreach ($cms as $cm) {
+            $fs->delete_area_files(context_module::instance($cm->id)->id);
+        }
     }
 
-    return $result;
+    $DB->delete_records_list('panoptosubmission_submission', 'panactivityid', $ids);
+
+    [$insql, $params] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED);
+    $params['modulename'] = 'panoptosubmission';
+    $DB->delete_records_select('event', "modulename = :modulename AND instance $insql", $params);
+
+    $DB->delete_records_list('panoptosubmission', 'id', $ids);
+
+    // The gradebook API has no bulk delete, so remove each activity's grade item in turn.
+    foreach ($activities as $activity) {
+        panoptosubmission_grade_item_delete($activity);
+    }
 }
 
 /**
@@ -364,6 +420,9 @@ function panoptosubmission_reset_gradebook($courseid, $type = '') {
 
     $params = ['course' => $courseid];
 
+    // One grade_update() per activity instance, not per submission. The gradebook API has no
+    // bulk reset, so this matches assign_reset_gradebook() in mod/assign. It only runs from
+    // the admin-triggered course reset, and N is the number of these activities in one course.
     if ($existinggrades = $DB->get_records_sql($sql, $params)) {
         foreach ($existinggrades as $existinggrade) {
             panoptosubmission_grade_item_update($existinggrade, 'reset');
@@ -459,13 +518,20 @@ function panoptosubmission_pluginfile(
     $forcedownload,
     array $options = []
 ) {
+    global $CFG;
 
-    if ($context->contextlevel != CONTEXT_MODULE) {
+    require_once($CFG->dirroot . '/mod/panoptosubmission/locallib.php');
+
+    if ($context->contextlevel != CONTEXT_MODULE || $filearea !== STUDENTSUBMISSION_FILE_FILEAREA) {
         return false;
     }
 
     require_course_login($course, true, $cm);
     $itemid = (int)array_shift($args);
+
+    if (!panoptosubmission_can_access_submission_files($cm, $context, $itemid)) {
+        return false;
+    }
 
     $relativepath = implode('/', $args);
     $fullpath = "/{$context->id}/mod_panoptosubmission/$filearea/$itemid/$relativepath";
@@ -478,6 +544,32 @@ function panoptosubmission_pluginfile(
 
     // Download MUST be forced - security!
     send_stored_file($file, 0, 0, true, $options);
+}
+
+/**
+ * Returns true when the current user may read the feedback files of a submission.
+ *
+ * Feedback files belong to one submission, so only its owner or a grader may read them.
+ *
+ * @param object $cm The course module.
+ * @param context $context The module context.
+ * @param int $submissionid The submission id, used as the file item id.
+ * @return bool True when access is allowed.
+ */
+function panoptosubmission_can_access_submission_files($cm, context $context, $submissionid) {
+    global $DB, $USER;
+
+    $submission = $DB->get_record(
+        'panoptosubmission_submission',
+        ['id' => $submissionid, 'panactivityid' => $cm->instance],
+        'id, userid'
+    );
+
+    if (!$submission) {
+        return false;
+    }
+
+    return $submission->userid == $USER->id || has_capability('mod/panoptosubmission:gradesubmission', $context);
 }
 
 /**
@@ -503,6 +595,16 @@ function panoptosubmission_get_property_or_default($object, $property, $default)
 
     // Return default if the property is not found.
     return $default;
+}
+
+/**
+ * Encode JSON for a script element, escaping delimiters.
+ *
+ * @param mixed $value The value to encode, typically the session detail array.
+ * @return string|false The encoded JSON, or false when the value cannot be encoded.
+ */
+function panoptosubmission_encode_script_json($value) {
+    return json_encode($value, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 }
 
 /**

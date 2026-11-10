@@ -28,7 +28,7 @@
  * @return whether the upgrade was a success
  */
 function xmldb_panoptosubmission_upgrade($oldversion) {
-    global $DB;
+    global $CFG, $DB;
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2022090744) {
@@ -108,6 +108,18 @@ function xmldb_panoptosubmission_upgrade($oldversion) {
 
         // Update the savepoint.
         upgrade_mod_savepoint(true, 2023120100, 'panoptosubmission');
+    }
+
+    if ($oldversion < 2026092201) {
+        // Viewing no longer provisions the course, so queue it for every course already using the activity.
+        require_once($CFG->dirroot . '/mod/panoptosubmission/lib.php');
+
+        $courseids = $DB->get_fieldset_sql('SELECT DISTINCT course FROM {panoptosubmission}');
+        foreach ($courseids as $courseid) {
+            panoptosubmission_queue_course_provisioning($courseid);
+        }
+
+        upgrade_mod_savepoint(true, 2026092201, 'panoptosubmission');
     }
 
     return true;

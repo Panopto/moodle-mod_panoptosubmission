@@ -29,9 +29,7 @@ define('PANOPTOSUBMISSION_REQ_GRADING', 1);
 define('PANOPTOSUBMISSION_SUBMITTED', 2);
 define('PANOPTOSUBMISSION_NOT_SUBMITTED', 3);
 
-// File areas for file submission assignment.
-define('STUDENTSUBMISSION_FILE_COMPONENT', 'mod_panoptosubmission');
-define('STUDENTSUBMISSION_FILE_FILEAREA', 'studentsubmission_files');
+// The feedback file area constants are defined in lib.php, which is loaded below.
 
 require_once($CFG->libdir . '/gradelib.php');
 require_once($CFG->libdir . '/moodlelib.php');
@@ -39,6 +37,7 @@ require_once($CFG->libdir . '/filelib.php');
 require_once($CFG->dirroot . '/grade/grading/lib.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/panopto_data.php');
 require_once($CFG->dirroot . '/blocks/panopto/lib/block_panopto_lib.php');
+require_once($CFG->dirroot . '/mod/panoptosubmission/lib.php');
 
 /**
  * Check if the assignment submission end date has passed or if late submissions
@@ -65,6 +64,32 @@ function panoptosubmission_submission_past_due($targetactivity) {
  */
 function panoptosubmission_submission_past_cutoff($targetactivity) {
     return (0 != $targetactivity->cutofftime) && (time() > $targetactivity->cutofftime);
+}
+
+/**
+ * Returns true when a source URL may be stored or launched.
+ *
+ * An empty URL is allowed. Anything else must be a known Panopto host.
+ *
+ * @param string $url The submitted or stored content URL.
+ * @return bool True when the URL is empty or belongs to a known Panopto host.
+ */
+function panoptosubmission_is_allowed_source_url($url) {
+    return empty($url) || panopto_is_allowed_panopto_host($url);
+}
+
+/**
+ * Returns the thumbnail URL if it belongs to a known Panopto host, otherwise empty.
+ *
+ * @param string $url The submitted or stored thumbnail URL.
+ * @return string The URL to keep, or an empty string.
+ */
+function panoptosubmission_sanitise_thumbnail_url($url) {
+    if (empty($url) || !panopto_is_allowed_panopto_host($url)) {
+        return '';
+    }
+
+    return $url;
 }
 
 /**
@@ -150,7 +175,7 @@ function panoptosubmission_get_submission($targetinstanceid, $userid) {
  *
  * @param int $targetinstanceid The activity instance id.
  * @param int $userid The user id.
- * @return object A data object consisting of the user's submission.
+ * @return object|null A data object consisting of the user's submission, or null when there is none.
  */
 function panoptosubmission_get_submission_grade_object($targetinstanceid, $userid) {
     global $DB;
@@ -164,6 +189,10 @@ function panoptosubmission_get_submission_grade_object($targetinstanceid, $useri
                    "AND u.id = :userid";
 
     $data = $DB->get_record_sql($sql, $param);
+
+    if (!$data) {
+        return null;
+    }
 
     if (-1 == $data->rawgrade) {
         $data->rawgrade = null;
@@ -254,7 +283,8 @@ function panoptosubmission_send_notification(
     $info->username = fullname($userfrom, true);
     $info->assignment = format_string($name, true);
     $info->url = $CFG->wwwroot . '/mod/panoptosubmission/grade_submissions.php?cmid=' . $cm->id;
-    $info->timeupdated = date('c', $submission->timemodified);
+    // A grader can create the record before the student submits, so timemodified may be unset or 0.
+    $info->timeupdated = date('c', empty($submission->timemodified) ? time() : $submission->timemodified);
     $info->courseid = $courseid;
     $info->cmid = $cm->id;
 
@@ -305,45 +335,357 @@ function panoptosubmission_get_graders($cm, $user, $context) {
         true
     );
 
-    $graders = [];
-    // Separate groups are being used.
-    if (groups_get_activity_groupmode($cm) == SEPARATEGROUPS) {
-        // Try to find all groups.
-        if ($groups = groups_get_all_groups($cm->course, $user->id)) {
-            foreach ($groups as $group) {
-                foreach ($potgraders as $potgrader) {
-                    if ($potgrader->id == $user->id) {
-                        continue; // Do not send self.
-                    }
-                    if (groups_is_member($group->id, $potgrader->id)) {
-                        $graders[$potgrader->id] = $potgrader;
-                    }
-                }
-            }
-        } else {
-            // User not in group, try to find graders without group.
-            foreach ($potgraders as $potgrader) {
-                if ($potgrader->id == $user->id) {
-                    // Do not send self.
-                    continue;
-                }
-                // Ugly hack.
-                if (!groups_get_all_groups($cm->course, $potgrader->id)) {
-                    $graders[$potgrader->id] = $potgrader;
-                }
-            }
-        }
-    } else {
-        foreach ($potgraders as $potgrader) {
-            if ($potgrader->id == $user->id) {
-                // Do not send self.
-                continue;
-            }
-            $graders[$potgrader->id] = $potgrader;
-        }
+    // Do not send self.
+    unset($potgraders[$user->id]);
+
+    if (empty($potgraders) || groups_get_activity_groupmode($cm) != SEPARATEGROUPS) {
+        return $potgraders;
     }
 
-    return $graders;
+    // Separate groups: load group membership once rather than per grader.
+    if ($usergroups = groups_get_all_groups($cm->course, $user->id, 0, 'g.id')) {
+        // Graders who share a group with the user.
+        return array_intersect_key($potgraders, panoptosubmission_get_group_member_ids(array_keys($usergroups)));
+    }
+
+    // User not in a group, so find graders who are not in any group either.
+    $allgroups = groups_get_all_groups($cm->course, 0, 0, 'g.id');
+    if (empty($allgroups)) {
+        return $potgraders;
+    }
+
+    return array_diff_key($potgraders, panoptosubmission_get_group_member_ids(array_keys($allgroups)));
+}
+
+/**
+ * Returns the members of the given groups, keyed by user id.
+ *
+ * Reads the membership table directly, so the result does not depend on which
+ * groups the current user is allowed to see.
+ *
+ * @param int[] $groupids The group ids.
+ * @return array User ids as keys.
+ */
+function panoptosubmission_get_group_member_ids(array $groupids) {
+    global $DB;
+
+    if (empty($groupids)) {
+        return [];
+    }
+
+    [$insql, $params] = $DB->get_in_or_equal($groupids, SQL_PARAMS_NAMED);
+
+    return array_flip($DB->get_fieldset_select('groups_members', 'userid', "groupid $insql", $params));
+}
+
+/**
+ * Returns the ids of the users the current grader may grade in this activity.
+ *
+ * The grading table is built from this list and saves are checked against it, so a
+ * crafted request cannot grade users outside the grader's groups under separate groups.
+ *
+ * @param object $cm Panopto Student Submission activity course module object.
+ * @param context $context The module context.
+ * @return int[] The gradable user ids.
+ */
+function panoptosubmission_get_gradable_userids($cm, $context) {
+    $students = array_keys(panoptosubmission_get_assignment_students($cm));
+
+    $gradergroups = panoptosubmission_get_grader_group_limit($cm, $context);
+    if (empty($students) || is_null($gradergroups)) {
+        return $students;
+    }
+
+    return array_values(array_intersect($students, array_keys(panoptosubmission_get_group_member_ids($gradergroups))));
+}
+
+/**
+ * Returns true when the current grader may grade one user in this activity.
+ *
+ * Applies the same rule as panoptosubmission_get_gradable_userids() without loading every student.
+ *
+ * @param object $cm Panopto Student Submission activity course module object.
+ * @param context $context The module context.
+ * @param int $userid The user to grade.
+ * @return bool True when the user is gradable.
+ */
+function panoptosubmission_can_grade_user($cm, $context, $userid) {
+    global $DB;
+
+    if (!is_enrolled($context, $userid, 'mod/panoptosubmission:submit')) {
+        return false;
+    }
+
+    $gradergroups = panoptosubmission_get_grader_group_limit($cm, $context);
+    if (is_null($gradergroups)) {
+        return true;
+    }
+
+    if (empty($gradergroups)) {
+        return false;
+    }
+
+    [$insql, $params] = $DB->get_in_or_equal($gradergroups, SQL_PARAMS_NAMED);
+    $params['userid'] = $userid;
+
+    return $DB->record_exists_select('groups_members', "userid = :userid AND groupid $insql", $params);
+}
+
+/**
+ * Returns the groups the current grader is limited to, or null when they may grade everyone.
+ *
+ * Matches the grading table, which only filters by group when the course has groups.
+ *
+ * @param object $cm Panopto Student Submission activity course module object.
+ * @param context $context The module context.
+ * @return int[]|null The grader's group ids, or null for no group limit.
+ */
+function panoptosubmission_get_grader_group_limit($cm, $context) {
+    global $USER;
+
+    if (
+        groups_get_activity_groupmode($cm) != SEPARATEGROUPS
+        || has_capability('moodle/site:accessallgroups', $context)
+        || !groups_get_all_groups($cm->course)
+    ) {
+        return null;
+    }
+
+    // Index 0 holds every group the grader belongs to, across all groupings.
+    return groups_get_user_groups($cm->course, $USER->id)[0] ?? [];
+}
+
+/**
+ * Cleans a grade posted from the quick grading table.
+ *
+ * @param string $rawgrade The posted value, already cleaned with PARAM_RAW_TRIMMED.
+ * @param float $activitygrade The activity's grade setting: the maximum points, or a negative scale id.
+ * @return float|null The grade to store, -1 for no grade, or null when the value is invalid.
+ */
+function panoptosubmission_clean_quickgrade($rawgrade, $activitygrade) {
+    // An empty points box or the scale's "No grade" option.
+    if ($rawgrade === '' || $rawgrade === '-1') {
+        return -1.0;
+    }
+
+    if (!is_numeric($rawgrade)) {
+        return null;
+    }
+
+    $grade = (float) $rawgrade;
+
+    if ($activitygrade > 0) {
+        return ($grade >= 0 && $grade <= $activitygrade) ? $grade : null;
+    }
+
+    // Scales only accept one of their own item keys.
+    $menu = make_grades_menu($activitygrade);
+    return array_key_exists((int) $grade, $menu) && $grade == (int) $grade ? $grade : null;
+}
+
+/**
+ * Returns stored feedback as the plain text the quick grading table shows.
+ *
+ * The result is unescaped text; escape it with s() before output.
+ *
+ * @param string $comment The stored feedback, which may be HTML.
+ * @param int $format The feedback's text format.
+ * @return string Plain text.
+ */
+function panoptosubmission_comment_as_plain_text($comment, $format) {
+    $comment = $comment ?? '';
+
+    if ($format == FORMAT_PLAIN) {
+        return $comment;
+    }
+
+    if ($format == FORMAT_MOODLE) {
+        // Line breaks are significant in this format, as format_text() treats them.
+        $comment = text_to_html($comment, null, false, true);
+    }
+
+    // Same conversion as html_to_text($comment, 0, false), but keeping the grader's words unchanged.
+    $converter = new \mod_panoptosubmission\local\html2text($comment, ['width' => 0, 'do_links' => 'none']);
+
+    return trim($converter->getText());
+}
+
+/**
+ * Normalises quick grading feedback so an unedited textarea compares equal to the stored text.
+ *
+ * @param string $comment The feedback text, already cleaned with PARAM_TEXT.
+ * @return string The text with unified line endings and no surrounding whitespace.
+ */
+function panoptosubmission_normalise_quickgrade_comment($comment) {
+    return trim(str_replace("\r\n", "\n", $comment));
+}
+
+/**
+ * Saves the grades and feedback posted from the quick grading table.
+ *
+ * @param object $cm Panopto Student Submission activity course module object.
+ * @param object $course The course object.
+ * @param object $pansubmissionactivity The activity record.
+ * @param context $context The module context.
+ * @param int[] $gradableuserids The users the current grader may grade.
+ * @param array $postedusers The posted users[] values, cleaned with PARAM_INT.
+ * @param array $postedgrades The posted menu[] values, cleaned with PARAM_RAW_TRIMMED.
+ * @param array $postedcomments The posted submissioncomment[] values, cleaned with PARAM_TEXT.
+ * @return int The number of edited grades that were not valid for this activity.
+ */
+function panoptosubmission_save_quickgrades(
+    $cm,
+    $course,
+    $pansubmissionactivity,
+    $context,
+    array $gradableuserids,
+    array $postedusers,
+    array $postedgrades,
+    array $postedcomments
+) {
+    global $DB, $USER;
+
+    // Ignore any posted user the grading table would not have shown.
+    $userids = array_values(array_intersect(array_map('intval', array_keys($postedusers)), $gradableuserids));
+    if (empty($userids)) {
+        return 0;
+    }
+
+    [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+    $params['panactivityid'] = $pansubmissionactivity->id;
+
+    $existing = [];
+    $records = $DB->get_records_select(
+        'panoptosubmission_submission',
+        "panactivityid = :panactivityid AND userid $insql",
+        $params
+    );
+    foreach ($records as $record) {
+        $existing[$record->userid] = $record;
+    }
+
+    // The table shows locked and overridden grades read-only, so they are never changed here.
+    $gradinginfo = grade_get_grades($course->id, 'mod', 'panoptosubmission', $cm->instance, $userids);
+    $gradebookgrades = $gradinginfo->items[0]->grades ?? [];
+
+    $recipients = $DB->get_records_list('user', 'id', $userids);
+    $pansubmissionactivity->cmidnumber = $cm->idnumber;
+    $time = time();
+    $changed = [];
+    $invalidgrades = 0;
+
+    foreach ($userids as $userid) {
+        $gradebookgrade = $gradebookgrades[$userid] ?? null;
+        if ($gradebookgrade && ($gradebookgrade->locked || $gradebookgrade->overridden)) {
+            continue;
+        }
+
+        $isnew = !isset($existing[$userid]);
+
+        if ($isnew) {
+            // The instructor is grading a user who has not submitted yet.
+            $usersubmission = new stdClass();
+            $usersubmission->panactivityid = $pansubmissionactivity->id;
+            $usersubmission->userid = $userid;
+            $usersubmission->grade = -1;
+        } else {
+            $usersubmission = $existing[$userid];
+        }
+
+        $gradechanged = false;
+        $commentchanged = false;
+
+        if (array_key_exists($userid, $postedgrades)) {
+            $rawgrade = $postedgrades[$userid];
+
+            // An unedited grade is left alone, even one the current grade settings would no longer accept.
+            if (!is_numeric($rawgrade) || (float) $rawgrade != (float) $usersubmission->grade) {
+                $grade = panoptosubmission_clean_quickgrade($rawgrade, $pansubmissionactivity->grade);
+
+                if (is_null($grade)) {
+                    $invalidgrades++;
+                } else if ($grade != $usersubmission->grade) {
+                    $usersubmission->grade = $grade;
+                    $gradechanged = true;
+                }
+            }
+        }
+
+        if (array_key_exists($userid, $postedcomments)) {
+            // The table shows feedback as plain text, so only an edit to that text counts as a change.
+            $shown = panoptosubmission_normalise_quickgrade_comment(clean_param(
+                panoptosubmission_comment_as_plain_text(
+                    $usersubmission->submissioncomment ?? '',
+                    $usersubmission->format ?? FORMAT_MOODLE
+                ),
+                PARAM_TEXT
+            ));
+
+            if (panoptosubmission_normalise_quickgrade_comment($postedcomments[$userid]) !== $shown) {
+                // Stored like older rows, so format_text() cleans it and the grading editor still opens as HTML.
+                $usersubmission->submissioncomment = $postedcomments[$userid];
+                $usersubmission->format = FORMAT_MOODLE;
+                $commentchanged = true;
+            }
+        }
+
+        // Leave untouched rows alone so students are not notified about unchanged feedback.
+        if (!$gradechanged && !$commentchanged) {
+            continue;
+        }
+
+        // Only a grade marks the submission as graded and names its grader; a comment alone does neither.
+        if ($gradechanged || $isnew) {
+            $usersubmission->teacher = $USER->id;
+        }
+        if ($gradechanged) {
+            $usersubmission->timemarked = $time;
+        }
+
+        if ($isnew) {
+            $usersubmission->id = $DB->insert_record('panoptosubmission_submission', $usersubmission);
+        } else {
+            $DB->update_record('panoptosubmission_submission', $usersubmission);
+        }
+
+        $changed[$userid] = ['submission' => $usersubmission, 'isnew' => $isnew];
+    }
+
+    if (!empty($changed)) {
+        // Push every changed grade to the gradebook in one update.
+        $grades = [];
+        foreach (array_keys($changed) as $userid) {
+            if ($grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid)) {
+                $grades[$userid] = $grade;
+            }
+        }
+        panoptosubmission_grade_item_update($pansubmissionactivity, $grades);
+    }
+
+    foreach ($changed as $userid => $change) {
+        // Send notification to student.
+        if ($pansubmissionactivity->sendstudentnotifications && isset($recipients[$userid])) {
+            panoptosubmission_send_notification(
+                $cm,
+                $course,
+                $pansubmissionactivity->name,
+                $change['submission'],
+                $USER,
+                $recipients[$userid],
+                'feedbackavailable'
+            );
+        }
+
+        $event = \mod_panoptosubmission\event\grades_updated::create([
+            'context' => $context,
+            'other' => [
+                'crud' => $change['isnew'] ? 'c' : 'u',
+            ],
+        ]);
+        $event->trigger();
+    }
+
+    return $invalidgrades;
 }
 
 /**
@@ -659,7 +1001,6 @@ function panoptosubmission_verify_panopto($courseid) {
     $targetautoservername = get_config('block_panopto', 'automatic_operation_target_server');
     if (empty($targetautoservername)) {
         throw new moodle_exception('no_automatic_operation_target_server', 'panoptosubmission');
-        return false;
     }
 
     try {
@@ -693,28 +1034,14 @@ function panoptosubmission_verify_panopto($courseid) {
  * @param int $courseid Course to require login for after repost succeeds.
  */
 function panoptosubmission_require_login_or_repost(int $courseid): void {
-    global $PAGE, $_POST;
+    global $CFG, $PAGE;
+
+    require_once($CFG->dirroot . '/blocks/panopto/lib/lti/panoptoblock_lti_utility.php');
 
     $context = context_course::instance($courseid);
     $PAGE->set_pagelayout('popup');
     $PAGE->set_context($context);
 
-    if (method_exists('panoptoblock_lti_utility', 'require_login_or_repost')) {
-        panoptoblock_lti_utility::require_login_or_repost($courseid, $context);
-        return;
-    }
-
-    if (!empty($_POST['repost'])) {
-        unset($_POST['repost']);
-    } else if (!isloggedin()) {
-        header_remove('Set-Cookie');
-        $output = $PAGE->get_renderer('mod_lti');
-        $page = new \mod_lti\output\repost_crosssite_page($_SERVER['REQUEST_URI'], $_POST);
-        echo $output->header();
-        echo $output->render($page);
-        echo $output->footer();
-        exit;
-    }
-
-    require_login($courseid);
+    // The block version this plugin depends on always provides the shared helper.
+    \panoptoblock_lti_utility::require_login_or_repost($courseid, $context);
 }

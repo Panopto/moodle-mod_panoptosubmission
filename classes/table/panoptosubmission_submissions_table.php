@@ -137,7 +137,7 @@ class panoptosubmission_submissions_table extends table_sql {
 
         $url = new moodle_url(
             '/mod/panoptosubmission/single_submission.php',
-            ['cmid' => $this->cminstance->cmid, 'userid' => $data->id, 'sesskey' => sesskey()]
+            ['cmid' => $this->cminstance->cmid, 'userid' => $data->id]
         );
 
         if (!empty($this->tifirst)) {
@@ -256,8 +256,20 @@ class panoptosubmission_submissions_table extends table_sql {
                 ];
                 $output = html_writer::tag('span', $gradeinput . ' / ' . $this->cminstance->grade, $gradecontainerattributes);
             } else {
+                // The grade column is NUMBER(11,2), so a stored scale item arrives as '3.00' while the menu
+                // keys are plain integers. html_writer::select compares them as strings, so without this cast
+                // nothing is preselected, the browser posts the leading 'No grade' option, and saving quick
+                // grades clears every graded row on the page.
+                $selected = is_null($grade) ? null : (int) $grade;
+
                 $gradeselectattributes = [];
-                $output = html_writer::select($gradesmenu, 'menu[' . $rowdata->id . ']', $grade, $default, $gradeselectattributes);
+                $output = html_writer::select(
+                    $gradesmenu,
+                    'menu[' . $rowdata->id . ']',
+                    $selected,
+                    $default,
+                    $gradeselectattributes
+                );
             }
         } else {
             $output = get_string('nograde');
@@ -291,9 +303,13 @@ class panoptosubmission_submissions_table extends table_sql {
             $finalgrade = $this->currentgrades->items[0]->grades[$rowdata->id];
         }
 
-        $submissioncomment = strip_tags($rowdata->submissioncomment ?? '');
+        // Plain text, escaped at each output below.
+        $submissioncomment = panoptosubmission_comment_as_plain_text(
+            $rowdata->submissioncomment ?? '',
+            $rowdata->submissionformat ?? FORMAT_MOODLE
+        );
         if ((!is_bool($finalgrade) && ($finalgrade->locked || $finalgrade->overridden))) {
-            $output = shorten_text($submissioncomment, 15);
+            $output = s(shorten_text($submissioncomment, 15));
         } else if (!empty($this->quickgrade)) {
             $param = [
                 'id' => 'comments_' . $rowdata->submitid,
@@ -302,9 +318,9 @@ class panoptosubmission_submissions_table extends table_sql {
                 'name' => 'submissioncomment[' . $rowdata->id . ']',
             ];
 
-            $output .= html_writer::tag('textarea', $submissioncomment, $param);
+            $output .= html_writer::tag('textarea', s($submissioncomment), $param);
         } else {
-            $output = shorten_text($submissioncomment, 15);
+            $output = s(shorten_text($submissioncomment, 15));
         }
 
         return $output;
@@ -332,7 +348,6 @@ class panoptosubmission_submissions_table extends table_sql {
      * @return string HTML markup.
      */
     public function col_timemodified($rowdata) {
-        $attr = ['name' => 'media_submission'];
         $attr = ['id' => 'ts' . $rowdata->id];
 
         $datemodified = $rowdata->timemodified;
@@ -373,8 +388,6 @@ class panoptosubmission_submissions_table extends table_sql {
         if (0 < $rowdata->timemarked) {
             $attr = ['id' => 'tt' . $rowdata->id];
             $output = html_writer::tag('div', userdate($rowdata->timemarked), $attr);
-        } else {
-            $otuput = '-';
         }
 
         return $output;
@@ -410,8 +423,12 @@ class panoptosubmission_submissions_table extends table_sql {
                 }
             }
 
-            if (isset($panoptoscalegrades[$this->cminstance->id][$grade])) {
-                return $panoptoscalegrades[$this->cminstance->id][$grade];
+            // A stored scale item arrives as '3.00', which PHP keeps as a string key and so never
+            // matches the integer keys of the scale menu. Cast it, or every scale grade shows as '-'.
+            $key = (int) $grade;
+
+            if (isset($panoptoscalegrades[$this->cminstance->id][$key])) {
+                return $panoptoscalegrades[$this->cminstance->id][$key];
             }
             return '-';
         }
@@ -427,7 +444,7 @@ class panoptosubmission_submissions_table extends table_sql {
 
         $url = new moodle_url(
             '/mod/panoptosubmission/single_submission.php',
-            ['cmid' => $this->cminstance->cmid, 'userid' => $rowdata->id, 'sesskey' => sesskey()]
+            ['cmid' => $this->cminstance->cmid, 'userid' => $rowdata->id]
         );
 
         if (!empty($this->tifirst)) {
