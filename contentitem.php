@@ -38,12 +38,22 @@ const STUDENT_SUBMISSION_PATH = '/mod/panoptosubmission/contentitem_return.php';
 // Check access and capabilities.
 $course = get_course($courseid);
 
+// Authenticate before the LTI 1.3 branch, which exits.
+require_login($course);
+
+$context = context_course::instance($courseid);
+
+// Submitters need this capability. Others need addinstance.
+if (!is_enrolled($context, $USER, 'mod/panoptosubmission:submit')) {
+    require_capability('moodle/course:manageactivities', $context);
+    require_capability('mod/lti:addcoursetool', $context);
+}
+
 $toolid = \panoptoblock_lti_utility::get_course_tool_id($courseid, 'panopto_student_submission_tool');
 
 // If no lti tool exists then we can not continue.
 if (is_null($toolid)) {
     throw new moodle_exception('no_existing_lti_tools', 'panoptosubmission');
-    return;
 }
 
 // LTI 1.3 login request.
@@ -70,8 +80,6 @@ if ($config->lti_ltiversion === LTI_VERSION_1P3) {
         unset($SESSION->lti_initiatelogin_status);
     }
 }
-
-require_login($course);
 
 // Set the return URL. We send the launch container along to help us avoid
 // frames-within-frames when the user returns.

@@ -96,6 +96,11 @@ $contentitemparams = [
 
 // Limit the instructor buttons to ONLY those users with the role appropriate for them.
 if (has_capability('mod/panoptosubmission:gradesubmission', $context)) {
+    // Provisioning runs in the background and cannot report back, so warn graders when it cannot run at all.
+    if (empty(get_config('block_panopto', 'automatic_operation_target_server'))) {
+        echo $OUTPUT->notification(get_string('no_automatic_operation_target_server', 'panoptosubmission'), 'warning');
+    }
+
     echo $renderer->display_instructor_buttons($cm, $USER->id);
     echo $renderer->display_grading_summary($cm, $course);
 } else {

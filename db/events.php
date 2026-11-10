@@ -33,4 +33,8 @@ $observers = [
         'eventname' => '\core\event\course_deleted',
         'callback' => 'mod_panoptosubmission_observer::course_deleted',
     ],
+    [
+        'eventname' => '\core\event\course_restored',
+        'callback' => 'mod_panoptosubmission_observer::course_restored',
+    ],
 ];

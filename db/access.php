@@ -38,6 +38,7 @@ $capabilities = [
     ],
 
     'mod/panoptosubmission:gradesubmission' => [
+        'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => [

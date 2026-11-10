@@ -30,7 +30,7 @@ require_once(dirname(__FILE__) . '/grade_preferences_form.php');
 
 // Course Module ID.
 $id = required_param('cmid', PARAM_INT);
-$mode = optional_param('mode', 0, PARAM_TEXT);
+$mode = optional_param('mode', '', PARAM_ALPHA);
 $tifirst = optional_param('tifirst', '', PARAM_TEXT);
 $tilast = optional_param('tilast', '', PARAM_TEXT);
 $page = optional_param('page', 0, PARAM_INT);
@@ -108,134 +108,26 @@ $data->quickgrade = get_user_preferences('panoptosubmission_quickgrade', 0);
 $data->perpage = get_user_preferences('panoptosubmission_perpage', 10);
 $data->group_filter = get_user_preferences('panoptosubmission_group_filter', 0);
 
-$gradedata = data_submitted();
+// Computed once for both the save and the table, which must agree on who can be graded.
+$gradableuserids = panoptosubmission_get_gradable_userids($cm, $context);
 
 // Check if fast grading was passed to the form and process the data.
-if (!empty($gradedata->mode)) {
-    $usersubmission = [];
-    $time = time();
-    $updated = false;
+// Quick grading is only offered when the grader turned it on and advanced grading is off.
+$gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
+if ('fastgrade' === $mode && !empty($data->quickgrade) && empty($gradingmanager->get_active_controller())) {
+    $invalidgrades = panoptosubmission_save_quickgrades(
+        $cm,
+        $course,
+        $pansubmissionactivity,
+        $context,
+        $gradableuserids,
+        optional_param_array('users', [], PARAM_INT),
+        optional_param_array('menu', [], PARAM_RAW_TRIMMED),
+        optional_param_array('submissioncomment', [], PARAM_TEXT)
+    );
 
-    foreach ($gradedata->users as $userid => $val) {
-        $userto = $DB->get_record('user', ['id' => $userid]);
-        $param = ['panactivityid' => $pansubmissionactivity->id, 'userid' => $userid];
-
-        $usersubmissions = $DB->get_record('panoptosubmission_submission', $param);
-
-        if ($usersubmissions) {
-            if (array_key_exists($userid, $gradedata->menu)) {
-                // Update grade.
-                if (($gradedata->menu[$userid] != $usersubmissions->grade)) {
-                    $usersubmissions->grade = $gradedata->menu[$userid];
-                    $usersubmissions->timemarked = $time;
-                    $usersubmissions->teacher = $USER->id;
-
-                    $updated = true;
-                }
-            }
-
-            if (
-                array_key_exists($userid, $gradedata->submissioncomment)
-                && 0 != strcmp($usersubmissions->submissioncomment ?? '', $gradedata->submissioncomment[$userid] ?? '')
-            ) {
-                $usersubmissions->submissioncomment = $gradedata->submissioncomment[$userid];
-                $updated = true;
-            }
-
-            // Trigger grade event.
-            if ($DB->update_record('panoptosubmission_submission', $usersubmissions)) {
-                $grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
-
-                $pansubmissionactivity->cmidnumber = $cm->idnumber;
-
-                panoptosubmission_grade_item_update($pansubmissionactivity, $grade);
-
-                // Send notification to student.
-                if ($pansubmissionactivity->sendstudentnotifications) {
-                    panoptosubmission_send_notification(
-                        $cm,
-                        $course,
-                        $pansubmissionactivity->name,
-                        $submission,
-                        $USER,
-                        $userto,
-                        'feedbackavailable'
-                    );
-                }
-
-                // Add to log only if updating.
-                $event = \mod_panoptosubmission\event\grades_updated::create([
-                    'context' => $context,
-                    'other' => [
-                        'crud' => 'u',
-                    ],
-                ]);
-                $event->trigger();
-            }
-        } else {
-            // No user submission however the instructor has submitted grade data.
-            $usersubmissions = new stdClass();
-            $usersubmissions->panactivityid = $cm->instance;
-            $usersubmissions->userid = $userid;
-            $usersubmissions->teacher = $USER->id;
-            $usersubmissions->timemarked = $time;
-
-            // Need to prevent completely empty submissions from getting entered.
-            // Into the video submissions' table.
-            // Check for unchanged grade value and an empty feedback value.
-            $emptygrade = empty($gradedata->menu[$userid]) ||
-                (array_key_exists($userid, $gradedata->menu) && '-1' == $gradedata->menu[$userid]);
-
-            $emptycomment = array_key_exists(
-                $userid,
-                $gradedata->submissioncomment
-            ) && empty($gradedata->submissioncomment[$userid]);
-
-            if ($emptygrade && $emptycomment) {
-                continue;
-            }
-
-            if (array_key_exists($userid, $gradedata->menu)) {
-                $usersubmissions->grade = $gradedata->menu[$userid];
-            }
-
-            if (array_key_exists($userid, $gradedata->submissioncomment)) {
-                $usersubmissions->submissioncomment = $gradedata->submissioncomment[$userid];
-            }
-
-            // Trigger grade event.
-            if ($DB->insert_record('panoptosubmission_submission', $usersubmissions)) {
-                $grade = panoptosubmission_get_submission_grade_object($pansubmissionactivity->id, $userid);
-
-                $pansubmissionactivity->cmidnumber = $cm->idnumber;
-
-                panoptosubmission_grade_item_update($pansubmissionactivity, $grade);
-
-                // Send notification to student.
-                if ($pansubmissionactivity->sendstudentnotifications) {
-                    panoptosubmission_send_notification(
-                        $cm,
-                        $course,
-                        $pansubmissionactivity->name,
-                        $submission,
-                        $USER,
-                        $userto,
-                        'feedbackavailable'
-                    );
-                }
-
-                // Add to log only if updating.
-                $event = \mod_panoptosubmission\event\grades_updated::create([
-                    'context' => $context,
-                    'other' => [
-                        'crud' => 'c',
-                    ],
-                ]);
-                $event->trigger();
-            }
-        }
-
-        $updated = false;
+    if ($invalidgrades) {
+        echo $OUTPUT->notification(get_string('invalidquickgrades', 'panoptosubmission', $invalidgrades), 'error');
     }
 }
 
@@ -247,7 +139,8 @@ $renderer->display_submissions_table(
     $data->quickgrade,
     $tifirst,
     $tilast,
-    $page
+    $page,
+    $gradableuserids
 );
 
 $prefform->set_data($data);

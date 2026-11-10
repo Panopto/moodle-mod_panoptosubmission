@@ -63,6 +63,11 @@ class restore_panoptosubmission_activity_structure_step extends restore_activity
 
         $data->timemodified = $this->apply_date_offset($data->timemodified);
 
+        // Move the activity's dates with the course start date.
+        $data->timeavailable = $this->apply_date_offset($data->timeavailable);
+        $data->timedue = $this->apply_date_offset($data->timedue);
+        $data->cutofftime = $this->apply_date_offset($data->cutofftime);
+
         $newitemid = $DB->insert_record('panoptosubmission', $data);
         $this->apply_activity_instance($newitemid);
     }
@@ -80,10 +85,12 @@ class restore_panoptosubmission_activity_structure_step extends restore_activity
 
         $data->panactivityid = $this->get_new_parentid('panoptosubmission');
         $data->userid = $this->get_mappingid('user', $data->userid);
+        $data->teacher = $this->get_mappingid('user', $data->teacher, 0);
         $data->timecreated = $this->apply_date_offset($data->timecreated);
 
         $newitemid = $DB->insert_record('panoptosubmission_submission', $data);
-        $this->set_mapping('panoptosubmission_submission', $oldid, $newitemid);
+        // Restore the submission's feedback files with it, under its new id.
+        $this->set_mapping('panoptosubmission_submission', $oldid, $newitemid, true);
     }
 
     /**
@@ -91,6 +98,7 @@ class restore_panoptosubmission_activity_structure_step extends restore_activity
      *
      */
     protected function after_execute() {
-        $this->add_related_files('mod_panoptosubmission', 'submission', 'panoptosubmission_submission');
+        $this->add_related_files('mod_panoptosubmission', 'intro', null);
+        $this->add_related_files('mod_panoptosubmission', 'studentsubmission_files', 'panoptosubmission_submission');
     }
 }

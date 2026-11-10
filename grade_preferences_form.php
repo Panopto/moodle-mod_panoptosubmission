@@ -91,11 +91,13 @@ class panoptosubmission_gradepreferences_form extends moodleform {
 
         if ($showquickgrading) {
             $mform->addElement('checkbox', 'quickgrade', get_string('quickgrade', 'panoptosubmission'));
+            $mform->setType('quickgrade', PARAM_BOOL);
             $mform->setDefault('quickgrade', '');
             $mform->addHelpButton('quickgrade', 'quickgrade', 'panoptosubmission');
         }
 
         $mform->addElement('select', 'group_filter', get_string('group_filter', 'mod_panoptosubmission'), $groupopt);
+        $mform->setType('group_filter', PARAM_INT);
 
         $filters = [
             PANOPTOSUBMISSION_ALL => get_string('all', 'panoptosubmission'),
@@ -105,6 +107,7 @@ class panoptosubmission_gradepreferences_form extends moodleform {
         ];
 
         $mform->addElement('select', 'filter', get_string('show'), $filters);
+        $mform->setType('filter', PARAM_INT);
         $mform->addHelpButton('filter', 'show', 'panoptosubmission');
 
         $mform->addElement('text', 'perpage', get_string('pagesize', 'panoptosubmission'), ['size' => 3, 'maxlength' => 3]);

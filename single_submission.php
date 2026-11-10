@@ -38,8 +38,8 @@ $page = optional_param('page', 0, PARAM_INT);
 
 [$cm, $course, $pansubmissionactivity] = panoptosubmission_validate_cmid($id);
 
+// Viewing needs no sesskey; the moodleform checks it when grading data is submitted.
 require_login($course->id, false, $cm);
-require_sesskey();
 
 global $CFG, $PAGE, $OUTPUT, $USER;
 
@@ -63,6 +63,11 @@ $PAGE->navbar->add($prevousurlstring, $previousurl);
 $PAGE->requires->css('/mod/panoptosubmission/styles.css');
 
 require_capability('mod/panoptosubmission:gradesubmission', $context);
+
+// Only users the grading table shows, which respects separate groups.
+if (!panoptosubmission_can_grade_user($cm, $context, $userid)) {
+    throw new moodle_exception('nopermissions', 'error', $previousurl, get_string('gradesubmission', 'panoptosubmission'));
+}
 
 $event = \mod_panoptosubmission\event\single_submission_page_viewed::create([
     'objectid' => $pansubmissionactivity->id,

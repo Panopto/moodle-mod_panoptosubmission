@@ -24,6 +24,13 @@ use core_privacy\local\request\writer;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 
+defined('MOODLE_INTERNAL') || die();
+
+// The privacy API loads this class on its own, so load what it needs: the file area constants and get_grading_manager().
+global $CFG;
+require_once($CFG->dirroot . '/mod/panoptosubmission/lib.php');
+require_once($CFG->dirroot . '/grade/grading/lib.php');
+
 // phpcs:disable Universal.OOStructures.AlphabeticExtendsImplements
 /**
  * This class defines the privacy information for the panopto submission module
@@ -206,6 +213,9 @@ class provider implements
 
             // Cannot make use of helper::export_context_files(), need to manually export panoptosubmission details.
             $panoptosubmissiondata = self::get_panoptosubmission_by_context($context);
+            if (!$panoptosubmissiondata) {
+                continue;
+            }
 
             // Get panoptosubmission details object for output.
             $panoptosubmission = self::get_panoptosubmission_output($panoptosubmissiondata);
@@ -224,7 +234,7 @@ class provider implements
                 $teacher
             );
 
-            $gradingmanager = get_grading_manager($context, 'mod_assign', 'submissions');
+            $gradingmanager = get_grading_manager($context, 'mod_panoptosubmission', 'submissions');
             $controller = $gradingmanager->get_active_controller();
             foreach ($submissionsdata as $submissiondata) {
                 // Default subcontext path to export assignment submissions submitted by the user.
@@ -363,9 +373,13 @@ class provider implements
             return;
         }
 
-        // Fetch the panoptosubmission.
+        // Fetch the panoptosubmission. Its row may already be gone if an earlier deletion was interrupted.
         $panoptosubmission = self::get_panoptosubmission_by_context($context);
         $userids = $userlist->get_userids();
+
+        if (!$panoptosubmission || empty($userids)) {
+            return;
+        }
 
         [$inorequalsql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $params['videoassignid'] = $panoptosubmission->id;

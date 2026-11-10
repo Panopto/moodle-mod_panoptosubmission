@@ -72,9 +72,6 @@ $string['gradenoun'] = 'Grade';
 $string['gradersubmissionupdatedhtml'] = '{$a->username} has updated their assignment submission
 for <i>\'{$a->assignment}\'  at {$a->timeupdated}</i><br /><br />
 It is <a href="{$a->url}">available on the web site</a>.';
-$string['gradesubmission'] = 'Grade';
-$string['gradeverb'] = 'Grade';
-$string['gradingsummary'] = 'Grading summary';
 $string['gradersubmissionupdatedsmall'] = '{$a->username} has updated their submission for assignment {$a->assignment}.';
 $string['gradersubmissionupdatedtext'] = '{$a->username} has updated their assignment submission
 for \'{$a->assignment}\' at {$a->timeupdated}
@@ -82,12 +79,18 @@ for \'{$a->assignment}\' at {$a->timeupdated}
 View the submission here:
 
     {$a->url}';
+$string['gradesubmission'] = 'Grade';
+$string['gradeverb'] = 'Grade';
+$string['gradingsummary'] = 'Grading summary';
 $string['group_filter'] = 'Group Filter';
 $string['has_grade'] = 'Graded';
 $string['hiddenfromstudents'] = 'Hidden from students';
+$string['invalid_content_host'] = 'The host for the target content must match one of the Panopto servers configured in the Panopto block for Moodle. If no Panopto server has been configured yet, ask your Moodle administrator to finish setting up the Panopto block.';
+$string['invalid_content_item'] = 'The video selection returned by Panopto could not be read. Please select the video again.';
 $string['invalid_launch_parameters'] = 'Invalid launch parameters';
 $string['invalidid'] = 'Invalid ID';
 $string['invalidperpage'] = 'Enter a number greater than zero';
+$string['invalidquickgrades'] = '{$a} grade(s) were not saved because they are not valid for this activity.';
 $string['late'] = '{$a} late';
 $string['latesubmissions'] = 'Late submissions';
 $string['latesubmissionsaccepted'] = 'Allowed until {$a}';
@@ -102,6 +105,7 @@ $string['no_automatic_operation_target_server'] = 'Please set Automatic Operatio
 $string['no_existing_lti_tools'] = 'A preconfigured Panopto LTI tool with the custom parameter "panopto_student_submission_tool" must exist to be able to use the Panopto Student Submission activity. Please see setup documentation for more information.';
 $string['noassignments'] = 'No Panopto Student Submission activities found in the course';
 $string['noenrolledstudents'] = 'No students are enrolled in the course';
+$string['nogradablestudents'] = 'This activity uses separate groups, and none of your groups contain students you can grade.';
 $string['nosubmission'] = 'No submission';
 $string['nosubmissions'] = 'No submissions';
 $string['nosubmissionsforgrading'] = 'There are no submissions available for grading';
@@ -112,6 +116,7 @@ $string['numberofparticipants'] = 'Participants';
 $string['numberofsubmissions'] = 'Number of submissions: {$a}';
 $string['numberofsubmissionsneedgrading'] = 'Needs grading';
 $string['numberofsubmittedassignments'] = 'Submitted';
+$string['openvideo'] = 'Open video';
 $string['optionalsettings'] = 'Optional settings';
 $string['pagesize'] = 'Submissions shown per page';
 $string['pagesize_help'] = 'Set the number of assignment to display per page';
@@ -142,6 +147,7 @@ $string['privacy:metadata:panoptosubmissiongroupfilter'] = 'Group filter prefere
 $string['privacy:metadata:panoptosubmissionperpage'] = 'Number of assignment submissions shown per page preference.';
 $string['privacy:metadata:panoptosubmissionquickgrade'] = 'Quick grading preference for Panopto Submission.';
 $string['privacy:submissionpath'] = 'submission';
+$string['provisioncoursefailed'] = 'Provisioning course {$a} with Panopto failed. See the Panopto block logs for details.';
 $string['quickgrade'] = 'Enable quick grading';
 $string['quickgrade_help'] = 'If enabled, multiple assignments can be graded at the same time. Update grades and feedback and then click "Save all feedback".';
 $string['relativedatessubmissiontimeleft'] = 'Calculated for each student';

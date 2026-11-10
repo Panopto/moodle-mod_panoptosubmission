@@ -43,6 +43,7 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'course', $COURSE->id);
+        $mform->setType('course', PARAM_INT);
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
@@ -87,10 +88,12 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
         $ynoptions = [0 => get_string('no'), 1 => get_string('yes')];
 
         $mform->addElement('select', 'preventlate', get_string('preventlate', 'panoptosubmission'), $ynoptions);
+        $mform->setType('preventlate', PARAM_INT);
         $mform->addHelpButton('preventlate', 'preventlate', 'panoptosubmission');
         $mform->setDefault('preventlate', 0);
 
         $mform->addElement('select', 'resubmit', get_string('allowdeleting', 'panoptosubmission'), $ynoptions);
+        $mform->setType('resubmit', PARAM_INT);
         $mform->addHelpButton('resubmit', 'allowdeleting', 'panoptosubmission');
         $mform->setDefault('resubmit', 0);
 
@@ -99,23 +102,40 @@ class mod_panoptosubmission_mod_form extends moodleform_mod {
 
         $name = get_string('sendnotifications', 'panoptosubmission');
         $mform->addElement('selectyesno', 'sendnotifications', $name);
+        $mform->setType('sendnotifications', PARAM_INT);
         $mform->addHelpButton('sendnotifications', 'sendnotifications', 'panoptosubmission');
 
         $name = get_string('sendlatenotifications', 'panoptosubmission');
         $mform->addElement('selectyesno', 'sendlatenotifications', $name);
+        $mform->setType('sendlatenotifications', PARAM_INT);
         $mform->addHelpButton('sendlatenotifications', 'sendlatenotifications', 'panoptosubmission');
         $mform->disabledIf('sendlatenotifications', 'sendnotifications', 'eq', 1);
 
         $name = get_string('sendstudentnotificationsdefault', 'panoptosubmission');
         $mform->addElement('selectyesno', 'sendstudentnotifications', $name);
+        $mform->setType('sendstudentnotifications', PARAM_INT);
         $mform->addHelpButton('sendstudentnotifications', 'sendstudentnotificationsdefault', 'panoptosubmission');
-        $mform->setDefault('sendstudentnotificationsdefault', 0);
+        $mform->setDefault('sendstudentnotifications', 0);
 
         $this->standard_grading_coursemodule_elements();
 
         $this->standard_coursemodule_elements();
 
         $this->add_action_buttons();
+    }
+
+    /**
+     * Prepare the stored settings for the form.
+     *
+     * @param array $defaultvalues The activity record, passed by reference.
+     */
+    public function data_preprocessing(&$defaultvalues) {
+        parent::data_preprocessing($defaultvalues);
+
+        // The grade column is a decimal, so "None" loads as '0.00', which the grade element treats as a value.
+        if (isset($defaultvalues['grade'])) {
+            $defaultvalues['grade'] = (float) $defaultvalues['grade'];
+        }
     }
 
     /**
